@@ -1,0 +1,70 @@
+# Claude Code settings
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Google Cloud
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!*evalset.json
+!test_config.json
+
+# Node modules
+node_modules/
+
+# Build artifacts
+frontend/dist/
+frontend/build/
+backend/dist/
+backend/build/

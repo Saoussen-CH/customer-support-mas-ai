@@ -83,6 +83,7 @@ EXAMPLES:
 - "Track my order" → order_agent
 - "I want a refund" → refund_workflow""",
     tools=[
+        preload_memory_tool.PreloadMemoryTool(),
         AgentTool(product_agent),  # Handles ALL product complexity internally
         AgentTool(order_agent),
         AgentTool(billing_agent),

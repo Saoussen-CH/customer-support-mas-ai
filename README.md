@@ -14,6 +14,24 @@ The system is built on Google Cloud Platform with:
 
 For detailed architecture documentation, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 
+## Implementation Based on Kaggle 5-Day AI Agents Course
+
+This project implements and extends concepts from Google's ADK course materials:
+
+| Course Topic | Implementation | Production Enhancement |
+|-------------|----------------|----------------------|
+| **Multi-Agent Orchestration** | ✅ Root + 3 Specialists + Workflow agents | Cost-optimized with Gemini 2.5 Pro + Flash |
+| **Sequential Workflows** | ✅ 3-step refund validation pipeline | Validation gates prevent invalid operations |
+| **Session Management** | ✅ Vertex AI Agent Engine sessions | Backend proxy with JWT auth + multi-user support |
+| **Memory Bank** | ✅ Vertex AI Memory Bank with callbacks | Cross-session preference recall |
+| **Observability** | ✅ LoggingPlugin + Cloud Logging | Production-ready monitoring |
+| **Evaluation & Testing** | ✅ Vertex AI Gen AI Evaluation + AgentEvaluator | 10+ evalset files with LLM-as-judge metrics |
+| **Deployment** | ✅ Vertex AI Agent Engine + Cloud Run | Full-stack with automation scripts |
+| **RAG Semantic Search** | 🚀 text-embedding-004 (768-dim) | Beyond course: Vector search on products |
+| **Smart Tool Design** | 🚀 Batch tools + smart wrappers | Beyond course: Replaced Loop/Parallel patterns |
+
+**Legend**: ✅ Implemented from course | 🚀 Production enhancement beyond course
+
 ## Key Features
 
 - 🤖 **Multi-Agent System** - Root agent coordinates specialized agents (Product, Order, Billing)
@@ -98,14 +116,14 @@ customer-support-mas/
 │   ├── config.py                 # Agent configurations
 │   ├── agents/                   # Agent definitions
 │   │   ├── root_agent.py         # Root coordinator (Gemini 2.5 Pro)
-│   │   ├── product_agent.py      # Product specialist (Gemini 2.0 Flash)
+│   │   ├── product_agent.py      # Product specialist (Gemini 2.5 Flash)
 │   │   ├── order_agent.py        # Order specialist
 │   │   ├── billing_agent.py      # Billing specialist
 │   │   ├── workflow_agents.py    # Parallel/Sequential/Loop agents
 │   │   └── callbacks.py          # Memory Bank callbacks
 │   ├── tools/                    # Tool implementations
-│   │   ├── product_tools.py      # 6 product tools (including get_product_info smart wrapper)
-│   │   ├── order_tools.py        # 3 order tools
+│   │   ├── product_tools.py      # 8 product tools (including get_product_info smart wrapper)
+│   │   ├── order_tools.py        # 2 order tools
 │   │   ├── billing_tools.py      # 6 billing tools
 │   │   └── workflow_tools.py     # Loop control tools
 │   ├── database/                 # Database layer
@@ -143,11 +161,49 @@ customer-support-mas/
 
 ## Technology Stack
 
-**Frontend**: React 18, TypeScript, Vite
-**Backend**: FastAPI, Python 3.11 (pinned with pyenv), Uvicorn
-**AI/ML**: Google ADK, Gemini 2.5 Pro, Gemini 2.0 Flash, Vertex AI Embeddings
-**Database**: Firestore (vector search + NoSQL)
-**Infrastructure**: Cloud Run, Vertex AI Agent Engine, Docker
+**Frontend**:
+- React 18
+- TypeScript
+- Vite
+- Axios (HTTP client)
+- Lucide React (icons)
+
+**Backend**:
+- FastAPI
+- Python 3.11 (pinned with pyenv)
+- Uvicorn (ASGI server)
+- Pydantic (data validation)
+- Pydantic Settings (config management)
+- python-dotenv (environment config)
+- email-validator (email validation)
+- SHA-256 (password hashing)
+- Token-based authentication
+
+**AI/ML**:
+- Google ADK (Agent Development Kit)
+- Gemini 2.5 Pro (reasoning)
+- Gemini 2.5 Flash (tool execution)
+- Vertex AI (Agent Engine, Memory Bank, Gen AI Evaluation)
+- google-cloud-aiplatform (Python SDK)
+- text-embedding-004 (768-dim embeddings)
+- numpy (vector operations)
+
+**Database**:
+- Google Cloud Firestore (NoSQL + vector search)
+
+**Infrastructure**:
+- Cloud Run (container hosting)
+- Vertex AI Agent Engine (agent runtime)
+- Google Cloud Storage (staging bucket)
+- Artifact Registry (container images)
+- Cloud Logging (monitoring)
+- Docker (containerization)
+
+**Testing**:
+- pytest
+- AgentEvaluator (ADK testing framework)
+- Vertex AI Gen AI Evaluation (LLM-as-judge metrics for deployed agents)
+- pandas (evaluation dataset management)
 
 ## Agent Architecture
 
@@ -157,7 +213,7 @@ customer-support-mas/
 - **Tools**: 4 AgentTools (product_agent, order_agent, billing_agent, refund_workflow)
 
 ### 2. Product Agent
-- **Model**: Gemini 2.5 Pro
+- **Model**: Gemini 2.5 Flash
 - **Tools**:
   - `search_products` - RAG semantic search
   - **`get_product_info`** - **Smart unified tool (default)** - Fetches details + inventory + reviews comprehensively
@@ -170,11 +226,11 @@ customer-support-mas/
 **Design Philosophy**: The product agent defaults to providing comprehensive information (`get_product_info`) for better UX. Individual tools are only used when users explicitly request specific data with "ONLY" or "JUST" keywords.
 
 ### 3. Order Agent
-- **Model**: Gemini 2.0 Flash
+- **Model**: Gemini 2.5 Flash
 - **Tools**: `track_order`, `get_my_order_history`
 
 ### 4. Billing Agent
-- **Model**: Gemini 2.0 Flash
+- **Model**: Gemini 2.5 Flash
 - **Tools**: `get_invoice`, `get_invoice_by_order_id`, `check_payment_status`
 - **Note**: Refunds are processed through the dedicated `refund_workflow` for proper validation
 
@@ -376,8 +432,6 @@ All logs sent to Google Cloud Logging for monitoring.
 
 ## Troubleshooting
 
-See **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** for comprehensive error solutions.
-
 **Quick fixes:**
 
 **Import Error:**
@@ -405,13 +459,11 @@ gcloud run services logs read customer-support-ai --limit=50
 ## Documentation
 
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** - 📋 Complete setup checklist (START HERE)
-- **[DEPLOYMENT_NOTES.md](./DEPLOYMENT_NOTES.md)** - 📌 Current deployment status & known issues
 - **[PYTHON_SETUP.md](./docs/PYTHON_SETUP.md)** - 🐍 Python 3.11 + pyenv installation guide
 - **[PREREQUISITES.md](./docs/PREREQUISITES.md)** - ⚙️ Required APIs, IAM roles, GCP setup
 - **[ENV_SETUP.md](./docs/ENV_SETUP.md)** - 🔧 Environment configuration with .env files
 - **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - 🚀 Deploy to Cloud Run & Vertex AI Agent Engine
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - 🏗️ System design, multi-agent workflows, RAG search
-- **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - 🔧 Common errors and solutions
 
 ## Resources
 
