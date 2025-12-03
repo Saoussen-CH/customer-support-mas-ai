@@ -98,7 +98,11 @@ cp .env.example .env
 nano .env  # Edit with your GCP project details
 
 # 2. Deploy agent to Vertex AI Agent Engine
-python deployment/deploy.py  # Run from project root
+# Option A: Standard deployment (no Memory Bank)
+python deployment/deploy.py
+
+# Option B: Two-stage deployment (with Memory Bank)
+python deployment/deploy_two_stage.py
 
 # 3. Deploy frontend + backend to Cloud Run
 ./deployment/deploy-cloudrun.sh
@@ -120,7 +124,8 @@ customer-support-mas/
 │   │   ├── order_agent.py        # Order specialist
 │   │   ├── billing_agent.py      # Billing specialist
 │   │   ├── workflow_agents.py    # Parallel/Sequential/Loop agents
-│   │   └── callbacks.py          # Memory Bank callbacks
+│   │   ├── callbacks.py          # Memory Bank callbacks (traditional - doesn't work)
+│   │   └── callbacks_sdk.py      # Memory Bank callbacks (SDK-based - working)
 │   ├── tools/                    # Tool implementations
 │   │   ├── product_tools.py      # 8 product tools (including get_product_info smart wrapper)
 │   │   ├── order_tools.py        # 2 order tools
@@ -143,7 +148,8 @@ customer-support-mas/
 │       ├── components/           # UI components
 │       └── services/             # API clients
 ├── deployment/                   # Deployment scripts
-│   ├── deploy.py                 # Deploy to Agent Engine
+│   ├── deploy.py                 # Deploy to Agent Engine (standard)
+│   ├── deploy_two_stage.py       # Deploy with Memory Bank (two-stage)
 │   └── deploy-cloudrun.sh        # Deploy to Cloud Run
 ├── scripts/                      # Utility scripts
 │   └── add_embeddings.py         # Add vector embeddings for RAG
@@ -161,49 +167,17 @@ customer-support-mas/
 
 ## Technology Stack
 
-**Frontend**:
-- React 18
-- TypeScript
-- Vite
-- Axios (HTTP client)
-- Lucide React (icons)
+**Frontend:** React 18 : TypeScript : Vite : Axios
 
-**Backend**:
-- FastAPI
-- Python 3.11 (pinned with pyenv)
-- Uvicorn (ASGI server)
-- Pydantic (data validation)
-- Pydantic Settings (config management)
-- python-dotenv (environment config)
-- email-validator (email validation)
-- SHA-256 (password hashing)
-- Token-based authentication
+**Backend:** FastAPI : Python 3.11 : Pydantic : Token-based auth
 
-**AI/ML**:
-- Google ADK (Agent Development Kit)
-- Gemini 2.5 Pro (reasoning)
-- Gemini 2.5 Flash (tool execution)
-- Vertex AI (Agent Engine, Memory Bank, Gen AI Evaluation)
-- google-cloud-aiplatform (Python SDK)
-- text-embedding-004 (768-dim embeddings)
-- numpy (vector operations)
+**AI/ML:** Google ADK : Gemini 2.5 Pro/Flash : Vertex AI Agent Engine : Vertex AI Memory Bank : Vertex AI Agent Engine Sessions : text-embedding-004 : gemini-embedding-001
 
-**Database**:
-- Google Cloud Firestore (NoSQL + vector search)
+**Data:** Firestore (NoSQL + vector search)
 
-**Infrastructure**:
-- Cloud Run (container hosting)
-- Vertex AI Agent Engine (agent runtime)
-- Google Cloud Storage (staging bucket)
-- Artifact Registry (container images)
-- Cloud Logging (monitoring)
-- Docker (containerization)
+**Infrastructure:** Cloud Run : Artifact Registry : Docker : Cloud Logging
 
-**Testing**:
-- pytest
-- AgentEvaluator (ADK testing framework)
-- Vertex AI Gen AI Evaluation (LLM-as-judge metrics for deployed agents)
-- pandas (evaluation dataset management)
+**Testing:** pytest : AgentEvaluator : Vertex AI Gen AI Evaluation
 
 ## Agent Architecture
 
@@ -308,16 +282,67 @@ python deployment/deploy.py --action deploy
 
 ## Memory Bank
 
-Remembers user preferences across sessions:
+Remembers user preferences across sessions using Vertex AI Memory Bank with automatic extraction and recall.
+
+### Memory Extraction Examples
 
 ```python
-# Extractions:
+# Automatically extracted from conversations:
 # - "Customer prefers products under $500"
 # - "User had delivery issues with order ORD-12345"
 # - "Customer is interested in gaming laptops"
 ```
 
-Agents use `PreloadMemoryTool` to load memories at conversation start.
+### Implementation Approach
+
+**Current Implementation:** SDK-based callbacks (`callbacks_sdk.py`)
+
+The project uses the Vertex AI Client SDK approach for Memory Bank integration:
+
+```python
+# callbacks_sdk.py - Working approach
+client = Client(project=PROJECT_ID, location=LOCATION)
+client.agent_engines.memories.generate(
+    agent_engine_id=agent_engine_id,
+    session_id=session_id
+)
+```
+
+**Why not the traditional approach?**
+
+The traditional approach (`callbacks.py`) assumes Agent Engine automatically provides Memory Bank service via invocation context:
+
+```python
+# callbacks.py - Doesn't work when deployed
+memory_service = callback_context._invocation_context.memory_service
+memory_service.save()
+```
+
+However, this **doesn't work** when deployed to Vertex AI Agent Engine because the Memory Bank service is not automatically injected into the invocation context. The SDK-based approach explicitly calls the Memory Bank API using the Agent Engine SDK.
+
+### Deployment Requirements
+
+**Two-Stage Deployment:** Memory Bank requires using `deploy_two_stage.py` instead of the standard `deploy.py`:
+
+1. **Stage 1:** Create Agent Engine resource with Memory Bank config → Get agent_engine_id
+2. **Stage 2:** Deploy agent code with `AGENT_ENGINE_ID` environment variable
+
+This solves the chicken-and-egg problem where callbacks need the agent_engine_id, but it's only available after initial deployment.
+
+**Standard deployment vs Two-stage:**
+- `deploy.py` - Single-stage deployment (no Memory Bank)
+- `deploy_two_stage.py` - Two-stage deployment (with Memory Bank)
+
+### Memory Recall
+
+Agents use `PreloadMemoryTool` to automatically load relevant memories at conversation start:
+
+```python
+tools=[
+    preload_memory_tool.PreloadMemoryTool(),  # Loads memories from previous sessions
+    # ... other tools
+]
+```
 
 ## Configuration
 
@@ -395,10 +420,21 @@ Agent: [Uses refund_workflow]
 
 ### Deploy to Agent Engine
 
+**Option A: Standard deployment (no Memory Bank)**
 ```bash
 python deployment/deploy.py
 # Returns: projects/.../reasoningEngines/...
 ```
+
+**Option B: Two-stage deployment (with Memory Bank)**
+```bash
+python deployment/deploy_two_stage.py
+# Stage 1: Creates Agent Engine resource with Memory Bank config
+# Stage 2: Deploys agent code with AGENT_ENGINE_ID env variable
+# Returns: projects/.../reasoningEngines/...
+```
+
+See [Memory Bank](#memory-bank) section for details on why two-stage deployment is needed.
 
 ### Deploy to Cloud Run
 
@@ -429,33 +465,6 @@ logging.info(f"[PRODUCT SEARCH] Query: {query}, Found: {len(results)} products")
 **Cloud Logging:**
 All logs sent to Google Cloud Logging for monitoring.
 
-
-## Troubleshooting
-
-**Quick fixes:**
-
-**Import Error:**
-```bash
-# Always run from project root
-cd /path/to/customer-support-mas
-python deployment/deploy.py
-```
-
-**API Not Enabled:**
-```bash
-./scripts/setup_gcp.sh  # Enables all required APIs
-```
-
-**Permission Denied:**
-```bash
-./scripts/setup_gcp.sh  # Configures IAM roles
-```
-
-**Check Logs:**
-```bash
-gcloud run services logs read customer-support-ai --limit=50
-```
-
 ## Documentation
 
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** - 📋 Complete setup checklist (START HERE)
@@ -470,34 +479,6 @@ gcloud run services logs read customer-support-ai --limit=50
 - [Google ADK Documentation](https://cloud.google.com/vertex-ai/docs/agent-builder)
 - [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/docs/reasoning-engine)
 - [Firestore Vector Search](https://cloud.google.com/firestore/docs/vector-search)
-
-## Command Reference
-
-```bash
-# Setup & Prerequisites
-./scripts/setup_gcp.sh                            # Enable APIs, configure IAM
-./scripts/setup_firestore.sh                      # Create database, seed data
-cp .env.example .env                              # Setup environment config
-
-# Database
-python -m customer_support_agent.database.seed    # Seed database
-python scripts/add_embeddings.py                  # Add RAG embeddings
-
-# Deployment (run from project root)
-python deployment/deploy.py --action deploy       # Deploy to Agent Engine
-python scripts/create_vector_index.py             # Create RAG vector index
-python scripts/add_embeddings.py --project YOUR_PROJECT --database YOUR_DB  # Add embeddings
-./deployment/deploy-cloudrun.sh                   # Deploy to Cloud Run
-
-# Testing
-pytest tests/ -v                                  # Run all tests
-python test_refactoring.py                        # Verify refactoring
-
-# Management
-gcloud ai reasoning-engines list                  # List deployed agents
-gcloud run services list                          # List Cloud Run services
-gcloud services list --enabled                    # List enabled APIs
-```
 
 ## License
 
