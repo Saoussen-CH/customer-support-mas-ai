@@ -167,17 +167,17 @@ customer-support-mas/
 
 ## Technology Stack
 
-**Frontend:** React 18 : TypeScript : Vite : Axios
+**Frontend:** React 18 - TypeScript - Vite - Axios
 
-**Backend:** FastAPI : Python 3.11 : Pydantic : Token-based auth
+**Backend:** FastAPI - Python 3.11 - Pydantic - Token-based auth
 
-**AI/ML:** Google ADK : Gemini 2.5 Pro/Flash : Vertex AI Agent Engine : Vertex AI Memory Bank : Vertex AI Agent Engine Sessions : text-embedding-004 : gemini-embedding-001
+**AI/ML:** Google ADK - Gemini 2.5 Pro/Flash - Vertex AI Agent Engine - Vertex AI Memory Bank - Vertex AI Agent Engine Sessions - text-embedding-004 - gemini-embedding-001
 
 **Data:** Firestore (NoSQL + vector search)
 
-**Infrastructure:** Cloud Run : Artifact Registry : Docker : Cloud Logging
+**Infrastructure:** Cloud Run - Artifact Registry - Docker - Cloud Logging
 
-**Testing:** pytest : AgentEvaluator : Vertex AI Gen AI Evaluation
+**Testing:** pytest - AgentEvaluator - Vertex AI Gen AI Evaluation
 
 ## Agent Architecture
 
