@@ -1,0 +1,74 @@
+{
+  "eval_set_id": "memory_persistence_tests",
+  "eval_cases": [
+    {
+      "eval_id": "save_budget_preference",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I prefer laptops under $600"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I'll keep that in mind! Here are laptops under $600"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I prefer laptops under $600"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "recall_budget_preference",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me laptops"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are options in your budget"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me laptops"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "category_preference_memory",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I'm interested in office furniture"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here's our office furniture"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I'm interested in office furniture"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

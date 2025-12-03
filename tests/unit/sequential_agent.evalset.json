@@ -1,0 +1,120 @@
+{
+  "eval_set_id": "sequential_agent_tests",
+  "eval_cases": [
+    {
+      "eval_id": "refund_workflow_valid_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want a refund for order ORD-12345"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your refund request has been processed"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I want a refund for order ORD-12345"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_workflow_return_request",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I'd like to return my order ORD-12345"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your return has been validated and processed"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I'd like to return my order ORD-12345"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_workflow_invalid_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want a refund for order ORD-99999"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Order ORD-99999 was not found"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I want a refund for order ORD-99999"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_workflow_with_reason",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I need to return order ORD-67890 because it arrived damaged"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your refund request for the damaged item has been submitted"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I need to return order ORD-67890 because it arrived damaged"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_eligibility_check",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Can I get a refund for ORD-12345?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Let me check the refund eligibility for your order"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "Can I get a refund for ORD-12345?"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

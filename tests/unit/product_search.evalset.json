@@ -1,0 +1,74 @@
+{
+  "eval_set_id": "product_search_tests",
+  "eval_cases": [
+    {
+      "eval_id": "basic_product_search",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me laptops"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the available laptops"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me laptops"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "price_filtered_search",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I'm looking for laptops under $600"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I found laptops within your $600 budget"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I'm looking for laptops under $600"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "category_filtered_search",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me office chairs"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the available office chairs"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me office chairs"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

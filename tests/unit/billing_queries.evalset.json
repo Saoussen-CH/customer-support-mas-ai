@@ -1,0 +1,74 @@
+{
+  "eval_set_id": "billing_queries_tests",
+  "eval_cases": [
+    {
+      "eval_id": "get_invoice_by_id",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me invoice INV-2025-001"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here's invoice INV-2025-001"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {"request": "Show me invoice INV-2025-001"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "get_invoice_by_order_id",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "What's the invoice for order ORD-12345?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "The invoice for order ORD-12345 is INV-2025-001"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {"request": "What's the invoice for order ORD-12345?"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "check_payment_status",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Has my payment for ORD-12345 been processed?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your payment for order ORD-12345 is currently Pending"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {"request": "Has my payment for ORD-12345 been processed?"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

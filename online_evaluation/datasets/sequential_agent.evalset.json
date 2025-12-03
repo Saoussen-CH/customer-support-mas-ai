@@ -1,0 +1,104 @@
+{
+  "eval_set_id": "sequential_agent_online_tests",
+  "eval_cases": [
+    {
+      "eval_id": "refund_workflow_valid",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want a refund for order ORD-12345"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I want a refund for order ORD-12345"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I've initiated the refund process for order ORD-12345. The order has been validated and is eligible for a refund. Your refund request has been submitted and will be processed within 5-7 business days."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "return_request",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I'd like to return my order ORD-12345"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I'd like to return my order ORD-12345"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "return processed through sequential validation workflow"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_invalid_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want a refund for order ORD-99999"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I want a refund for order ORD-99999"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I apologize, but I couldn't find order ORD-99999 in our system. The order validation has failed. Please verify the order number and try again."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    }
+  ]
+}

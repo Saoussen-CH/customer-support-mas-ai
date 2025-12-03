@@ -1,0 +1,90 @@
+{
+  "eval_set_id": "multi_agent_handoffs_tests",
+  "eval_cases": [
+    {
+      "eval_id": "product_and_order_handoff",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "What's the price of the EcoBook laptop and where is my order ORD-12345?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "The EcoBook Budget Laptop is $549.99. Your order ORD-12345 is currently In Transit"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "What's the price of the EcoBook laptop"}
+              },
+              {
+                "name": "order_agent",
+                "args": {"request": "where is my order ORD-12345"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "order_and_billing_handoff",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Track my order ORD-12345 and show me the invoice"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your order ORD-12345 is In Transit. The invoice for this order is INV-2025-001"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "order_agent",
+                "args": {"request": "Track my order ORD-12345"}
+              },
+              {
+                "name": "billing_agent",
+                "args": {"request": "show me the invoice"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "product_order_billing_full_journey",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I'm looking for the ProBook laptop. Can you tell me about my previous order ORD-12345 and if the payment went through?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "The ProBook Laptop 15 is available for $999.99. Your order ORD-12345 is In Transit. The payment is currently Pending"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "ProBook laptop"}
+              },
+              {
+                "name": "order_agent",
+                "args": {"request": "order ORD-12345"}
+              },
+              {
+                "name": "billing_agent",
+                "args": {"request": "payment"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

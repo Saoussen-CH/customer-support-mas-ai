@@ -1,0 +1,169 @@
+{
+  "eval_set_id": "loop_agent_tests",
+  "eval_cases": [
+    {
+      "eval_id": "multi_product_details_both",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me laptops"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the available laptops"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me laptops"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Give me details on both"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the details for all the laptops"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Give me details on both"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "multi_product_details_all",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Find wireless headphones"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I found wireless headphones"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Find wireless headphones"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Show me details on all of them"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the complete details"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me details on all of them"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "multi_product_details_multiple",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me office chairs"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the available office chairs"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me office chairs"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "I want details on all these products"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the detailed specifications for each chair"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I want details on all these products"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "multi_product_follow_up",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Search for gaming products"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I found gaming products"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Search for gaming products"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Tell me more about each one"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here is detailed information about each gaming product"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Tell me more about each one"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

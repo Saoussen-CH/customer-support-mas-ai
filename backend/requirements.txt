@@ -1,0 +1,9 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-dotenv==1.0.0
+google-cloud-aiplatform[adk,agent_engines]>=1.112
+google-cloud-firestore>=2.16.0
+vertexai>=1.38.0
+pydantic>=2.6.1
+pydantic-settings>=2.1.0
+email-validator>=2.0.0

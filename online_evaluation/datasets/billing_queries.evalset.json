@@ -1,0 +1,104 @@
+{
+  "eval_set_id": "billing_queries_tests",
+  "eval_cases": [
+    {
+      "eval_id": "get_invoice_by_id",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me invoice INV-2025-001"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {
+                  "request": "Show me invoice INV-2025-001"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Invoice INV-2025-001 is for $1295.98 including tax. It was issued on January 15, 2025, and is due on February 15, 2025. The status is pending."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "get_invoice_for_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "What's the invoice for order ORD-12345?"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {
+                  "request": "What's the invoice for order ORD-12345?"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The invoice for order ORD-12345 is INV-2025-001 for $1295.98 including tax, issued on January 15, 2025, due on February 15, 2025, with status pending."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "check_payment_status",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Has my payment for ORD-12345 been processed?"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "billing_agent",
+                "args": {
+                  "request": "Has my payment for ORD-12345 been processed?"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The payment for ORD-12345 is currently pending. The amount due is $1295.98, and the payment method used was a credit card ending in 4242."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    }
+  ]
+}

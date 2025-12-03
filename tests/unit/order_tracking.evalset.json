@@ -1,0 +1,51 @@
+{
+  "eval_set_id": "order_tracking_tests",
+  "eval_cases": [
+    {
+      "eval_id": "valid_order_tracking",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Where is my order ORD-12345?"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your order ORD-12345 is currently In Transit"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "order_agent",
+                "args": {"request": "Where is my order ORD-12345?"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "invalid_order_id",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Track order ORD-99999"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I couldn't find an order with ID ORD-99999"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "order_agent",
+                "args": {"request": "Track order ORD-99999"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

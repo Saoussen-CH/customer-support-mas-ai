@@ -1,0 +1,21 @@
+# ADK Multi-Agent Customer Support - Dependencies
+# ================================================
+# Python Version: 3.11+ (see .python-version for pinned version)
+# ================================================
+
+# Google ADK and Vertex AI
+google-adk>=1.19.0
+google-cloud-aiplatform[adk,agent_engines]>=1.112
+
+# Database - Firestore
+google-cloud-firestore>=2.16.0
+
+# RAG - Vector Search & Embeddings
+numpy>=1.24.0
+vertexai>=1.38.0
+
+# Optional: For external API calls in tools
+requests>=2.31.0
+
+# Development dependencies
+python-dotenv>=1.0.0

@@ -1,0 +1,127 @@
+{
+  "eval_set_id": "loop_agent_online_tests",
+  "eval_cases": [
+    {
+      "eval_id": "multi_product_details_laptops",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me laptops"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Show me laptops"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found several laptops: ProBook Laptop 15 at $999.99, EcoBook Budget Laptop at $549.99, and ROG Gaming Laptop at $1,899.99."
+              }
+            ],
+            "role": "model"
+          }
+        },
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Give me details on all of them"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Give me details on all of them"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "detailed specifications for all three laptops retrieved through loop iteration"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "multi_product_both",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Find wireless headphones"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Find wireless headphones"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found wireless headphones products"
+              }
+            ],
+            "role": "model"
+          }
+        },
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Tell me about both"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Tell me about both"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "details for multiple products using loop agent"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    }
+  ]
+}

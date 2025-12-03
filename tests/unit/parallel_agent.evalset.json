@@ -1,0 +1,97 @@
+{
+  "eval_set_id": "parallel_agent_tests",
+  "eval_cases": [
+    {
+      "eval_id": "comprehensive_product_lookup_by_id",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Tell me EVERYTHING about product PROD-001"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here is comprehensive information about the ProBook Laptop"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Tell me EVERYTHING about product PROD-001"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "comprehensive_product_lookup_semantic",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Give me comprehensive information on the ROG Gaming Laptop"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here is all the information about the ROG Gaming Laptop including details, inventory, and reviews"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Give me comprehensive information on the ROG Gaming Laptop"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "full_details_inventory_reviews",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want full details, stock, and reviews for PROD-002"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here is the complete information for the Wireless Headphones Pro"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I want full details, stock, and reviews for PROD-002"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "everything_about_product",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Everything about the Mechanical Gaming Keyboard"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here is comprehensive information about the Mechanical Gaming Keyboard"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Everything about the Mechanical Gaming Keyboard"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

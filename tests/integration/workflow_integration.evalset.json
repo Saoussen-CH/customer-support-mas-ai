@@ -1,0 +1,208 @@
+{
+  "eval_set_id": "workflow_integration_tests",
+  "eval_cases": [
+    {
+      "eval_id": "product_comprehensive_then_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Tell me everything about product PROD-001 and then track my order ORD-12345"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "comprehensive product info and order tracking"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Tell me everything about product PROD-001"}
+              },
+              {
+                "name": "order_agent",
+                "args": {"request": "track my order ORD-12345"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "multi_product_details_then_refund",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Show me laptops"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the available laptops"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Show me laptops"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Give me details on all of them"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Here are the details for all laptops"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Give me details on all of them"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Actually, I want a refund for order ORD-12345"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your refund has been processed"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I want a refund for order ORD-12345"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "comprehensive_product_order_billing_refund_workflow",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want full information on PROD-006, check my order ORD-12345, show me the invoice, and process a refund"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "comprehensive workflow with all agents"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "full information on PROD-006"}
+              },
+              {
+                "name": "order_agent",
+                "args": {"request": "check my order ORD-12345"}
+              },
+              {
+                "name": "billing_agent",
+                "args": {"request": "show me the invoice"}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {"request": "process a refund"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "parallel_lookup_with_memory",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I prefer products under $800"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "I'll remember your budget preference"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "I prefer products under $800"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "Tell me everything about the ROG Gaming Laptop"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "comprehensive info about ROG Gaming Laptop"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {"request": "Tell me everything about the ROG Gaming Laptop"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "sequential_refund_after_order_tracking",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Track my order ORD-12345"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "Your order is In Transit"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "order_agent",
+                "args": {"request": "Track my order ORD-12345"}
+              }
+            ]
+          }
+        },
+        {
+          "user_content": {
+            "parts": [{"text": "I changed my mind, I want a refund"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "refund workflow initiated"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I want a refund"}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

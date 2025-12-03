@@ -1,0 +1,104 @@
+{
+  "eval_set_id": "parallel_agent_online_tests",
+  "eval_cases": [
+    {
+      "eval_id": "comprehensive_product_lookup_prod001",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Tell me EVERYTHING about product PROD-001"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Tell me EVERYTHING about product PROD-001"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The ProBook Laptop 15 is priced at $999.99. It features a 15-inch display, Intel Core i5 processor, 8GB RAM, and 256GB SSD. Currently, we have 15 units in stock at our Main Warehouse. Customer reviews show a 4.5-star rating with positive feedback about its performance and build quality."
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "comprehensive_gaming_laptop",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Give me comprehensive information on the ROG Gaming Laptop"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "Give me comprehensive information on the ROG Gaming Laptop"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "comprehensive details, inventory status, and customer reviews for ROG Gaming Laptop"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "full_details_stock_reviews",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want full details, stock, and reviews for PROD-002"
+              }
+            ],
+            "role": "user"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "product_agent",
+                "args": {
+                  "request": "I want full details, stock, and reviews for PROD-002"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "complete information for Wireless Headphones Pro including specifications, availability, and customer feedback"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ]
+    }
+  ]
+}

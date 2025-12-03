@@ -1,0 +1,120 @@
+{
+  "eval_set_id": "refund_passing_test",
+  "description": "PASSING test cases for refund workflow - orders that should be approved",
+  "eval_cases": [
+    {
+      "eval_id": "refund_valid_order_within_window",
+      "description": "Valid order within 30-day return window (ORD-67890)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want to request a refund for my order ORD-67890. The headphones have defective audio quality."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "refund"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I want to request a refund for my order ORD-67890"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_in_transit_order",
+      "description": "Order in transit eligible for cancellation (ORD-12345)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Can I cancel my order ORD-12345? I ordered the wrong laptop model."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "refund"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "cancel order ORD-12345"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_processing_order",
+      "description": "Processing order eligible for cancellation (ORD-22222)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Please cancel order ORD-22222, I need to modify my purchase."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "refund"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "cancel order ORD-22222"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
