@@ -1,6 +1,6 @@
 # Multi-Agent Customer Support System
 
-A production-ready customer support system with React frontend and FastAPI backend, built with Google's Agent Development Kit (ADK). Features multi-agent orchestration, RAG semantic search, Memory Bank, and Sequential workflow pattern for validated refund processing.
+  A production-ready, full-stack AI customer support system powered by Google's Agent Development Kit (ADK). Features hierarchical multi-agent orchestration, RAG-powered semantic search with vector embeddings,   cross-session Memory Bank for personalized  experiences, and Sequential workflow patterns for validated refund processing. Built with React/TypeScript frontend, FastAPI backend, Vertex AI middleware and Firestore. Includes comprehensive LLM-based evaluation suite with 10+ test datasets, cloud-native deployment automation.
 
 ## Architecture
 
@@ -27,10 +27,6 @@ This project implements and extends concepts from Google's ADK course materials:
 | **Observability** | ✅ LoggingPlugin + Cloud Logging | Production-ready monitoring |
 | **Evaluation & Testing** | ✅ Vertex AI Gen AI Evaluation + AgentEvaluator | 10+ evalset files with LLM-as-judge metrics |
 | **Deployment** | ✅ Vertex AI Agent Engine + Cloud Run | Full-stack with automation scripts |
-| **RAG Semantic Search** | 🚀 text-embedding-004 (768-dim) | Beyond course: Vector search on products |
-| **Smart Tool Design** | 🚀 Batch tools + smart wrappers | Beyond course: Replaced Loop/Parallel patterns |
-
-**Legend**: ✅ Implemented from course | 🚀 Production enhancement beyond course
 
 ## Key Features
 
