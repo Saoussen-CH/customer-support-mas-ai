@@ -16,7 +16,7 @@ For detailed architecture documentation, see [ARCHITECTURE.md](./docs/ARCHITECTU
 
 ## Implementation Based on Kaggle 5-Day AI Agents Course
 
-This project implements and extends concepts from Google's ADK course materials:
+This project implements and extends concepts from Kaggle 5-Day AI Agents Intensive materials:
 
 | Course Topic | Implementation | Production Enhancement |
 |-------------|----------------|----------------------|
