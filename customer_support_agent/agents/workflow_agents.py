@@ -86,7 +86,8 @@ validation_agent = Agent(
     model=validator_config["model"],
     description="Validates that the order ID exists in the system",
     instruction=validator_config["instruction"],
-    tools=[validate_order_id]
+    tools=[validate_order_id],
+    output_key="order_status"  # Save validation result to state
 )
 
 eligibility_config = get_agent_config("eligibility_checker")
@@ -95,7 +96,8 @@ eligibility_agent = Agent(
     model=eligibility_config["model"],
     description="Checks if the order is eligible for a refund based on business rules",
     instruction=eligibility_config["instruction"],
-    tools=[check_refund_eligibility]
+    tools=[check_refund_eligibility],
+    output_key="eligibility_status"  # Save eligibility result to state
 )
 
 refund_config = get_agent_config("refund_processor")
@@ -111,6 +113,11 @@ sequential_refund_workflow = SequentialAgent(
     name="refund_workflow",
     description="""Validated refund processing workflow. Handles refund requests by validating order, checking eligibility, and processing refund in sequence.
 
+CRITICAL PREREQUISITES (CHECK BEFORE CALLING):
+- Order ID MUST be present in conversation (format: ORD-XXXXX)
+- Refund reason MUST be present in conversation (e.g., "broken item", "defective", "wrong item")
+- DO NOT call this workflow if either is missing - ask the user first
+
 WORKFLOW STEPS:
 1. Validate Order - Confirm the order exists in the system
 2. Check Eligibility - Verify the order qualifies for a refund
@@ -118,10 +125,6 @@ WORKFLOW STEPS:
 
 CONTEXT HANDLING:
 Each sub-agent extracts order_id and reason from conversation history. Users should not be asked to repeat information already provided.
-
-EXPECTED INPUT:
-- Order ID (e.g., "I want a refund for order ORD-12345")
-- Reason (e.g., "broken item", "defective", "wrong item")
 
 VALIDATION GATES:
 If validation fails at any step, the workflow stops immediately.""",

@@ -1,23 +1,29 @@
 {
   "eval_set_id": "sequential_agent_tests",
+  "description": "Tests for SequentialAgent refund workflow with validation gates",
   "eval_cases": [
     {
-      "eval_id": "refund_workflow_valid_order",
+      "eval_id": "refund_workflow_valid_order_with_reason",
+      "description": "Valid order with explicit reason - should pass all 3 validation gates",
       "conversation": [
         {
           "user_content": {
-            "parts": [{"text": "I want a refund for order ORD-12345"}],
+            "parts": [{"text": "I want a refund for order ORD-12345 because the laptop arrived damaged"}],
             "role": "user"
           },
           "final_response": {
-            "parts": [{"text": "Your refund request has been processed"}],
+            "parts": [{"text": "refund"}],
             "role": "model"
           },
           "intermediate_data": {
             "tool_uses": [
               {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
                 "name": "refund_workflow",
-                "args": {"request": "I want a refund for order ORD-12345"}
+                "args": {"request": "I want a refund for order ORD-12345 because the laptop arrived damaged"}
               }
             ]
           }
@@ -25,22 +31,27 @@
       ]
     },
     {
-      "eval_id": "refund_workflow_return_request",
+      "eval_id": "refund_workflow_in_transit_order",
+      "description": "In-transit order eligible for cancellation - should pass validation",
       "conversation": [
         {
           "user_content": {
-            "parts": [{"text": "I'd like to return my order ORD-12345"}],
+            "parts": [{"text": "I'd like to cancel my order ORD-12345 as I ordered the wrong model"}],
             "role": "user"
           },
           "final_response": {
-            "parts": [{"text": "Your return has been validated and processed"}],
+            "parts": [{"text": "cancel"}],
             "role": "model"
           },
           "intermediate_data": {
             "tool_uses": [
               {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
                 "name": "refund_workflow",
-                "args": {"request": "I'd like to return my order ORD-12345"}
+                "args": {"request": "I'd like to cancel my order ORD-12345 as I ordered the wrong model"}
               }
             ]
           }
@@ -49,21 +60,26 @@
     },
     {
       "eval_id": "refund_workflow_invalid_order",
+      "description": "Non-existent order - should fail at Step 1 (validate_order_id)",
       "conversation": [
         {
           "user_content": {
-            "parts": [{"text": "I want a refund for order ORD-99999"}],
+            "parts": [{"text": "I want a refund for order ORD-99999 because it's defective"}],
             "role": "user"
           },
           "final_response": {
-            "parts": [{"text": "Order ORD-99999 was not found"}],
+            "parts": [{"text": "not found"}],
             "role": "model"
           },
           "intermediate_data": {
             "tool_uses": [
               {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
                 "name": "refund_workflow",
-                "args": {"request": "I want a refund for order ORD-99999"}
+                "args": {"request": "I want a refund for order ORD-99999 because it's defective"}
               }
             ]
           }
@@ -71,22 +87,27 @@
       ]
     },
     {
-      "eval_id": "refund_workflow_with_reason",
+      "eval_id": "refund_workflow_delivered_order_with_reason",
+      "description": "Delivered order within return window with reason - should pass",
       "conversation": [
         {
           "user_content": {
-            "parts": [{"text": "I need to return order ORD-67890 because it arrived damaged"}],
+            "parts": [{"text": "I need to return order ORD-67890 because the headphones have defective audio"}],
             "role": "user"
           },
           "final_response": {
-            "parts": [{"text": "Your refund request for the damaged item has been submitted"}],
+            "parts": [{"text": "refund"}],
             "role": "model"
           },
           "intermediate_data": {
             "tool_uses": [
               {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
                 "name": "refund_workflow",
-                "args": {"request": "I need to return order ORD-67890 because it arrived damaged"}
+                "args": {"request": "I need to return order ORD-67890 because the headphones have defective audio"}
               }
             ]
           }
@@ -94,7 +115,36 @@
       ]
     },
     {
-      "eval_id": "refund_eligibility_check",
+      "eval_id": "refund_workflow_order_past_return_window",
+      "description": "Order past 30-day return window - should fail at Step 2 (check_refund_eligibility)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want to return order ORD-11111 because it's not comfortable"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "not eligible"}],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {"request": "I want to return order ORD-11111 because it's not comfortable"}
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_workflow_missing_reason",
+      "description": "Order ID without reason - agent should ask for reason before calling workflow",
       "conversation": [
         {
           "user_content": {
@@ -102,14 +152,34 @@
             "role": "user"
           },
           "final_response": {
-            "parts": [{"text": "Let me check the refund eligibility for your order"}],
+            "parts": [{"text": "reason"}],
+            "role": "model"
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_workflow_sequential_validation",
+      "description": "Test sequential execution: Step 1 (validate) → Step 2 (eligibility) → Step 3 (process)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Process refund for ORD-22222, item was wrong size"}],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [{"text": "processed"}],
             "role": "model"
           },
           "intermediate_data": {
             "tool_uses": [
               {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
                 "name": "refund_workflow",
-                "args": {"request": "Can I get a refund for ORD-12345?"}
+                "args": {"request": "Process refund for ORD-22222, item was wrong size"}
               }
             ]
           }

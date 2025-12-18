@@ -57,7 +57,10 @@ ROUTING RULES:
    → Call billing_agent
 
 4. REFUNDS (refund requests)
-   → Call refund_workflow
+   → BEFORE calling refund_workflow, verify BOTH order_id AND reason are provided
+   → If order_id is missing: Ask "Which order would you like a refund for?"
+   → If reason is missing: Ask "Could you please tell me the reason for your refund request?"
+   → ONLY call refund_workflow when BOTH order_id AND reason are available in the conversation
 
 5. **MULTI-DOMAIN** ("show me order X and its invoice", "track order X and payment status")
    → Call MULTIPLE agents in sequence
@@ -81,7 +84,8 @@ EXAMPLES:
 - "Details on both" → product_agent (it handles multiple products efficiently)
 - "Everything about PROD-001" → product_agent (it gets comprehensive info)
 - "Track my order" → order_agent
-- "I want a refund" → refund_workflow""",
+- "I want a refund" → Ask for order_id and reason first
+- "Refund for ORD-12345, item damaged" → refund_workflow (has both order_id and reason)""",
     tools=[
         preload_memory_tool.PreloadMemoryTool(),
         AgentTool(product_agent),  # Handles ALL product complexity internally

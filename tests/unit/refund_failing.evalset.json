@@ -1,10 +1,48 @@
 {
   "eval_set_id": "refund_failing_test",
-  "description": "FAILING test cases for refund workflow - orders that should be rejected",
+  "description": "FAILING test cases for refund workflow - orders that should be rejected. Tests validation gates at each step of the sequential workflow.",
   "eval_cases": [
     {
-      "eval_id": "refund_order_past_return_window",
-      "description": "Order past 30-day return window (ORD-11111)",
+      "eval_id": "refund_validation_gate_1_fail_order_not_found",
+      "description": "GATE 1 FAILURE: Non-existent order should fail at validate_order_id step (ORD-99999)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I need a refund for order ORD-99999 because it's defective"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "not found"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I need a refund for order ORD-99999 because it's defective"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_validation_gate_2_fail_past_return_window",
+      "description": "GATE 2 FAILURE: Order past 30-day return window should fail at check_refund_eligibility step (ORD-11111)",
       "conversation": [
         {
           "user_content": {
@@ -32,7 +70,7 @@
               {
                 "name": "refund_workflow",
                 "args": {
-                  "request": "I'd like to return my office chair from order ORD-11111"
+                  "request": "I'd like to return my office chair from order ORD-11111. It's not comfortable enough."
                 }
               }
             ]
@@ -41,14 +79,52 @@
       ]
     },
     {
-      "eval_id": "refund_invalid_order",
-      "description": "Non-existent order (ORD-99999)",
+      "eval_id": "refund_validation_gate_2_fail_already_delivered",
+      "description": "GATE 2 FAILURE: Delivered order outside return window should fail eligibility check (ORD-11111)",
       "conversation": [
         {
           "user_content": {
             "parts": [
               {
-                "text": "I need a refund for order ORD-99999"
+                "text": "Can I get a refund for order ORD-11111? The product quality is not what I expected."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "not eligible"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "Can I get a refund for order ORD-11111? The product quality is not what I expected."
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_validation_escalation_test",
+      "description": "Test that workflow escalates (stops) when validation fails - invalid order with reason",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Please process refund for ORD-99999 due to damaged packaging"
               }
             ],
             "role": "user"
@@ -70,7 +146,45 @@
               {
                 "name": "refund_workflow",
                 "args": {
-                  "request": "refund for order ORD-99999"
+                  "request": "Please process refund for ORD-99999 due to damaged packaging"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_eligibility_escalation_test",
+      "description": "Test that workflow escalates (stops) when eligibility check fails - order outside return window",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I want to return order ORD-11111 because I don't need it anymore"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "not eligible"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "I want to return order ORD-11111 because I don't need it anymore"
                 }
               }
             ]

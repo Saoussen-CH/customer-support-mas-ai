@@ -281,16 +281,23 @@ def validate_parallel_agent_execution(tool_calls):
     return len(invoked_tools.intersection(parallel_tools)) > 0
 
 
-def validate_sequential_agent_execution(tool_calls, expected_sequence):
+def validate_sequential_agent_execution(tool_calls, expected_sequence=None):
     """
     Validate that SequentialAgent executed sub-agents in the correct order.
 
+    The refund workflow has 3 sequential steps with validation gates:
+    1. validate_order_id - Checks if order exists (GATE 1)
+    2. check_refund_eligibility - Checks business rules (GATE 2)
+    3. process_refund - Processes the refund (GATE 3)
+
+    Each gate can stop the workflow using tool_context.actions.escalate = True
+
     Args:
         tool_calls: List of tool calls made during conversation
-        expected_sequence: Expected sequence of tool names
+        expected_sequence: Optional expected sequence of tool names (defaults to refund workflow sequence)
 
     Returns:
-        bool: True if tools were called in the expected order
+        bool: True if refund workflow tools were invoked
     """
     tool_names = [call.get("name") for call in tool_calls]
 
@@ -303,7 +310,20 @@ def validate_sequential_agent_execution(tool_calls, expected_sequence):
     }
 
     invoked_tools = set(tool_names)
-    return len(invoked_tools.intersection(refund_tools)) > 0
+    workflow_invoked = len(invoked_tools.intersection(refund_tools)) > 0
+
+    # If expected_sequence provided, validate order
+    if expected_sequence and workflow_invoked:
+        sequence_indices = []
+        for expected_tool in expected_sequence:
+            if expected_tool in tool_names:
+                sequence_indices.append(tool_names.index(expected_tool))
+
+        # Check if indices are in ascending order (sequential execution)
+        if sequence_indices:
+            return sequence_indices == sorted(sequence_indices)
+
+    return workflow_invoked
 
 
 def validate_loop_agent_execution(tool_calls, min_iterations=2):
@@ -352,3 +372,88 @@ def validate_comprehensive_lookup_response(results):
     has_reviews = "reviews" in results or "rating" in results
 
     return has_details or has_inventory or has_reviews
+
+
+def validate_refund_workflow_gates(tool_calls, expected_gate_failure=None):
+    """
+    Validate that refund workflow validation gates work correctly.
+
+    Tests that the workflow properly stops at validation gates when failures occur:
+    - GATE 1: validate_order_id - order must exist
+    - GATE 2: check_refund_eligibility - order must be eligible
+    - GATE 3: process_refund - final processing step
+
+    Args:
+        tool_calls: List of tool calls made during conversation
+        expected_gate_failure: Expected gate where workflow should stop (1, 2, or None for success)
+
+    Returns:
+        bool: True if workflow behaved correctly for the expected failure gate
+    """
+    tool_names = [call.get("name") for call in tool_calls]
+
+    # Extract refund workflow tool calls
+    gate_1_called = "validate_order_id" in tool_names
+    gate_2_called = "check_refund_eligibility" in tool_names
+    gate_3_called = "process_refund" in tool_names
+    workflow_called = "refund_workflow" in tool_names
+
+    if not workflow_called:
+        return False
+
+    # If no failure expected, all gates should be called
+    if expected_gate_failure is None:
+        return gate_1_called and gate_2_called and gate_3_called
+
+    # If gate 1 should fail, only gate 1 should be called
+    if expected_gate_failure == 1:
+        return gate_1_called and not gate_2_called and not gate_3_called
+
+    # If gate 2 should fail, gates 1 and 2 should be called, but not gate 3
+    if expected_gate_failure == 2:
+        return gate_1_called and gate_2_called and not gate_3_called
+
+    return False
+
+
+def validate_refund_prerequisites(conversation_text):
+    """
+    Validate that refund workflow prerequisites are present in conversation.
+
+    According to the workflow description, these must be present:
+    - Order ID in format ORD-XXXXX
+    - Refund reason (e.g., "damaged", "defective", "wrong item")
+
+    Args:
+        conversation_text: The conversation text to analyze
+
+    Returns:
+        dict: {
+            "has_order_id": bool,
+            "has_reason": bool,
+            "order_id": str or None,
+            "meets_prerequisites": bool
+        }
+    """
+    import re
+
+    # Check for order ID pattern ORD-XXXXX
+    order_pattern = r'ORD-\d{5}'
+    order_match = re.search(order_pattern, conversation_text)
+
+    # Check for refund reason keywords
+    reason_keywords = [
+        "damaged", "defective", "wrong", "broken", "incorrect",
+        "arrived damaged", "not working", "doesn't work", "faulty",
+        "poor quality", "not comfortable", "wrong model", "wrong size",
+        "not expected", "change mind", "don't need", "modify"
+    ]
+
+    has_reason = any(keyword.lower() in conversation_text.lower() for keyword in reason_keywords)
+
+    return {
+        "has_order_id": bool(order_match),
+        "has_reason": has_reason,
+        "order_id": order_match.group(0) if order_match else None,
+        "meets_prerequisites": bool(order_match) and has_reason
+    }

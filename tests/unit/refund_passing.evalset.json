@@ -1,10 +1,10 @@
 {
   "eval_set_id": "refund_passing_test",
-  "description": "PASSING test cases for refund workflow - orders that should be approved",
+  "description": "PASSING test cases for refund workflow - orders that should be approved. All test cases include both order_id and reason as required by the workflow.",
   "eval_cases": [
     {
-      "eval_id": "refund_valid_order_within_window",
-      "description": "Valid order within 30-day return window (ORD-67890)",
+      "eval_id": "refund_delivered_order_defective_item",
+      "description": "Delivered order within 30-day return window - defective item (ORD-67890)",
       "conversation": [
         {
           "user_content": {
@@ -32,7 +32,7 @@
               {
                 "name": "refund_workflow",
                 "args": {
-                  "request": "I want to request a refund for my order ORD-67890"
+                  "request": "I want to request a refund for my order ORD-67890. The headphones have defective audio quality."
                 }
               }
             ]
@@ -41,8 +41,8 @@
       ]
     },
     {
-      "eval_id": "refund_in_transit_order",
-      "description": "Order in transit eligible for cancellation (ORD-12345)",
+      "eval_id": "refund_in_transit_wrong_item",
+      "description": "Order in transit eligible for cancellation - wrong item ordered (ORD-12345)",
       "conversation": [
         {
           "user_content": {
@@ -56,7 +56,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "refund"
+                "text": "cancel"
               }
             ],
             "role": "model"
@@ -70,7 +70,7 @@
               {
                 "name": "refund_workflow",
                 "args": {
-                  "request": "cancel order ORD-12345"
+                  "request": "Can I cancel my order ORD-12345? I ordered the wrong laptop model."
                 }
               }
             ]
@@ -79,14 +79,52 @@
       ]
     },
     {
-      "eval_id": "refund_processing_order",
-      "description": "Processing order eligible for cancellation (ORD-22222)",
+      "eval_id": "refund_processing_order_change_mind",
+      "description": "Processing order eligible for cancellation - customer changed mind (ORD-22222)",
       "conversation": [
         {
           "user_content": {
             "parts": [
               {
                 "text": "Please cancel order ORD-22222, I need to modify my purchase."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "cancel"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "Please cancel order ORD-22222, I need to modify my purchase."
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_delivered_damaged_item",
+      "description": "Delivered order with damaged item - within return window (ORD-67890)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "I received order ORD-67890 but it arrived damaged. I need a refund."
               }
             ],
             "role": "user"
@@ -108,7 +146,45 @@
               {
                 "name": "refund_workflow",
                 "args": {
-                  "request": "cancel order ORD-22222"
+                  "request": "I received order ORD-67890 but it arrived damaged. I need a refund."
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "refund_sequential_gates_pass",
+      "description": "Test that all 3 sequential gates pass: validate → eligibility → process (ORD-12345)",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Process a refund for order ORD-12345 due to wrong product received"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "success"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "PreloadMemoryTool",
+                "args": {}
+              },
+              {
+                "name": "refund_workflow",
+                "args": {
+                  "request": "Process a refund for order ORD-12345 due to wrong product received"
                 }
               }
             ]

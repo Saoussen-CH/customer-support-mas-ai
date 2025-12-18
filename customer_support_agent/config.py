@@ -184,7 +184,14 @@ THEN:
 - Call validate_order_id(order_id="ORD-XXXXX") with the extracted order ID
 - DO NOT ask the user for the order ID if it's already in the conversation
 
-CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry.""",
+OUTPUT:
+- If tool returns status="valid": Output ONLY the word "valid"
+- If tool returns status="invalid": Output ONLY the word "invalid"
+
+CRITICAL:
+- Call the tool exactly ONCE and return the result
+- Your final response MUST be a single word: either "valid" or "invalid"
+- Do not add explanations or additional text""",
         "temperature": 0.1,
         "max_iterations": 2,  # One tool call max
         "timeout": 10,  # 10 seconds timeout
@@ -195,15 +202,29 @@ CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry
         "model": FAST_MODEL,
         "instruction": """Check refund eligibility using the check_refund_eligibility tool.
 
+CRITICAL VALIDATION GATE:
+- First check the session state variable {order_status}
+- If order_status == "invalid":
+  * DO NOT call any tools
+  * Output ONLY: "order_not_found"
+  * STOP immediately
+
+IF order_status == "valid":
 EXTRACT FROM CONTEXT:
 - Find the order ID mentioned in the conversation (format: ORD-XXXXX)
-- The order ID was validated in the previous step
 
 THEN:
 - Call check_refund_eligibility(order_id="ORD-XXXXX") with the order ID
 - DO NOT ask the user for information already provided
 
-CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry.""",
+OUTPUT:
+- If tool returns eligible=True: Output ONLY "eligible"
+- If tool returns eligible=False: Output ONLY "ineligible"
+- If tool returns status="not_found": Output ONLY "no_eligibility_data"
+
+CRITICAL:
+- Your final response MUST be a single word
+- Do not add explanations or additional text""",
         "temperature": 0.1,
         "max_iterations": 2,  # One tool call max
         "timeout": 10,  # 10 seconds timeout
@@ -214,22 +235,49 @@ CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry
         "model": FAST_MODEL,
         "instruction": """Process the refund using the process_refund tool.
 
+CRITICAL VALIDATION GATES:
+Step 1: Check session state variable {order_status}
+- If order_status == "invalid":
+  * DO NOT call any tools
+  * Respond: "I cannot process the refund because the order was not found in our system."
+  * STOP immediately
+
+Step 2: Check session state variable {eligibility_status}
+- If eligibility_status == "order_not_found":
+  * Respond: "I cannot process the refund because the order was not found."
+  * STOP immediately
+- If eligibility_status == "ineligible":
+  * DO NOT call any tools
+  * Respond: "I cannot process the refund because the order is not eligible for a refund."
+  * STOP immediately
+- If eligibility_status == "no_eligibility_data":
+  * Respond: "I cannot process the refund due to missing eligibility information."
+  * STOP immediately
+
+IF BOTH CHECKS PASS (order_status=="valid" AND eligibility_status=="eligible"):
 EXTRACT FROM CONTEXT:
 - Find the order ID mentioned in the conversation (format: ORD-XXXXX)
 - Find the refund reason mentioned by the user (e.g., "broken item", "defective", "wrong item", etc.)
 - Look through all previous messages in the conversation
 
-THEN:
+CHECK FOR REQUIRED INFORMATION:
+- If the refund REASON is MISSING or NOT PROVIDED:
+  * DO NOT call process_refund tool yet
+  * Ask the user: "I can help you with that refund. Could you please tell me the reason for your refund request?"
+  * WAIT for user response with the reason
+  * STOP and do not proceed until reason is provided
+
+ONLY WHEN BOTH order_id AND reason ARE AVAILABLE:
 - Call process_refund(order_id="ORD-XXXXX", reason="...") with BOTH parameters
-- DO NOT ask the user for information they already provided
-- If the reason is missing, ONLY THEN ask for it
+- The reason MUST come from the user, never use a default value
 
-IMPORTANT: The user has already provided both the order ID and reason in previous messages.
-
-CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry.""",
+CRITICAL:
+- ONLY call process_refund if both validation gates passed AND reason is provided
+- Do not process refunds for invalid or ineligible orders
+- Do not process refunds without a user-provided reason""",
         "temperature": 0.1,
-        "max_iterations": 2,  # One tool call max
-        "timeout": 10,  # 10 seconds timeout
+        "max_iterations": 3,  # Allow asking for reason + processing refund
+        "timeout": 15,  # 15 seconds timeout (increased for user interaction)
     },
 }
 
