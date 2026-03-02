@@ -1,0 +1,313 @@
+{
+  "eval_set_id": "evalset07c564",
+  "name": "evalset07c564",
+  "eval_cases": [
+    {
+      "eval_id": "casef52658",
+      "conversation": [
+        {
+          "invocation_id": "e-5c5fe901-0ccc-4b39-886f-4b15b083633f",
+          "user_content": {
+            "parts": [
+              {
+                "text": "what products do you have"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I need a more specific query to search for products. What kind of products are you interested in?",
+                "thought_signature": "CqgMAY89a18smAp-4onPNxegRD4dMP3e3YHFPf-2_AfzNWZVSRHixlkZUGlozPlPFltdJ6Ke6RyUVTaeeKxDQ3yh5Ad3qupc7pv7mPpz9PzD80IXKmudXbme3_lSy2rSdevpyzDfQN7hVgHjZT0stWGFh-EHpkCyYDRs9MtWh5t7lLvEbD6ZrT472wWScRIK7cNssacDaPo8Rht596-v_Wo7h-PAC04dBTxm4dpWbRg6hpgfyc4RdT5PqqWenhpTZ0o-z0pCzsnKg9l_ClTcBDOB2ENPRZf-vDioko1o-9krYK2n8zT-PuLzvxoqUulct1hYBAVoTmrK2QuNlTx3UvVXdTeTeU8_AQYmH8Wph5ZXe8Sna6Tm82X9BOdwQfV9paskp3VVAPEJ0rw7SMsEP8ElZKb69Kp3UaKJmQu0XGLlaki2slwNbQlmvu0f6fMtxoPXHE1OBxvct74UcTMTZjoeBQDqh_PdaPLi_ZuCKZlE0HC7op7rb-xuZQG876-s-3RjDJ84BPV72W1C-hUZyugJu6dsO-1VlSq_J7B5TdJ7QxMoRMGWZiLaomVr1c4eokKoUq0E76pPUrCJQUCi8rJMcr9xQDyIxgPUNekRwZP-GEpr-6EKIZC3wxg3YdQsvZh03CjMdrG4buRGE8eI3RndOWDwwe84-Lg9mAkugg6ZFaDAcCC2lhG0IUP-OmbPe84do10q4Xo6eL3LHeMHFW6TgDKphme1VPnZFAxpKB0KVzcwCpV59gmiQuy5EOS7M1tfWTviP49Xcu3jnEM92V8UaU3b41iSER9C_hTc_b0-dGWAWAmtosgOscjfKlvhUnC7Lw3t5vG2MDu4PQfnAKHcrUP_qbuzj3fNsN97VZsjXkMdNcfmVRDW-_FFKGSvHjIj32DQ93PNSxo6HryK2YTtDFnBBF2xvXh1mnKTBZp78J3Q4j5atMaeX8yd_h_EdA9-SCfzbr_jX-qVu_Q36zhE1Oo4YJbD4EGGdHsWppg1xKmPo-ldF87fQE4GDzVYHL1rbR6XB-hnqzQAVGJNAw5SsFWHZfx--olv43_t83785V5g6dPgrr5Mz4_5Hshij8JsHMwWGODOOOn8YHGxULoa_Yo2P5HuL5wSKPEzRw2mqwXpjYSgvZjdMLhrqJQ2nmGXgip2i1NXByjCyfDIFejY_SQhsmT152XvD0Pc9w_XtVqkRuMQTDvdoTa8IrJDuPQKhF4-xBPbiNxEIn6m8g30K5BgRGDlemQntZg5FtCeyJPN6DsObCQBxJj1dSBcZTSC08KBTB_GL96ua1bMmDP6JrtNDrMF_tzcUnO-XlFzp_Cp62JvKJO8Pz4Yw6TxVnKJV_lPW2zIiLS8nAYECDN6t2PNYI4gJl6wPh9arhtN1BJ5p-I67NcY197UVPgiUMNBVFcFwyrzkhBdnui_o42krQ6HQGGtIBuJq1gQK97JqCXqPsqqhDGDXHFFAfIODPKnK7wmLjGp5Vx9oCP8g8y7nsAvRsvinJqMuXa-ZEYVRCxrMMPWfWtgfTUzeLIox7ZwxiOTifiD78elHXJ71ccMdpqq9mPGrYzTxsJ32IwU_HNXPRpIzeznptcxww411Lm4G_DtuRF0COAkDYPaXcbT9nwKm9Flz02aPkZoH7obTRUE9A12C2uraHgIPJXsWnl2S1g-y0dR8ixJvK524EayhFxwAKkxUy4r0uk49cEDHofJ_W48iSCqtNUniY62KD4JJTw6UHJA81zN7DvrjlVXH2WOi2lFJfVjmIj4J75jFLGEOsIVAj5o6nhHBj9vlt6S9GHOG2NxGoMrULUPahLiXaxNXZ-7P902ATxRUo23eW4CyiO7momya_sFdVrSstM-5YM51eQfibhI4fMZ3fC1frymp0iuOBiIz96VJKjYu59gT6uR7k4jzxasQH45EorU08I2-WhpoptZf_m_U63lLZsKBpEnAM9SO-6x2K8jxTa2RMViDqZORLW8Og3QfCyNeG15p2vuzCsBLFn9Z4qqLjZwZx9WKhndqKHa97rcOMktPGUfZ78VF1RVlvItZcPpaykhxHLVrqPveT-qtr-LzvHUtNtXLpZ9vsmZlTdgY9cWJwj8EIdAIQ=="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-ef3bd86a-8845-49e3-b359-42768e211de8",
+                        "args": {
+                          "query": ""
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CtkCAY89a1-QFj_JeB0xHgm2JqwqDHkIfNi4B9zRXqZswZu8I0cXAUFHNE5FdaBKutzNT1v7HKb97deMf6OzknShE5Nq_q1asPB4X3zbTmueaxEdps_n4LLlUjGE0QSiLqf8iInmCMF_-P3h30bDxd_U_bVTCcgt1C6FFHWz_Qgas83YGn3UZaH5t83WpALolDXi2PBY2pGMUhdO_zrh_PYBN_tfF1iw-cCyZhops_eCabWHOonrUd02Y05MVK99d0_5N7mfzCRz3WU99zbedw9p0eGpGJga2w6mIkdvyDN8yddvNneMMhz8w8OJQcVQENGUAzYK9aU_mQOG9WKIXA-epzyExMa7nXyxK08lhULOzTe0s9coH9PUVAW2QxlauFf7VJaAxrKM41wtAvV8c6ViEL543TpCpMsscO0EUQ4a5UQsDPi0CGiyHOUPOaNLjDxGscSXQYXB_GrD"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-ef3bd86a-8845-49e3-b359-42768e211de8",
+                        "name": "search_products",
+                        "response": {
+                          "status": "validation_error",
+                          "message": "Search query is required"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770401249.468442
+        },
+        {
+          "invocation_id": "e-669f201f-9c2c-45cc-af6a-2afc5ada5d57",
+          "user_content": {
+            "parts": [
+              {
+                "text": "laptops"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "We have a couple of laptops available:\n\n*   **ProBook Laptop 15** (PROD-001): High-performance laptop with Intel i7. Price: $999.99\n*   **ROG Gaming Laptop** (PROD-006): High-performance gaming laptop with RTX 4060 graphics card. Price: $1499.99\n\nWould you like more details on either of these?",
+                "thought_signature": "CtIBAY89a19czaDIZVPAtakaw8kxIoxrVxQdDDmvtjIReitdrdF4fRpTQxwnbWH3V0cT5XQGoF28PymVIJVBPmSBGISAYltLCkbGXDV_adg69h3UZUQJ-gcRxkVdOk4mcZxGtaIbF3JX8eQ9wg4quqDW8OatNO6jSRcUJCgE2Z8OOQs9ftOrDB7gfgFTlsvdrDUaHl6xys97rVwUrNCQ6lowWSbiUK3JSWKiVKedCqf0QZG-o5e8jR20-fkQJ-1eqRBGyQX5lcuPUmIWIlGJG6unk5mS"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-079e6e4b-deb3-4c2d-b207-540df137d6e5",
+                        "args": {
+                          "query": "laptops"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CrkBAY89a193v4Ii2TOxxy-RTJqf6tX4NcdZr0I_aksiEb25XJLrd5j3cQmtGnaIe9LXGhSWOG6GaH5xpzFqfIhHeHR0-oEJSw-714ICENe4TZn-76Byfv8TIUPB7VU3W8w383saXVw45IU4jBniT1o0Vk5mGS_JirtYbQWFHzeC5uCdkOqrT3tFmyzBasi2SJghFGootbDU1C0kR1oo_4U51hsdyNk3gkEZIGCGXZDMbQ8bT58fprW_f_o="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-079e6e4b-deb3-4c2d-b207-540df137d6e5",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 0.6132020985987575,
+                              "category_match_score": 3
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5527188395101688,
+                              "category_match_score": 3
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770401269.509558
+        }
+      ],
+      "session_input": {
+        "app_name": "product_agent",
+        "user_id": "user"
+      },
+      "creation_timestamp": 1770401869.116276
+    },
+    {
+      "eval_id": "case295d7b",
+      "conversation": [
+        {
+          "invocation_id": "e-5c5fe901-0ccc-4b39-886f-4b15b083633f",
+          "user_content": {
+            "parts": [
+              {
+                "text": "what products do you have"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I need a more specific query to search for products. What kind of products are you interested in?",
+                "thought_signature": "CqgMAY89a18smAp-4onPNxegRD4dMP3e3YHFPf-2_AfzNWZVSRHixlkZUGlozPlPFltdJ6Ke6RyUVTaeeKxDQ3yh5Ad3qupc7pv7mPpz9PzD80IXKmudXbme3_lSy2rSdevpyzDfQN7hVgHjZT0stWGFh-EHpkCyYDRs9MtWh5t7lLvEbD6ZrT472wWScRIK7cNssacDaPo8Rht596-v_Wo7h-PAC04dBTxm4dpWbRg6hpgfyc4RdT5PqqWenhpTZ0o-z0pCzsnKg9l_ClTcBDOB2ENPRZf-vDioko1o-9krYK2n8zT-PuLzvxoqUulct1hYBAVoTmrK2QuNlTx3UvVXdTeTeU8_AQYmH8Wph5ZXe8Sna6Tm82X9BOdwQfV9paskp3VVAPEJ0rw7SMsEP8ElZKb69Kp3UaKJmQu0XGLlaki2slwNbQlmvu0f6fMtxoPXHE1OBxvct74UcTMTZjoeBQDqh_PdaPLi_ZuCKZlE0HC7op7rb-xuZQG876-s-3RjDJ84BPV72W1C-hUZyugJu6dsO-1VlSq_J7B5TdJ7QxMoRMGWZiLaomVr1c4eokKoUq0E76pPUrCJQUCi8rJMcr9xQDyIxgPUNekRwZP-GEpr-6EKIZC3wxg3YdQsvZh03CjMdrG4buRGE8eI3RndOWDwwe84-Lg9mAkugg6ZFaDAcCC2lhG0IUP-OmbPe84do10q4Xo6eL3LHeMHFW6TgDKphme1VPnZFAxpKB0KVzcwCpV59gmiQuy5EOS7M1tfWTviP49Xcu3jnEM92V8UaU3b41iSER9C_hTc_b0-dGWAWAmtosgOscjfKlvhUnC7Lw3t5vG2MDu4PQfnAKHcrUP_qbuzj3fNsN97VZsjXkMdNcfmVRDW-_FFKGSvHjIj32DQ93PNSxo6HryK2YTtDFnBBF2xvXh1mnKTBZp78J3Q4j5atMaeX8yd_h_EdA9-SCfzbr_jX-qVu_Q36zhE1Oo4YJbD4EGGdHsWppg1xKmPo-ldF87fQE4GDzVYHL1rbR6XB-hnqzQAVGJNAw5SsFWHZfx--olv43_t83785V5g6dPgrr5Mz4_5Hshij8JsHMwWGODOOOn8YHGxULoa_Yo2P5HuL5wSKPEzRw2mqwXpjYSgvZjdMLhrqJQ2nmGXgip2i1NXByjCyfDIFejY_SQhsmT152XvD0Pc9w_XtVqkRuMQTDvdoTa8IrJDuPQKhF4-xBPbiNxEIn6m8g30K5BgRGDlemQntZg5FtCeyJPN6DsObCQBxJj1dSBcZTSC08KBTB_GL96ua1bMmDP6JrtNDrMF_tzcUnO-XlFzp_Cp62JvKJO8Pz4Yw6TxVnKJV_lPW2zIiLS8nAYECDN6t2PNYI4gJl6wPh9arhtN1BJ5p-I67NcY197UVPgiUMNBVFcFwyrzkhBdnui_o42krQ6HQGGtIBuJq1gQK97JqCXqPsqqhDGDXHFFAfIODPKnK7wmLjGp5Vx9oCP8g8y7nsAvRsvinJqMuXa-ZEYVRCxrMMPWfWtgfTUzeLIox7ZwxiOTifiD78elHXJ71ccMdpqq9mPGrYzTxsJ32IwU_HNXPRpIzeznptcxww411Lm4G_DtuRF0COAkDYPaXcbT9nwKm9Flz02aPkZoH7obTRUE9A12C2uraHgIPJXsWnl2S1g-y0dR8ixJvK524EayhFxwAKkxUy4r0uk49cEDHofJ_W48iSCqtNUniY62KD4JJTw6UHJA81zN7DvrjlVXH2WOi2lFJfVjmIj4J75jFLGEOsIVAj5o6nhHBj9vlt6S9GHOG2NxGoMrULUPahLiXaxNXZ-7P902ATxRUo23eW4CyiO7momya_sFdVrSstM-5YM51eQfibhI4fMZ3fC1frymp0iuOBiIz96VJKjYu59gT6uR7k4jzxasQH45EorU08I2-WhpoptZf_m_U63lLZsKBpEnAM9SO-6x2K8jxTa2RMViDqZORLW8Og3QfCyNeG15p2vuzCsBLFn9Z4qqLjZwZx9WKhndqKHa97rcOMktPGUfZ78VF1RVlvItZcPpaykhxHLVrqPveT-qtr-LzvHUtNtXLpZ9vsmZlTdgY9cWJwj8EIdAIQ=="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-ef3bd86a-8845-49e3-b359-42768e211de8",
+                        "args": {
+                          "query": ""
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CtkCAY89a1-QFj_JeB0xHgm2JqwqDHkIfNi4B9zRXqZswZu8I0cXAUFHNE5FdaBKutzNT1v7HKb97deMf6OzknShE5Nq_q1asPB4X3zbTmueaxEdps_n4LLlUjGE0QSiLqf8iInmCMF_-P3h30bDxd_U_bVTCcgt1C6FFHWz_Qgas83YGn3UZaH5t83WpALolDXi2PBY2pGMUhdO_zrh_PYBN_tfF1iw-cCyZhops_eCabWHOonrUd02Y05MVK99d0_5N7mfzCRz3WU99zbedw9p0eGpGJga2w6mIkdvyDN8yddvNneMMhz8w8OJQcVQENGUAzYK9aU_mQOG9WKIXA-epzyExMa7nXyxK08lhULOzTe0s9coH9PUVAW2QxlauFf7VJaAxrKM41wtAvV8c6ViEL543TpCpMsscO0EUQ4a5UQsDPi0CGiyHOUPOaNLjDxGscSXQYXB_GrD"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-ef3bd86a-8845-49e3-b359-42768e211de8",
+                        "name": "search_products",
+                        "response": {
+                          "status": "validation_error",
+                          "message": "Search query is required"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770401249.468442
+        },
+        {
+          "invocation_id": "e-669f201f-9c2c-45cc-af6a-2afc5ada5d57",
+          "user_content": {
+            "parts": [
+              {
+                "text": "laptops"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "We have a couple of laptops available:\n\n*   **ProBook Laptop 15** (PROD-001): High-performance laptop with Intel i7. Price: $999.99\n*   **ROG Gaming Laptop** (PROD-006): High-performance gaming laptop with RTX 4060 graphics card. Price: $1499.99\n\nWould you like more details on either of these?",
+                "thought_signature": "CtIBAY89a19czaDIZVPAtakaw8kxIoxrVxQdDDmvtjIReitdrdF4fRpTQxwnbWH3V0cT5XQGoF28PymVIJVBPmSBGISAYltLCkbGXDV_adg69h3UZUQJ-gcRxkVdOk4mcZxGtaIbF3JX8eQ9wg4quqDW8OatNO6jSRcUJCgE2Z8OOQs9ftOrDB7gfgFTlsvdrDUaHl6xys97rVwUrNCQ6lowWSbiUK3JSWKiVKedCqf0QZG-o5e8jR20-fkQJ-1eqRBGyQX5lcuPUmIWIlGJG6unk5mS"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-079e6e4b-deb3-4c2d-b207-540df137d6e5",
+                        "args": {
+                          "query": "laptops"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CrkBAY89a193v4Ii2TOxxy-RTJqf6tX4NcdZr0I_aksiEb25XJLrd5j3cQmtGnaIe9LXGhSWOG6GaH5xpzFqfIhHeHR0-oEJSw-714ICENe4TZn-76Byfv8TIUPB7VU3W8w383saXVw45IU4jBniT1o0Vk5mGS_JirtYbQWFHzeC5uCdkOqrT3tFmyzBasi2SJghFGootbDU1C0kR1oo_4U51hsdyNk3gkEZIGCGXZDMbQ8bT58fprW_f_o="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-079e6e4b-deb3-4c2d-b207-540df137d6e5",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 0.6132020985987575,
+                              "category_match_score": 3
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5527188395101688,
+                              "category_match_score": 3
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770401269.509558
+        }
+      ],
+      "session_input": {
+        "app_name": "product_agent",
+        "user_id": "user"
+      },
+      "creation_timestamp": 1770402883.8370075
+    }
+  ],
+  "creation_timestamp": 1770401864.324419
+}

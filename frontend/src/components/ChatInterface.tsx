@@ -4,6 +4,7 @@ import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { chatService, sessionService } from '../services/api';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { useToast } from './Toast';
 import type { Message } from '../types';
 
 interface ChatInterfaceProps {
@@ -17,6 +18,7 @@ export default function ChatInterface({ currentSessionId, onSessionCreated }: Ch
   const [error, setError] = useState<string>();
   const [autoSpeak, setAutoSpeak] = useState(false);
   const { speak, stop, isSpeaking, isSupported: isTTSSupported } = useTextToSpeech();
+  const toast = useToast();
   const previousSessionIdRef = useRef<string | null>(null);
   const currentSessionIdRef = useRef<string | null>(currentSessionId);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -56,6 +58,7 @@ export default function ChatInterface({ currentSessionId, onSessionCreated }: Ch
           })
           .catch((err) => {
             console.error('[ChatInterface] Failed to load messages:', err);
+            toast.error('Failed to load conversation history');
             setMessages([]);
           })
           .finally(() => {
@@ -152,7 +155,11 @@ export default function ChatInterface({ currentSessionId, onSessionCreated }: Ch
 
       // Only show error if we're still in the same session or creating a new one
       if (isStillInSameSession || isNewSessionCreation) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+        setError(errorMsg);
+
+        // Show toast notification for the error
+        toast.error(errorMsg);
 
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -166,7 +173,7 @@ export default function ChatInterface({ currentSessionId, onSessionCreated }: Ch
     } finally {
       setIsLoading(false);
     }
-  }, [currentSessionId, autoSpeak, isTTSSupported, speak, onSessionCreated]);
+  }, [currentSessionId, autoSpeak, isTTSSupported, speak, onSessionCreated, toast]);
 
 
   const toggleAutoSpeak = () => {

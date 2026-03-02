@@ -1,9 +1,3 @@
-# Claude Code settings
-.claude/
-
-# Reference notebooks
-refs/
-
 # Python
 __pycache__/
 *.py[cod]
@@ -27,9 +21,13 @@ wheels/
 *.egg
 
 # Virtual Environment
+.venv/
 venv/
 ENV/
 env/
+
+# uv — commit uv.lock (do NOT add it here)
+# uv.lock is intentionally tracked in git for reproducible builds
 
 # Environment variables
 .env
@@ -71,3 +69,24 @@ frontend/dist/
 frontend/build/
 backend/dist/
 backend/build/
+
+# Local reference material and generated reports
+refs/
+presentations/
+eval_report.html
+docs/DATA_MODEL.md
+docs/EVAL_ARCHITECTURE.md
+docs/EVAL_PROMOTION_STRATEGY.md
+docs/EVAL_STRATEGY.md
+docs/EVALSET_DATA_QUALITY.md
+docs/MEMORY_BANK.md
+docs/PRODUCTION_READINESS.md
+docs/VERTEX_CREATE_EVALUATION_RUN.md
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfplan

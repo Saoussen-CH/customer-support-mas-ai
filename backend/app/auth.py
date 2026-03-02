@@ -2,46 +2,60 @@
 Authentication and user management.
 
 Simple token-based auth for now (can upgrade to JWT, OAuth later).
+
+SECURITY NOTES:
+- Uses bcrypt for password hashing (secure, with salt)
+- Token storage is in-memory (use Redis for production multi-instance deployments)
+- Tokens expire after 30 days
 """
 
-import secrets
-import hashlib
-from typing import Optional, Dict
-from datetime import datetime, timedelta
 import logging
+import secrets
+from datetime import datetime, timedelta
+from typing import Dict, Optional
+
+import bcrypt
 
 logger = logging.getLogger(__name__)
 
 
-# In-memory token store (use Redis in production)
+# In-memory token store
+# TODO: For production multi-instance deployments, replace with Redis:
+#   import redis
+#   redis_client = redis.Redis(host='redis-server', decode_responses=True)
 _active_tokens: Dict[str, Dict] = {}
 
 
 def hash_password(password: str) -> str:
     """
-    Hash a password using SHA-256 (use bcrypt in production).
+    Hash a password using bcrypt with automatic salt generation.
 
     Args:
         password: Plain text password
 
     Returns:
-        Hashed password
+        Hashed password (includes salt)
     """
-    return hashlib.sha256(password.encode()).hexdigest()
+    # bcrypt automatically generates a salt and includes it in the hash
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
     """
-    Verify a password against its hash.
+    Verify a password against its bcrypt hash.
 
     Args:
         password: Plain text password
-        password_hash: Stored hash
+        password_hash: Stored bcrypt hash (includes salt)
 
     Returns:
         True if password matches
     """
-    return hash_password(password) == password_hash
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Password verification failed: {e}")
+        return False
 
 
 def generate_token(user_id: str) -> str:

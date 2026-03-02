@@ -8,40 +8,40 @@ Usage:
 """
 
 import argparse
-import os
+
+import vertexai
 from google.cloud import firestore
 from vertexai.language_models import TextEmbeddingModel
-import vertexai
 
 
 def add_embeddings_to_products(project_id: str, database_id: str, location: str = "us-central1"):
     """Add vector embeddings to all products for semantic search."""
-    
+
     print("=" * 60)
     print("ADDING EMBEDDINGS TO PRODUCTS")
     print("=" * 60)
     print(f"Project: {project_id}")
     print(f"Database: {database_id}")
     print(f"Location: {location}")
-    
+
     # Initialize Vertex AI
     vertexai.init(project=project_id, location=location)
-    
+
     # Initialize Firestore
     db = firestore.Client(project=project_id, database=database_id)
-    
+
     # Load embedding model
     print("\n⏳ Loading embedding model (text-embedding-004)...")
     model = TextEmbeddingModel.from_pretrained("text-embedding-004")
-    
+
     # Get all products
     products = list(db.collection("products").stream())
     print(f"\n📦 Found {len(products)} products to process")
-    
+
     # Process each product
     for i, doc in enumerate(products, 1):
         data = doc.to_dict()
-        
+
         # Create rich searchable text combining all relevant fields
         search_text_parts = [
             data.get("name", ""),
@@ -49,34 +49,36 @@ def add_embeddings_to_products(project_id: str, database_id: str, location: str 
             data.get("category", ""),
             " ".join(data.get("keywords", [])),
         ]
-        
+
         # Add specs if available
         if "specs" in data:
             specs = data["specs"]
             search_text_parts.append(" ".join(str(v) for v in specs.values()))
-        
+
         search_text = " ".join(search_text_parts)
-        
+
         print(f"\n[{i}/{len(products)}] Processing: {doc.id} - {data.get('name')}")
         print(f"   Search text: {search_text[:100]}...")
-        
+
         # Generate embedding
         try:
             embeddings_response = model.get_embeddings([search_text])
             embedding_vector = embeddings_response[0].values
-            
+
             # Update Firestore document with embedding
-            doc.reference.update({
-                "embedding": embedding_vector,
-                "search_text": search_text  # Store for debugging
-            })
-            
+            doc.reference.update(
+                {
+                    "embedding": embedding_vector,
+                    "search_text": search_text,  # Store for debugging
+                }
+            )
+
             print(f"   ✓ Added embedding (dimension: {len(embedding_vector)})")
-            
+
         except Exception as e:
             print(f"   ✗ Error: {e}")
             continue
-    
+
     print("\n" + "=" * 60)
     print("✅ EMBEDDINGS ADDED SUCCESSFULLY!")
     print("=" * 60)
@@ -85,10 +87,10 @@ def add_embeddings_to_products(project_id: str, database_id: str, location: str 
     print("2. Use semantic search in your agent")
     print("3. Test with queries like 'gaming computer' or 'comfortable seating'")
     print("\nNote: Firestore vector search requires an index. Create it with:")
-    print(f"gcloud firestore indexes composite create \\")
-    print(f"  --collection-group=products \\")
-    print(f"  --query-scope=COLLECTION \\")
-    print(f"  --field-config field-path=embedding,vector-config='{{\"dimension\":\"768\",\"flat\": {{}}}}' \\")
+    print("gcloud firestore indexes composite create \\")
+    print("  --collection-group=products \\")
+    print("  --query-scope=COLLECTION \\")
+    print('  --field-config field-path=embedding,vector-config=\'{"dimension":"768","flat": {}}\' \\')
     print(f"  --database={database_id}")
 
 
@@ -97,14 +99,10 @@ def main():
     parser.add_argument("--project", type=str, required=True, help="GCP Project ID")
     parser.add_argument("--database", type=str, default="customer-support-db", help="Firestore database ID")
     parser.add_argument("--location", type=str, default="us-central1", help="GCP location")
-    
+
     args = parser.parse_args()
-    
-    add_embeddings_to_products(
-        project_id=args.project,
-        database_id=args.database,
-        location=args.location
-    )
+
+    add_embeddings_to_products(project_id=args.project, database_id=args.database, location=args.location)
 
 
 if __name__ == "__main__":

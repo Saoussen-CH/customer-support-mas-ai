@@ -3,9 +3,9 @@
 set -e
 
 # Load configuration from .env file if it exists
-if [ -f backend/.env ]; then
-  echo "Loading configuration from backend/.env..."
-  export $(cat backend/.env | grep -v '^#' | xargs)
+if [ -f .env ]; then
+  echo "Loading configuration from .env..."
+  export $(cat .env | grep -v '^#' | xargs)
 fi
 
 # Configuration - Use env vars or defaults

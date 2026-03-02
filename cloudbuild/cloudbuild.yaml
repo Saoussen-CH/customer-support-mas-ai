@@ -1,0 +1,100 @@
+# CI Pipeline — Used by develop push trigger
+#
+# Trigger mapping:
+#   Push to develop → _EVAL_PROFILE=standard
+
+substitutions:
+  _EVAL_PROFILE: "standard"
+  _PYTHON_VERSION: "3.11"
+  _FIRESTORE_DATABASE: "customer-support-db"
+  _GOOGLE_CLOUD_LOCATION: "us-central1"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # ===========================================================================
+  # Install dependencies via uv (reproducible from uv.lock)
+  # Syncs the workspace into /workspace/.venv shared across all steps
+  # ===========================================================================
+  - id: "install-deps"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        pip install uv --quiet &&
+        uv sync --frozen --group dev &&
+        cp -r .venv /workspace/.venv
+    waitFor: ["-"]
+
+  # ===========================================================================
+  # Lint (parallel with tool-tests)
+  # ===========================================================================
+  - id: "lint"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        ruff check customer_support_agent/ --ignore=E501
+    waitFor: ["install-deps"]
+
+  # ===========================================================================
+  # Tool Tests — pure Python, mocked Firestore (parallel with lint)
+  # ===========================================================================
+  - id: "tool-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/unit/test_tools.py tests/unit/test_mock_rag.py tests/unit/test_refund_standalone.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+    waitFor: ["install-deps"]
+
+  # ===========================================================================
+  # Unit Agent Evaluation — calls Vertex AI Gemini (after tool-tests)
+  # ===========================================================================
+  - id: "unit-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/unit/test_agent_eval_ci.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+      - "EVAL_PROFILE=${_EVAL_PROFILE}"
+    waitFor: ["tool-tests"]
+
+  # ===========================================================================
+  # Integration Evaluation — multi-agent workflows (after unit-tests)
+  # ===========================================================================
+  - id: "integration-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/integration/test_integration_eval_ci.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+      - "EVAL_PROFILE=${_EVAL_PROFILE}"
+    waitFor: ["unit-tests"]
+
+timeout: "1800s"

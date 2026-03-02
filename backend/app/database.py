@@ -5,15 +5,121 @@ Uses Firestore for storing:
 - Users: User accounts and profiles
 - Sessions: Conversation threads for each user
 - Session state is managed by Agent Engine, but we track metadata here
+
+Data Model:
+-----------
+1. Users can be:
+   - Demo users: Pre-seeded accounts with order history (demo@example.com, jane@example.com)
+   - New users: Fresh accounts that start with no order history
+
+2. Demo users have known user_ids that link to pre-seeded order/billing data:
+   - demo@example.com → user_id: "demo-user-001"
+   - jane@example.com → user_id: "demo-user-002"
+
+3. New users get random UUIDs and start with no orders, invoices, etc.
 """
 
-from google.cloud import firestore
-from typing import Optional, Dict, List
-from datetime import datetime
+import hashlib
+import time
 import uuid
-import logging
+from datetime import datetime
+from functools import wraps
+from typing import Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import retry
+from google.cloud import firestore
+
+from .logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
+# =============================================================================
+# RETRY CONFIGURATION
+# =============================================================================
+
+# Firestore retry policy for transient errors
+FIRESTORE_RETRY = retry.Retry(
+    initial=0.1,  # Initial delay: 100ms
+    maximum=10.0,  # Maximum delay: 10 seconds
+    multiplier=2.0,  # Exponential backoff multiplier
+    deadline=30.0,  # Total deadline: 30 seconds
+    predicate=retry.if_exception_type(
+        gcp_exceptions.ServiceUnavailable,  # 503
+        gcp_exceptions.DeadlineExceeded,  # 504
+        gcp_exceptions.InternalServerError,  # 500
+        gcp_exceptions.Aborted,  # 409 (transaction conflict)
+    ),
+)
+
+
+def with_retry(func):
+    """
+    Decorator to add retry logic to database operations.
+
+    Retries on transient Firestore errors with exponential backoff.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        last_exception = None
+        for attempt in range(3):  # Max 3 attempts
+            try:
+                return func(*args, **kwargs)
+            except (
+                gcp_exceptions.ServiceUnavailable,
+                gcp_exceptions.DeadlineExceeded,
+                gcp_exceptions.InternalServerError,
+                gcp_exceptions.Aborted,
+            ) as e:
+                last_exception = e
+                wait_time = (2**attempt) * 0.1  # 0.1s, 0.2s, 0.4s
+                logger.warning(
+                    "Firestore operation failed, retrying", attempt=attempt + 1, error=str(e), wait_seconds=wait_time
+                )
+                time.sleep(wait_time)
+            except Exception:
+                # Non-retryable error, raise immediately
+                raise
+
+        # All retries exhausted
+        logger.error("Firestore operation failed after all retries", error=str(last_exception))
+        raise last_exception
+
+    return wrapper
+
+
+# =============================================================================
+# DEMO USER CONFIGURATION
+# =============================================================================
+# These must match the seed data in customer_support_agent/database/seed.py
+
+DEMO_USERS = {
+    "demo@example.com": {
+        "user_id": "demo-user-001",
+        "name": "Demo User",
+        "tier": "Gold",
+        "password_hash": hashlib.sha256("demo123".encode()).hexdigest(),
+    },
+    "jane@example.com": {
+        "user_id": "demo-user-002",
+        "name": "Jane Smith",
+        "tier": "Silver",
+        "password_hash": hashlib.sha256("jane123".encode()).hexdigest(),
+    },
+}
+
+
+def is_demo_email(email: str) -> bool:
+    """Check if an email belongs to a demo account."""
+    return email.lower() in DEMO_USERS
+
+
+def get_demo_user_id(email: str) -> Optional[str]:
+    """Get the pre-seeded user_id for a demo email."""
+    demo = DEMO_USERS.get(email.lower())
+    return demo["user_id"] if demo else None
 
 
 class Database:
@@ -26,9 +132,14 @@ class Database:
     # USER MANAGEMENT
     # =========================================================================
 
+    @with_retry
     def create_user(self, email: str, name: str, password_hash: str) -> str:
         """
         Create a new user account.
+
+        IMPORTANT: Demo user emails (demo@example.com, jane@example.com) are
+        pre-seeded and cannot be registered again. Users should log in with
+        these accounts instead.
 
         Args:
             email: User email (unique identifier)
@@ -37,7 +148,25 @@ class Database:
 
         Returns:
             user_id: Generated user ID
+
+        Raises:
+            ValueError: If email belongs to a demo account
         """
+        # Check if this is a demo email - demo users are pre-seeded
+        if is_demo_email(email):
+            logger.warning(f"Attempted to register demo email: {email}")
+            raise ValueError(
+                "This email is reserved for demo purposes. "
+                "Please log in with password 'demo123' or 'jane123' instead."
+            )
+
+        # Check if user already exists
+        existing = self.get_user_by_email(email)
+        if existing:
+            logger.warning(f"User already exists: {email}")
+            raise ValueError("An account with this email already exists.")
+
+        # Generate new user ID for non-demo users
         user_id = str(uuid.uuid4())
 
         user_data = {
@@ -47,6 +176,7 @@ class Database:
             "password_hash": password_hash,
             "created_at": datetime.utcnow(),
             "last_login": None,
+            "is_demo": False,  # Mark as non-demo user
         }
 
         self.db.collection("users").document(user_id).set(user_data)
@@ -54,9 +184,14 @@ class Database:
 
         return user_id
 
+    @with_retry
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         """
         Get user by email address.
+
+        This method checks Firestore for the user. Demo users should be
+        pre-seeded in the database with known user_ids that link to
+        their order/billing data.
 
         Args:
             email: User email
@@ -64,7 +199,10 @@ class Database:
         Returns:
             User data dict or None if not found
         """
-        query = self.db.collection("users").where("email", "==", email).limit(1)
+        email_lower = email.lower()
+
+        # First, try to find in Firestore (works for both demo and regular users)
+        query = self.db.collection("users").where("email", "==", email_lower).limit(1)
         results = list(query.stream())
 
         if results:
@@ -72,9 +210,26 @@ class Database:
             logger.info(f"Found user: {user_data['user_id']} ({email})")
             return user_data
 
+        # Also check original case (for backwards compatibility)
+        if email != email_lower:
+            query = self.db.collection("users").where("email", "==", email).limit(1)
+            results = list(query.stream())
+            if results:
+                user_data = results[0].to_dict()
+                logger.info(f"Found user: {user_data['user_id']} ({email})")
+                return user_data
+
+        # If this is a demo email but not found in DB, the seed hasn't run
+        if is_demo_email(email):
+            logger.warning(
+                f"Demo user {email} not found in database. "
+                f"Run the seed script: python -m customer_support_agent.database.seed --project YOUR_PROJECT"
+            )
+
         logger.info(f"User not found: {email}")
         return None
 
+    @with_retry
     def get_user(self, user_id: str) -> Optional[Dict]:
         """
         Get user by user_id.
@@ -92,12 +247,12 @@ class Database:
 
         return None
 
+    @with_retry
     def update_last_login(self, user_id: str):
         """Update user's last login timestamp."""
-        self.db.collection("users").document(user_id).update({
-            "last_login": datetime.utcnow()
-        })
+        self.db.collection("users").document(user_id).update({"last_login": datetime.utcnow()})
 
+    @with_retry
     def create_anonymous_user(self) -> str:
         """
         Create an anonymous user (for users who don't register).
@@ -122,12 +277,8 @@ class Database:
     # SESSION MANAGEMENT
     # =========================================================================
 
-    def create_session(
-        self,
-        user_id: str,
-        agent_engine_session_id: str,
-        session_name: Optional[str] = None
-    ) -> str:
+    @with_retry
+    def create_session(self, user_id: str, agent_engine_session_id: str, session_name: Optional[str] = None) -> str:
         """
         Create a new conversation session for a user.
 
@@ -157,6 +308,7 @@ class Database:
 
         return session_id
 
+    @with_retry
     def get_session(self, session_id: str) -> Optional[Dict]:
         """
         Get session by session_id.
@@ -174,6 +326,7 @@ class Database:
 
         return None
 
+    @with_retry
     def get_user_sessions(self, user_id: str, limit: int = 20) -> List[Dict]:
         """
         Get all sessions for a user.
@@ -206,6 +359,7 @@ class Database:
 
         return result
 
+    @with_retry
     def update_session(self, session_id: str):
         """
         Update session's updated_at timestamp and increment message count.
@@ -213,11 +367,14 @@ class Database:
         Args:
             session_id: Session ID
         """
-        self.db.collection("sessions").document(session_id).update({
-            "updated_at": datetime.utcnow(),
-            "message_count": firestore.Increment(1),
-        })
+        self.db.collection("sessions").document(session_id).update(
+            {
+                "updated_at": datetime.utcnow(),
+                "message_count": firestore.Increment(1),
+            }
+        )
 
+    @with_retry
     def rename_session(self, session_id: str, new_name: str):
         """
         Rename a session.
@@ -226,12 +383,15 @@ class Database:
             session_id: Session ID
             new_name: New session name
         """
-        self.db.collection("sessions").document(session_id).update({
-            "session_name": new_name,
-            "updated_at": datetime.utcnow(),
-        })
+        self.db.collection("sessions").document(session_id).update(
+            {
+                "session_name": new_name,
+                "updated_at": datetime.utcnow(),
+            }
+        )
         logger.info(f"Renamed session {session_id} to: {new_name}")
 
+    @with_retry
     def delete_session(self, session_id: str):
         """
         Mark session as inactive (soft delete).
@@ -239,23 +399,20 @@ class Database:
         Args:
             session_id: Session ID
         """
-        self.db.collection("sessions").document(session_id).update({
-            "is_active": False,
-            "updated_at": datetime.utcnow(),
-        })
+        self.db.collection("sessions").document(session_id).update(
+            {
+                "is_active": False,
+                "updated_at": datetime.utcnow(),
+            }
+        )
         logger.info(f"Deleted session: {session_id}")
 
     # =========================================================================
     # MESSAGE MANAGEMENT
     # =========================================================================
 
-    def save_message(
-        self,
-        session_id: str,
-        role: str,
-        content: str,
-        message_id: Optional[str] = None
-    ) -> str:
+    @with_retry
+    def save_message(self, session_id: str, role: str, content: str, message_id: Optional[str] = None) -> str:
         """
         Save a message to a session.
 
@@ -280,12 +437,15 @@ class Database:
         }
 
         # Store in subcollection: sessions/{session_id}/messages/{message_id}
-        self.db.collection("sessions").document(session_id).collection("messages").document(message_id).set(message_data)
+        self.db.collection("sessions").document(session_id).collection("messages").document(message_id).set(
+            message_data
+        )
 
         logger.info(f"Saved {role} message to session {session_id}")
 
         return message_id
 
+    @with_retry
     def get_session_messages(self, session_id: str, limit: int = 100) -> List[Dict]:
         """
         Get all messages for a session.

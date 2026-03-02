@@ -1,53 +1,68 @@
-import vertexai
-from vertexai import agent_engines
+import asyncio
 from typing import Optional
-import uuid
-import logging
-from .config import settings
-from google.api_core import retry
-from google.api_core import exceptions
 
-logger = logging.getLogger(__name__)
+import vertexai
+from google.api_core import exceptions, retry
+from vertexai import agent_engines
+
+from .config import settings
+from .logging_config import get_logger
+
+logger = get_logger(__name__)
+
+# Timeout configuration
+DEFAULT_QUERY_TIMEOUT_SECONDS = 120  # 2 minutes for agent queries
+SESSION_CREATE_TIMEOUT_SECONDS = 30  # 30 seconds for session creation
 
 # Configure retry policy for Agent Engine calls
 # Handles transient errors with exponential backoff
 AGENT_RETRY_POLICY = retry.Retry(
-    initial=1.0,          # Initial delay: 1 second
-    maximum=60.0,         # Maximum delay: 60 seconds
-    multiplier=2.0,       # Exponential backoff multiplier
-    deadline=180.0,       # Total deadline: 3 minutes
+    initial=1.0,  # Initial delay: 1 second
+    maximum=60.0,  # Maximum delay: 60 seconds
+    multiplier=2.0,  # Exponential backoff multiplier
+    deadline=180.0,  # Total deadline: 3 minutes
     predicate=retry.if_exception_type(
-        exceptions.ResourceExhausted,    # 429 Rate Limit
-        exceptions.ServiceUnavailable,   # 503 Service Unavailable
-        exceptions.DeadlineExceeded,     # 504 Gateway Timeout
+        exceptions.ResourceExhausted,  # 429 Rate Limit
+        exceptions.ServiceUnavailable,  # 503 Service Unavailable
+        exceptions.DeadlineExceeded,  # 504 Gateway Timeout
         exceptions.InternalServerError,  # 500 Internal Server Error
-        exceptions.TooManyRequests,      # 429 Too Many Requests
-    )
+        exceptions.TooManyRequests,  # 429 Too Many Requests
+    ),
 )
 
 
 class AgentEngineClient:
     def __init__(self):
-        """Initialize the Agent Engine client."""
+        """Initialize the Agent Engine client (lazy — no network calls at import time)."""
         vertexai.init(
             project=settings.google_cloud_project,
             location=settings.google_cloud_location,
         )
         self.resource_name = settings.agent_engine_resource_name
+        self._remote_app = None
 
-        # Get the remote agent engine app
-        try:
-            self.remote_app = agent_engines.get(self.resource_name)
-            logger.info(f"Connected to Agent Engine: {self.resource_name}")
-        except Exception as e:
-            logger.error(f"Failed to connect to Agent Engine: {e}")
-            raise
+    def _get_remote_app(self):
+        """Lazily connect to Agent Engine on first use."""
+        if self._remote_app is None:
+            try:
+                self._remote_app = agent_engines.get(self.resource_name)
+                self.agent_engine_app = self._remote_app  # Alias for health checks
+                logger.info("Connected to Agent Engine", resource_name=self.resource_name)
+            except Exception as e:
+                logger.error("Failed to connect to Agent Engine", error=str(e))
+                raise
+        return self._remote_app
+
+    @property
+    def remote_app(self):
+        return self._get_remote_app()
 
     async def query_agent(
         self,
         user_id: str,
         agent_engine_session_id: Optional[str],
-        message: str
+        message: str,
+        timeout_seconds: float = DEFAULT_QUERY_TIMEOUT_SECONDS,
     ) -> tuple[str, str]:
         """
         Query the deployed Agent Engine using async_stream_query with retry logic.
@@ -67,92 +82,99 @@ class AgentEngineClient:
             user_id: User ID (from auth or anonymous)
             agent_engine_session_id: Agent Engine session ID (None for new session)
             message: User message
+            timeout_seconds: Maximum time to wait for response (default: 120s)
 
         Returns:
             Tuple of (response_text, agent_engine_session_id)
+
+        Raises:
+            TimeoutError: If the operation exceeds timeout_seconds
+            Exception: For other failures
         """
         try:
-            # Check if we need to create a new session on Agent Engine
-            if not agent_engine_session_id:
-                logger.info(f"Creating new Agent Engine session for user: {user_id}")
+            async with asyncio.timeout(timeout_seconds):
+                # Check if we need to create a new session on Agent Engine
+                if not agent_engine_session_id:
+                    logger.info("Creating new Agent Engine session", user_id=user_id)
 
-                # Create session on Agent Engine with retry logic
-                @AGENT_RETRY_POLICY
-                async def _create_session():
-                    return await self.remote_app.async_create_session(user_id=user_id)
+                    # Create session on Agent Engine with retry logic
+                    @AGENT_RETRY_POLICY
+                    async def _create_session():
+                        async with asyncio.timeout(SESSION_CREATE_TIMEOUT_SECONDS):
+                            return await self.remote_app.async_create_session(user_id=user_id)
 
-                try:
-                    remote_session = await _create_session()
-                except Exception as e:
-                    logger.error(f"Failed to create session after retries: {e}")
-                    raise Exception(f"Unable to create session: Service temporarily unavailable")
+                    try:
+                        remote_session = await _create_session()
+                    except asyncio.TimeoutError:
+                        logger.error("Session creation timed out", user_id=user_id)
+                        raise TimeoutError("Session creation timed out. Please try again.")
+                    except Exception as e:
+                        logger.error("Failed to create session after retries", error=str(e))
+                        raise Exception("Unable to create session: Service temporarily unavailable")
 
-                # Extract the actual session_id from Agent Engine's response
-                agent_engine_session_id = remote_session['id']
+                    # Extract the actual session_id from Agent Engine's response
+                    agent_engine_session_id = remote_session["id"]
 
-                logger.info(f"Agent Engine session created: {agent_engine_session_id} for user: {user_id}")
-            else:
-                logger.info(f"Using existing Agent Engine session: {agent_engine_session_id} for user: {user_id}")
+                    logger.info("Agent Engine session created", session_id=agent_engine_session_id, user_id=user_id)
+                else:
+                    logger.info(
+                        "Using existing Agent Engine session", session_id=agent_engine_session_id, user_id=user_id
+                    )
 
-            logger.info(f"Querying agent with message: {message[:50]}...")
+                logger.info("Querying agent", message_preview=message[:50])
 
-            # Stream the query to the agent using Agent Engine's session
-            response_text = ""
-            event_count = 0
+                # Stream the query to the agent using Agent Engine's session
+                response_text = ""
+                event_count = 0
 
-            async for event in self.remote_app.async_stream_query(
-                user_id=user_id,
-                session_id=agent_engine_session_id,
-                message=message
-            ):
-                event_count += 1
-                logger.info(f"[Event {event_count}] Received event from author: {event.get('author', 'unknown')}")
-                logger.info(f"[Event {event_count}] Full event keys: {list(event.keys())}")
-                logger.info(f"[Event {event_count}] Full event: {event}")
+                async for event in self.remote_app.async_stream_query(
+                    user_id=user_id, session_id=agent_engine_session_id, message=message
+                ):
+                    event_count += 1
+                    logger.debug(
+                        "Received event",
+                        event_num=event_count,
+                        author=event.get("author", "unknown") if isinstance(event, dict) else "unknown",
+                    )
 
-                # Extract text from event
-                if isinstance(event, dict):
-                    content = event.get("content", event.get("parts", {}))
+                    # Extract text from event
+                    if isinstance(event, dict):
+                        content = event.get("content", event.get("parts", {}))
 
-                    if isinstance(content, dict):
-                        parts = content.get("parts", [])
-                        logger.info(f"[Event {event_count}] Found {len(parts)} parts in content")
+                        if isinstance(content, dict):
+                            parts = content.get("parts", [])
 
-                        for i, part in enumerate(parts):
-                            if isinstance(part, dict):
-                                if part.get("text"):
-                                    # Append text parts (this is the agent's response)
-                                    text = part["text"]
-                                    response_text += text
-                                    logger.info(f"[Event {event_count}] Part {i}: Extracted text ({len(text)} chars): {text[:100]}...")
-                                elif part.get("function_call"):
-                                    # Log function calls (these are tool invocations)
-                                    fn = part["function_call"]
-                                    logger.info(f"[Event {event_count}] Part {i}: Tool call: {fn.get('name')}({fn.get('args', {})})")
-                                else:
-                                    logger.info(f"[Event {event_count}] Part {i}: Other part type: {list(part.keys())}")
-                    else:
-                        logger.info(f"[Event {event_count}] Content is not a dict: {type(content)}")
+                            for part in parts:
+                                if isinstance(part, dict):
+                                    if part.get("text"):
+                                        response_text += part["text"]
+                                    elif part.get("function_call"):
+                                        fn = part["function_call"]
+                                        logger.debug("Tool call", tool=fn.get("name"), args=fn.get("args", {}))
 
-                    # Also check for direct text field
-                    if "text" in event:
-                        direct_text = event["text"]
-                        response_text += direct_text
-                        logger.info(f"[Event {event_count}] Found direct text field: {direct_text[:100]}...")
+                        # Also check for direct text field
+                        if "text" in event:
+                            response_text += event["text"]
 
-            logger.info(f"Processing complete: {event_count} events, {len(response_text)} chars extracted")
+                logger.info("Query processing complete", event_count=event_count, response_length=len(response_text))
 
-            if not response_text:
-                logger.error(f"No response text extracted from {event_count} events! Check logs above for event details.")
-                response_text = "I apologize, but I didn't receive a response. Please try again."
+                if not response_text:
+                    logger.error("No response text extracted", event_count=event_count)
+                    response_text = "I apologize, but I didn't receive a response. Please try again."
 
-            logger.info(f"Final response ({len(response_text)} chars): {response_text[:100]}...")
+                # Return agent_engine_session_id so it can be tracked in our database
+                return response_text, agent_engine_session_id
 
-            # Return agent_engine_session_id so it can be tracked in our database
-            return response_text, agent_engine_session_id
-
+        except asyncio.TimeoutError:
+            logger.error("Agent query timed out", timeout_seconds=timeout_seconds, user_id=user_id)
+            raise TimeoutError(
+                f"Request timed out after {timeout_seconds} seconds. " "The system is busy. Please try again."
+            )
+        except TimeoutError:
+            # Re-raise TimeoutError from session creation
+            raise
         except Exception as e:
-            logger.error(f"Error querying agent: {str(e)}", exc_info=True)
+            logger.error("Error querying agent", error=str(e), exc_info=True)
             raise Exception(f"Failed to query agent: {str(e)}")
 
 

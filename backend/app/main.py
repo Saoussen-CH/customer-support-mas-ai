@@ -1,37 +1,49 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import logging
 import os
 from pathlib import Path
 from typing import Optional
-from .config import settings
-from .models import (
-    ChatRequest, ChatResponse, HealthResponse,
-    RegisterRequest, LoginRequest, AuthResponse, AnonymousUserResponse,
-    SessionListResponse, RenameSessionRequest, MessageHistoryResponse, MessageInfo
-)
-from .agent_client import agent_client
-from .database import get_database
-from . import auth
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from . import auth
+from .agent_client import agent_client
+from .config import settings
+from .database import get_database
+from .health import HealthChecker, HealthStatus, liveness_check, readiness_check
+from .logging_config import get_logger, logging_middleware, set_request_context, setup_logging
+from .metrics import increment_chat_errors, increment_chat_requests, metrics, metrics_middleware
+from .models import (
+    AnonymousUserResponse,
+    AuthResponse,
+    ChatRequest,
+    ChatResponse,
+    LoginRequest,
+    MessageHistoryResponse,
+    MessageInfo,
+    RegisterRequest,
+    RenameSessionRequest,
+    SessionListResponse,
 )
-logger = logging.getLogger(__name__)
+from .rate_limiter import RateLimitDependency
+
+# Initialize structured logging
+# Use JSON format in production, human-readable in development
+is_production = os.getenv("ENVIRONMENT", "development") == "production"
+setup_logging(level=os.getenv("LOG_LEVEL", "INFO"), json_format=is_production, service_name="customer-support-api")
+logger = get_logger(__name__)
 
 # Initialize database
-db = get_database(
-    project_id=settings.google_cloud_project,
-    database_id="customer-support-db"
-)
+db = get_database(project_id=settings.google_cloud_project, database_id="customer-support-db")
+
+# Initialize health checker (agent_client added after import)
+health_checker = HealthChecker(db=db, agent_client=None)
 
 app = FastAPI(
     title="Customer Support AI Backend",
     description="Backend API for Customer Support Multi-Agent System with User Management",
-    version="2.0.0"
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -42,10 +54,67 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add logging middleware for request context
+app.middleware("http")(logging_middleware)
+
+# Add metrics middleware for request tracking
+app.middleware("http")(metrics_middleware)
+
+
+# =============================================================================
+# APPLICATION LIFECYCLE EVENTS
+# =============================================================================
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Application startup handler.
+
+    Initializes resources and logs startup information.
+    """
+    logger.info(
+        "Application starting up",
+        project=settings.google_cloud_project,
+        location=settings.google_cloud_location,
+        version="2.0.0",
+    )
+
+    # Set initial metrics
+    metrics.set_gauge("app_info", 1)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Graceful shutdown handler.
+
+    Ensures clean shutdown of resources:
+    - Logs shutdown event
+    - Allows in-flight requests to complete (handled by uvicorn)
+    - Could close database connections if needed
+    """
+    logger.info("Application shutting down - starting graceful shutdown")
+
+    # Log final metrics before shutdown
+    final_metrics = metrics.get_all_metrics()
+    logger.info(
+        "Final metrics before shutdown",
+        total_requests=final_metrics["summary"]["total_requests"],
+        total_errors=final_metrics["summary"]["total_errors"],
+        uptime_seconds=final_metrics["uptime_seconds"],
+    )
+
+    # Note: Uvicorn handles waiting for in-flight requests by default
+    # with its --timeout-graceful-shutdown option (default 30s)
+
+    logger.info("Graceful shutdown complete")
+
 
 # =============================================================================
 # AUTHENTICATION DEPENDENCY
 # =============================================================================
+
 
 def get_current_user(authorization: Optional[str] = Header(None)) -> Optional[str]:
     """
@@ -71,68 +140,160 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> Optional[st
     return user_id
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return HealthResponse(
-        status="healthy",
-        agent_engine=settings.agent_engine_resource_name,
-        project=settings.google_cloud_project,
-        location=settings.google_cloud_location
-    )
+    """
+    Comprehensive health check endpoint.
+
+    Checks connectivity to:
+    - Database (Firestore)
+    - Agent Engine
+
+    Returns:
+        - 200: All systems healthy
+        - 503: System degraded or unhealthy
+    """
+    from fastapi.responses import JSONResponse
+
+    # Update health checker with agent client if available
+    health_checker.agent_client = agent_client
+
+    result = await health_checker.check_all()
+
+    # Return 503 if unhealthy
+    status_code = 200 if result.status != HealthStatus.UNHEALTHY else 503
+
+    return JSONResponse(content=result.to_dict(), status_code=status_code)
+
+
+@app.get("/health/live")
+async def liveness_probe():
+    """
+    Kubernetes liveness probe.
+
+    Returns 200 if the process is running.
+    Used to determine if pod should be restarted.
+    """
+    return await liveness_check()
+
+
+@app.get("/health/ready")
+async def readiness_probe():
+    """
+    Kubernetes readiness probe.
+
+    Returns 200 if service can handle requests.
+    Used to determine if pod should receive traffic.
+    """
+    from fastapi.responses import JSONResponse
+
+    health_checker.agent_client = agent_client
+    result = await readiness_check(health_checker)
+
+    status_code = 200 if result["ready"] else 503
+
+    return JSONResponse(content=result, status_code=status_code)
+
+
+# =============================================================================
+# METRICS ENDPOINTS
+# =============================================================================
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """
+    Get application metrics in JSON format.
+
+    Returns request counts, latencies, error rates by endpoint.
+    """
+    return metrics.get_all_metrics()
+
+
+@app.get("/metrics/prometheus")
+async def get_prometheus_metrics():
+    """
+    Get application metrics in Prometheus format.
+
+    Use this endpoint for Prometheus scraping.
+    """
+    from fastapi.responses import PlainTextResponse
+
+    return PlainTextResponse(content=metrics.get_prometheus_format(), media_type="text/plain")
 
 
 # =============================================================================
 # AUTHENTICATION ENDPOINTS
 # =============================================================================
 
-@app.post("/api/auth/register", response_model=AuthResponse)
-async def register(request: RegisterRequest):
-    """Register a new user account."""
-    try:
-        # Check if email already exists
-        existing_user = db.get_user_by_email(request.email)
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
 
+@app.post("/api/auth/register", response_model=AuthResponse)
+async def register(request: RegisterRequest, _rate_check: bool = Depends(RateLimitDependency("auth"))):
+    """
+    Register a new user account.
+
+    Note: Demo accounts (demo@example.com, jane@example.com) are pre-seeded
+    and cannot be registered. Users should log in with these accounts instead:
+    - demo@example.com / demo123 (Gold tier, 3 orders)
+    - jane@example.com / jane123 (Silver tier, 1 order)
+
+    New users start with NO order history - they can browse products but
+    have nothing to track, refund, or view invoices for.
+    """
+    try:
         # Hash password and create user
+        # Note: create_user() handles demo email validation and duplicate check
         password_hash = auth.hash_password(request.password)
-        user_id = db.create_user(
-            email=request.email,
-            name=request.name,
-            password_hash=password_hash
-        )
+        user_id = db.create_user(email=request.email, name=request.name, password_hash=password_hash)
 
         # Generate auth token
         token = auth.generate_token(user_id)
 
-        logger.info(f"User registered: {user_id} ({request.email})")
+        logger.info("User registered", user_id=user_id, email=request.email)
 
-        return AuthResponse(
-            user_id=user_id,
-            token=token,
-            name=request.name,
-            email=request.email
-        )
+        return AuthResponse(user_id=user_id, token=token, name=request.name, email=request.email)
 
+    except ValueError as e:
+        # Handle demo email registration attempt or duplicate email
+        logger.warning("Registration rejected", reason=str(e), email=request.email)
+        raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Registration error: {str(e)}")
+        logger.error("Registration error", error=str(e), email=request.email)
         raise HTTPException(status_code=500, detail="Registration failed")
 
 
 @app.post("/api/auth/login", response_model=AuthResponse)
-async def login(request: LoginRequest):
-    """Login with email and password."""
+async def login(request: LoginRequest, _rate_check: bool = Depends(RateLimitDependency("auth"))):
+    """
+    Login with email and password.
+
+    Demo accounts with pre-seeded order history:
+    - demo@example.com / demo123 (Gold tier, 3 orders, can refund ORD-12345, ORD-67890)
+    - jane@example.com / jane123 (Silver tier, 1 order, can refund ORD-22222)
+    """
     try:
         # Get user by email
         user = db.get_user_by_email(request.email)
         if not user:
+            # Provide helpful message for demo emails that haven't been seeded
+            from .database import is_demo_email
+
+            if is_demo_email(request.email):
+                raise HTTPException(
+                    status_code=401, detail="Demo user not found. Please run the database seed script first."
+                )
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Verify password
         if not auth.verify_password(request.password, user["password_hash"]):
+            # Provide helpful hint for demo users with wrong password
+            from .database import is_demo_email
+
+            if is_demo_email(request.email):
+                hint = "demo123" if "demo@" in request.email.lower() else "jane123"
+                raise HTTPException(status_code=401, detail=f"Invalid password. Hint: demo password is '{hint}'")
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Update last login
@@ -141,35 +302,27 @@ async def login(request: LoginRequest):
         # Generate auth token
         token = auth.generate_token(user["user_id"])
 
-        logger.info(f"User logged in: {user['user_id']} ({request.email})")
+        logger.info("User logged in", user_id=user["user_id"], email=request.email)
 
-        return AuthResponse(
-            user_id=user["user_id"],
-            token=token,
-            name=user["name"],
-            email=user["email"]
-        )
+        return AuthResponse(user_id=user["user_id"], token=token, name=user["name"], email=user["email"])
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Login error: {str(e)}")
+        logger.error("Login error", error=str(e), email=request.email)
         raise HTTPException(status_code=500, detail="Login failed")
 
 
 @app.post("/api/auth/anonymous", response_model=AnonymousUserResponse)
-async def create_anonymous():
+async def create_anonymous(_rate_check: bool = Depends(RateLimitDependency("auth"))):
     """Create an anonymous user (for users who don't want to register)."""
     try:
         user_id = db.create_anonymous_user()
 
-        return AnonymousUserResponse(
-            user_id=user_id,
-            is_anonymous=True
-        )
+        return AnonymousUserResponse(user_id=user_id, is_anonymous=True)
 
     except Exception as e:
-        logger.error(f"Anonymous user creation error: {str(e)}")
+        logger.error("Anonymous user creation error", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to create anonymous user")
 
 
@@ -189,7 +342,7 @@ async def logout(authorization: str = Header(...)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Logout error: {str(e)}")
+        logger.error("Logout error", error=str(e))
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
@@ -197,11 +350,13 @@ async def logout(authorization: str = Header(...)):
 # CHAT ENDPOINT
 # =============================================================================
 
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
     user_id: Optional[str] = Depends(get_current_user),
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: Optional[str] = Header(None),
+    _rate_check: bool = Depends(RateLimitDependency("chat")),
 ):
     """
     Send a message to the customer support agent.
@@ -225,10 +380,15 @@ async def chat(
         if not actual_user_id:
             raise HTTPException(
                 status_code=401,
-                detail="Authentication required. Use Authorization header or X-User-Id for anonymous users."
+                detail="Authentication required. Use Authorization header or X-User-Id for anonymous users.",
             )
 
-        logger.info(f"Chat request from user: {actual_user_id}, message: {request.message[:50]}...")
+        # Set user context for logging
+        set_request_context(user_id=actual_user_id, session_id=request.session_id)
+        logger.info("Chat request received", message_preview=request.message[:50])
+
+        # Track chat request metric
+        increment_chat_requests()
 
         # Check if this is a new session or existing one
         if request.session_id:
@@ -242,7 +402,7 @@ async def chat(
             internal_session_id = request.session_id
             agent_engine_session_id = session["agent_engine_session_id"]
 
-            logger.info(f"Using existing session: {internal_session_id}")
+            logger.info("Using existing session", session_id=internal_session_id)
         else:
             # Create new session
             internal_session_id = None
@@ -251,18 +411,15 @@ async def chat(
 
         # Query the agent
         response_text, agent_engine_session_id = await agent_client.query_agent(
-            user_id=actual_user_id,
-            agent_engine_session_id=agent_engine_session_id,
-            message=request.message
+            user_id=actual_user_id, agent_engine_session_id=agent_engine_session_id, message=request.message
         )
 
         # If new session, create it in database
         if not internal_session_id:
             internal_session_id = db.create_session(
-                user_id=actual_user_id,
-                agent_engine_session_id=agent_engine_session_id
+                user_id=actual_user_id, agent_engine_session_id=agent_engine_session_id
             )
-            logger.info(f"Created new session: {internal_session_id}")
+            logger.info("Created new session", session_id=internal_session_id)
         else:
             # Update existing session
             db.update_session(internal_session_id)
@@ -271,30 +428,31 @@ async def chat(
         db.save_message(internal_session_id, "user", request.message)
         db.save_message(internal_session_id, "assistant", response_text)
 
-        return ChatResponse(
-            response=response_text,
-            user_id=actual_user_id,
-            session_id=internal_session_id
-        )
+        return ChatResponse(response=response_text, user_id=actual_user_id, session_id=internal_session_id)
 
     except HTTPException:
+        increment_chat_errors()
         raise
+    except TimeoutError as e:
+        increment_chat_errors()
+        logger.warning("Chat request timed out", error=str(e))
+        raise HTTPException(status_code=504, detail=str(e))
     except Exception as e:
-        logger.error(f"Error processing chat request: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing request: {str(e)}"
-        )
+        increment_chat_errors()
+        logger.error("Error processing chat request", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 
 # =============================================================================
 # SESSION MANAGEMENT ENDPOINTS
 # =============================================================================
 
+
 @app.get("/api/sessions", response_model=SessionListResponse)
 async def list_sessions(
     user_id: Optional[str] = Depends(get_current_user),
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: Optional[str] = Header(None),
+    _rate_check: bool = Depends(RateLimitDependency("sessions")),
 ):
     """Get all sessions for the current user."""
     try:
@@ -306,19 +464,15 @@ async def list_sessions(
         sessions = db.get_user_sessions(actual_user_id)
 
         from .models import SessionInfo
-        session_list = [
-            SessionInfo(**session) for session in sessions
-        ]
 
-        return SessionListResponse(
-            user_id=actual_user_id,
-            sessions=session_list
-        )
+        session_list = [SessionInfo(**session) for session in sessions]
+
+        return SessionListResponse(user_id=actual_user_id, sessions=session_list)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error listing sessions: {str(e)}")
+        logger.error("Error listing sessions", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to list sessions")
 
 
@@ -327,7 +481,8 @@ async def rename_session(
     session_id: str,
     request: RenameSessionRequest,
     user_id: Optional[str] = Depends(get_current_user),
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: Optional[str] = Header(None),
+    _rate_check: bool = Depends(RateLimitDependency("sessions")),
 ):
     """Rename a session."""
     try:
@@ -350,7 +505,7 @@ async def rename_session(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error renaming session: {str(e)}")
+        logger.error("Error renaming session", error=str(e), session_id=session_id)
         raise HTTPException(status_code=500, detail="Failed to rename session")
 
 
@@ -358,7 +513,8 @@ async def rename_session(
 async def delete_session(
     session_id: str,
     user_id: Optional[str] = Depends(get_current_user),
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: Optional[str] = Header(None),
+    _rate_check: bool = Depends(RateLimitDependency("sessions")),
 ):
     """Delete a session."""
     try:
@@ -381,7 +537,7 @@ async def delete_session(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting session: {str(e)}")
+        logger.error("Error deleting session", error=str(e), session_id=session_id)
         raise HTTPException(status_code=500, detail="Failed to delete session")
 
 
@@ -389,7 +545,8 @@ async def delete_session(
 async def get_session_messages(
     session_id: str,
     user_id: Optional[str] = Depends(get_current_user),
-    x_user_id: Optional[str] = Header(None)
+    x_user_id: Optional[str] = Header(None),
+    _rate_check: bool = Depends(RateLimitDependency("sessions")),
 ):
     """Get message history for a session."""
     try:
@@ -410,15 +567,12 @@ async def get_session_messages(
 
         message_list = [MessageInfo(**msg) for msg in messages]
 
-        return MessageHistoryResponse(
-            session_id=session_id,
-            messages=message_list
-        )
+        return MessageHistoryResponse(session_id=session_id, messages=message_list)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error fetching messages: {str(e)}")
+        logger.error("Error fetching messages", error=str(e), session_id=session_id)
         raise HTTPException(status_code=500, detail="Failed to fetch messages")
 
 
@@ -429,20 +583,40 @@ async def api_root():
         "message": "Customer Support AI Backend v2.0",
         "docs": "/docs",
         "health": "/health",
+        "demo_accounts": {
+            "description": "Pre-seeded accounts with order history for testing",
+            "accounts": [
+                {
+                    "email": "demo@example.com",
+                    "password": "demo123",
+                    "tier": "Gold",
+                    "orders": ["ORD-12345", "ORD-67890", "ORD-11111"],
+                    "refundable": ["ORD-12345", "ORD-67890"],
+                },
+                {
+                    "email": "jane@example.com",
+                    "password": "jane123",
+                    "tier": "Silver",
+                    "orders": ["ORD-22222"],
+                    "refundable": ["ORD-22222"],
+                },
+            ],
+            "note": "New users start with NO order history",
+        },
         "endpoints": {
             "auth": {
                 "register": "POST /api/auth/register",
                 "login": "POST /api/auth/login",
                 "anonymous": "POST /api/auth/anonymous",
-                "logout": "POST /api/auth/logout"
+                "logout": "POST /api/auth/logout",
             },
             "chat": "POST /api/chat",
             "sessions": {
                 "list": "GET /api/sessions",
                 "rename": "PUT /api/sessions/{id}/rename",
-                "delete": "DELETE /api/sessions/{id}"
-            }
-        }
+                "delete": "DELETE /api/sessions/{id}",
+            },
+        },
     }
 
 
@@ -477,4 +651,5 @@ if static_dir.exists():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=settings.port)

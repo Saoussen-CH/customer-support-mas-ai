@@ -1,4 +1,4 @@
-# Getting Started - Setup Checklist
+# Getting Started — Setup Checklist
 
 Complete this checklist to deploy the Customer Support Multi-Agent System.
 
@@ -26,78 +26,40 @@ Complete this checklist to deploy the Customer Support Multi-Agent System.
   gcloud auth application-default login
   ```
 
-- [ ] **Install Python 3.11+ using pyenv**
-
-  **Install pyenv:**
-  ```bash
-  # macOS
-  brew install pyenv
-
-  # Linux
-  curl https://pyenv.run | bash
-  ```
-
-  **Install Python 3.11.13:**
-  ```bash
-  pyenv install 3.11.13
-  pyenv local 3.11.13  # Uses .python-version file
-  ```
-
-  **Verify:**
-  ```bash
-  python --version  # Should show Python 3.11.13
-  ```
-
-### Step 2: Clone and Setup Repository (2 minutes)
+### Step 2: Clone and Install Dependencies (2 minutes)
 
 - [ ] **Clone repository**
   ```bash
-  git clone https://github.com/your-repo/customer-support-mas.git
-  cd customer-support-mas
+  git clone https://github.com/your-repo/customer-support-mas-kaggle.git
+  cd customer-support-mas-kaggle
   ```
 
-- [ ] **Create virtual environment and install dependencies**
+- [ ] **Install dependencies** (uses `uv` — installs Python 3.11 automatically)
   ```bash
-  # Verify Python version
-  python --version  # Should be 3.11.13 (from .python-version)
-
-  # Create virtual environment
-  python -m venv .venv
-
-  # Activate virtual environment
-  source .venv/bin/activate  # macOS/Linux
-  # OR
-  .venv\Scripts\activate     # Windows
-
-  # Install dependencies
-  pip install -r requirements.txt
+  make install
   ```
+
+  This installs all Python dependencies from `pyproject.toml` + sets up pre-commit hooks.
 
 ### Step 3: GCP Resources Setup (5-10 minutes)
 
-Run automated setup scripts:
-
 - [ ] **Enable APIs and configure IAM**
   ```bash
-  ./scripts/setup_gcp.sh
+  bash scripts/setup_gcp.sh
   ```
 
   This script will:
   - ✓ Enable 10+ required GCP APIs
   - ✓ Create service account `customer-support-agent`
-  - ✓ Grant IAM roles to service account
-  - ✓ Grant IAM roles to your user
+  - ✓ Grant IAM roles to service account and your user
   - ✓ Create GCS bucket for staging
 
-- [ ] **Setup Firestore database**
+- [ ] **Setup Firestore database and seed data**
   ```bash
-  ./scripts/setup_firestore.sh
+  make setup-firestore
   ```
 
-  This script will:
-  - ✓ Create Firestore database
-  - ✓ Seed with sample data (products, orders, invoices)
-  - ✓ Optionally add vector embeddings for RAG
+  This creates the Firestore database and seeds it with sample products, orders, invoices, and users.
 
 **Manual alternative:** See [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) for manual setup steps.
 
@@ -106,35 +68,23 @@ Run automated setup scripts:
 - [ ] **Copy .env template**
   ```bash
   cp .env.example .env
-  cp backend/.env.example backend/.env
   ```
 
-- [ ] **Edit .env files**
-
-  Update `.env` with your values:
+- [ ] **Edit `.env` with your values**
   ```bash
   GOOGLE_CLOUD_PROJECT=your-project-id
   GOOGLE_CLOUD_LOCATION=us-central1
-  GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-name  # From setup_gcp.sh output
+  GOOGLE_CLOUD_STORAGE_BUCKET=gs://your-bucket-name
   FIRESTORE_DATABASE=customer-support-db
   ```
 
-  Update `backend/.env`:
-  ```bash
-  GOOGLE_CLOUD_PROJECT=your-project-id
-  GOOGLE_CLOUD_LOCATION=us-central1
-  FRONTEND_URL=http://localhost:3000
-  PORT=8000
-  ```
-
-**Help:** See [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) for detailed configuration guide.
+**Help:** See [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) for full configuration details.
 
 ### Step 5: Deploy to Vertex AI Agent Engine (5 minutes)
 
-- [ ] **Deploy agent**
+- [ ] **Deploy agent** (two-stage: deploys AdkApp + configures Memory Bank)
   ```bash
-  # From project root directory
-  python deployment/deploy.py --action deploy
+  make deploy-agent-engine
   ```
 
   Expected output:
@@ -144,8 +94,6 @@ Run automated setup scripts:
   ```
 
 - [ ] **Copy resource name to .env**
-
-  Add to `.env` and `backend/.env`:
   ```bash
   AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
   ```
@@ -154,110 +102,95 @@ Run automated setup scripts:
 
 ### Step 5.5: Enable RAG Semantic Search (10 minutes)
 
-This step enables semantic search (e.g., "gaming computer" finds "ROG Gaming Laptop").
+This enables "gaming computer" to find "ROG Gaming Laptop" via semantic search.
 
 - [ ] **Create vector index**
   ```bash
-  # Use REST API
-  curl -X POST \
-    "https://firestore.googleapis.com/v1/projects/$GOOGLE_CLOUD_PROJECT/databases/$FIRESTORE_DATABASE/collectionGroups/products/indexes" \
-    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "fields": [{
-        "fieldPath": "embedding",
-        "vectorConfig": {"dimension": 768, "flat": {}}
-      }],
-      "queryScope": "COLLECTION"
-    }'
-  ```
-
-  Expected output:
-  ```json
-  {
-    "name": "projects/.../operations/...",
-    "metadata": {
-      "state": "INITIALIZING",
-      "index": "projects/.../indexes/..."
-    }
-  }
+  make vector-index
   ```
 
 - [ ] **Wait for index to be ready (5-10 minutes)**
   ```bash
-  # Check status
   gcloud firestore indexes composite list \
     --database=customer-support-db \
     --project=$GOOGLE_CLOUD_PROJECT
-
   # Wait for: STATE = READY
   ```
 
-- [ ] **Add vector embeddings**
+- [ ] **Add vector embeddings to products**
   ```bash
-  # Once index is READY
-  python scripts/add_embeddings.py \
-    --project $GOOGLE_CLOUD_PROJECT \
-    --database customer-support-db \
-    --location us-central1
+  make add-embeddings
   ```
 
 - [ ] **Redeploy agent with RAG enabled**
   ```bash
-  python deployment/deploy.py --action deploy
+  make deploy-agent-engine
   ```
 
-- [ ] **Test semantic search**
-  ```bash
-  python deployment/deploy.py --action test_remote
-  # Try: "Find me a gaming computer"
-  # Should find "ROG Gaming Laptop" even without exact keywords!
-  ```
+**Note:** If you skip RAG, the agent falls back to keyword search automatically.
 
-**Note:** If you want to skip RAG for now, the agent will use keyword search as fallback.
-
-**Help:** See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md#rag-setup-required-for-semantic-search) for detailed RAG setup.
-
-### Step 6: Deploy Frontend + Backend (Optional, 10 minutes)
+### Step 6: Deploy Frontend + Backend to Cloud Run (10 minutes)
 
 Skip this step if you only want to test the agent locally.
 
-- [ ] **Update deployment script**
-
-  Edit `deployment/deploy-cloudrun.sh`:
-  ```bash
-  PROJECT_ID="your-project-id"
-  AGENT_ENGINE_RESOURCE_NAME="projects/123/.../reasoningEngines/456"
-  ```
-
 - [ ] **Deploy to Cloud Run**
   ```bash
-  ./deployment/deploy-cloudrun.sh
+  make deploy-cloud-run
   ```
 
 - [ ] **Access web application**
 
-  Open the URL from deployment output:
+  Open the URL from the deployment output:
   ```
   https://customer-support-ai-xxxxx-uc.a.run.app
   ```
 
-### Step 7: Verify Everything Works (2 minutes)
+### Step 7: Run Tests (2 minutes)
 
-- [ ] **Run tests**
+- [ ] **Run all tests**
   ```bash
-  pytest tests/ -v
+  make test
+  ```
+
+  Or run individual layers:
+  ```bash
+  make test-tools        # Pure Python, no LLM (free, fast)
+  make test-unit         # Unit agent eval (LLM calls)
+  make test-integration  # Multi-agent handoff eval (LLM calls)
   ```
 
 - [ ] **Test agent locally**
   ```bash
-  python deployment/deploy.py --action test_local
+  make test-local
   ```
 
-- [ ] **Test a few queries**
-  - "Show me laptops under $600"
-  - "Track order ORD-12345"
-  - "Tell me everything about PROD-001"
+### Step 8: Post-Deploy Evaluation (optional)
+
+Evaluate the live deployed agent against production test cases:
+
+```bash
+make eval-post-deploy AGENT_ENGINE_ID=your-engine-id
+```
+
+Scores appear in **Vertex AI → Experiments → post-deploy-eval**. Results must pass `TOOL_USE_QUALITY ≥ 0.5` and `FINAL_RESPONSE_QUALITY ≥ 0.5`.
+
+### Step 9: Set Up CI/CD (optional)
+
+- [ ] **One-time Cloud Build setup** (IAM, Artifact Registry, Secret Manager)
+  ```bash
+  make setup-cloud-build \
+    PROJECT_ID=your-project-id \
+    REGION=us-central1 \
+    STAGING_BUCKET=your-bucket-name
+  ```
+
+- [ ] **Connect GitHub repo** in Cloud Console → Cloud Build → Triggers → Connect Repository
+
+- [ ] **Create triggers** using the commands printed by the setup script
+
+See **[docs/CI_CD.md](./docs/CI_CD.md)** for full setup instructions.
+
+---
 
 ## 🎉 You're Done!
 
@@ -265,54 +198,43 @@ Your multi-agent customer support system is now deployed and ready to use!
 
 ## What You've Set Up
 
-✅ **Vertex AI Agent Engine** - Serverless agent deployment
-✅ **Firestore Database** - Products, orders, invoices, users
-✅ **RAG Search** - Semantic product search with embeddings (optional)
-✅ **Memory Bank** - Cross-session user preferences
-✅ **Multi-Agent System** - Root + Product + Order + Billing agents
-✅ **Workflow Patterns** - Smart Tool Wrapper, SequentialAgent for validated refunds
-✅ **Cloud Run** - Frontend + Backend web application (optional)
+✅ **Vertex AI Agent Engine** — Serverless agent deployment
+✅ **Firestore Database** — Products, orders, invoices, users
+✅ **RAG Search** — Semantic product search with embeddings
+✅ **Memory Bank** — Cross-session user preferences
+✅ **Multi-Agent System** — Root + Product + Order + Billing agents
+✅ **Sequential Workflow** — Validated refund processing
+✅ **Cloud Run** — Frontend + Backend web application
 
-
-## Next Steps
-
-### Test Different Scenarios
+## Test These Scenarios
 
 1. **Product Search with RAG**
    ```
-   User: "Find me gaming laptops"
-   → Uses semantic search to find relevant products
+   "Find me gaming laptops"
+   → Semantic search finds ROG Gaming Laptop
    ```
 
 2. **Comprehensive Product Info**
    ```
-   User: "Give me full details on PROD-001 including inventory and reviews"
-   → Returns details + inventory + reviews automatically
+   "Tell me everything about PROD-001"
+   → Returns details + inventory + reviews in one call
    ```
 
 3. **Refund Request (SequentialAgent)**
    ```
-   User: "I want a refund for order ORD-12345"
-   → Step 1: Validate order
-   → Step 2: Check eligibility
-   → Step 3: Process refund
+   "I want a refund for order ORD-12345"
+   → Step 1: Validate order ✓
+   → Step 2: Check eligibility ✓
+   → Step 3: Process refund ✓
    ```
 
 4. **Order Tracking**
    ```
-   User: "Where is my order ORD-12345?"
-   → Retrieves order status from Firestore
+   "Where is my order ORD-67890?"
+   → Retrieves order status and tracking info
    ```
 
-### Learn More
-
-- **[PYTHON_SETUP.md](./docs/PYTHON_SETUP.md)** - Python environment setup guide
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Understand the system design
-- **[Testing](./README.md#testing)** - Run comprehensive test suite
-- **[Memory Bank](./README.md#memory-bank)** - How agents remember preferences
-- **[RAG Search](./README.md#rag-search)** - Semantic search explained
-
-### Customize
+## Customize
 
 - **Add new products**: Edit `customer_support_agent/database/seed.py`
 - **Modify agents**: Edit files in `customer_support_agent/agents/`
@@ -321,34 +243,20 @@ Your multi-agent customer support system is now deployed and ready to use!
 
 ## Troubleshooting
 
-If something doesn't work, check:
+1. **[PREREQUISITES.md](./docs/PREREQUISITES.md)** — API/IAM issues
+2. **[ENV_SETUP.md](./docs/ENV_SETUP.md)** — Configuration issues
+3. **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** — Deployment errors
 
-1. **[PYTHON_SETUP.md](./docs/PYTHON_SETUP.md)** - Python/pyenv issues
-2. **[PREREQUISITES.md](./docs/PREREQUISITES.md)** - API/IAM issues
-3. **[ENV_SETUP.md](./docs/ENV_SETUP.md)** - Configuration issues
-4. **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Deployment errors
-5. **[Troubleshooting section](./README.md#troubleshooting)** - Common errors
+```bash
+# Useful debug commands
+gcloud run services logs read customer-support-ai --limit=50
+gcloud ai reasoning-engines list
+make test-local
+```
 
-## Get Help
+## Documentation
 
-- Check logs: `gcloud run services logs read customer-support-ai --limit=50`
-- View agent engine status: `gcloud ai reasoning-engines list`
-- Test locally first: `python deployment/deploy.py --action test_local`
-
-
-## Production Deployment
-
-For production use:
-
-1. Use Cloud Secret Manager for credentials
-2. Set up monitoring and alerts
-3. Configure auto-scaling on Cloud Run
-4. Enable HTTPS and custom domain
-5. Set up CI/CD pipeline
-6. Review security settings
-
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for production deployment guide.
-
----
-
-**Congratulations! You've successfully deployed a production-ready multi-agent customer support system!** 🎊
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System design and agent architecture
+- **[EVAL_ARCHITECTURE.md](./docs/EVAL_ARCHITECTURE.md)** — Evaluation strategy (3 layers + post-deploy)
+- **[CI_CD.md](./docs/CI_CD.md)** — Cloud Build pipeline setup
+- **[MEMORY_BANK.md](./docs/MEMORY_BANK.md)** — Memory Bank implementation

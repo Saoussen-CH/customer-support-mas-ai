@@ -5,32 +5,33 @@ This module contains the product specialist agent that handles all product-relat
 """
 
 from google.adk.agents import Agent
-from google.adk.tools import AgentTool
 from google.adk.tools import preload_memory_tool
+
+# Import workflow agents - DISABLED (not used anymore)
+# from customer_support_agent.agents.workflow_agents import (
+#     multi_product_details_loop,
+# )
+# Import callbacks
+from customer_support_agent.agents.callbacks import (
+    auto_save_to_memory,
+    log_system_instructions,
+)
 
 # Import centralized configuration
 from customer_support_agent.config import get_agent_config
 
 # Import tools
 from customer_support_agent.tools import (
-    search_products,
-    get_product_info,  # Smart unified tool (recommended for comprehensive info)
-    get_all_saved_products_info,  # Get all products from last search (efficient!)
-    get_product_details,  # For "only details" requests
-    get_last_mentioned_product,
     check_inventory,  # For "only inventory" requests
+    get_all_saved_products_info,  # Get all products from last search (efficient!)
+    get_last_mentioned_product,
+    get_product_details,  # For "only details" requests
+    get_product_info,  # Smart unified tool (recommended for comprehensive info)
     get_product_reviews,  # For "only reviews" requests
+    search_products,
 )
 
-# Import workflow agents - DISABLED (not used anymore)
-# from customer_support_agent.agents.workflow_agents import (
-#     multi_product_details_loop,
-# )
-
-# Import callbacks
-from customer_support_agent.agents.callbacks import auto_save_to_memory, track_agent_start
-from customer_support_agent.agents.callbacks_explicit import auto_save_to_memory_explicit
-from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
+# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
 
 
 # =============================================================================
@@ -95,38 +96,40 @@ For ANY product information request, ALWAYS use get_product_info(product_id) UNL
    → Use get_all_saved_products_info if they're from a previous search
    → Or call get_product_info multiple times for each product
 
-=== MEMORY-AWARE RESPONSES ===
+=== PRELOADED USER MEMORIES (READ THIS FIRST!) ===
 
-CRITICAL: PreloadMemoryTool automatically loads past memories. CHECK THEM FIRST!
+User memories are AUTOMATICALLY PRELOADED into your context before you respond.
+Look for a section in your context labeled "Memories" or containing user facts like:
+- "User prefers laptops under $1000"
+- "User likes gaming products"
 
-**SCENARIO 1: First time user states preference (no memory yet)**
-Customer: "I prefer laptops under $600"
-You: "I'll keep that in mind! Here are laptops under $600: [results]"
-Action: search_products("laptops under $600")
+These memories are ALREADY IN YOUR CONTEXT. You do NOT need to call any tool to access them.
+You MUST apply these preferences AUTOMATICALLY to EVERY response.
 
-**SCENARIO 2: User requests products and you have budget memory**
-Memory: "User prefers laptops under $600"
-Customer: "show me laptops"
-You: "I see you previously mentioned a $600 budget for laptops. Here are options in your budget: [results]. Would you like to see higher-priced options too?"
-Action: search_products("laptops under $600")
+**HOW TO USE PRELOADED MEMORIES:**
 
-**SCENARIO 3: User explicitly asks to see ALL products (override budget)**
-Memory: "User prefers laptops under $600"
-Customer: "show me all laptops" or "show all options"
-You: "Sure! Here are all our laptops, including those over your $600 budget: [all results]"
-Action: search_products("laptops") ← NO price constraint
+1. SCAN your context for any preloaded user preferences (budget, category preferences, etc.)
+2. APPLY them automatically - don't wait for user to ask
+3. MENTION them in your response: "Based on your preference for..."
+4. RECOMMEND matching products FIRST
+5. THEN offer alternatives that don't match
 
-**SCENARIO 4: User updates their budget**
-Memory: "User prefers laptops under $600"
-Customer: "I can go up to $800 now"
-You: "Got it, I've updated your budget preference. Here are laptops under $800: [results]"
-Action: search_products("laptops under $800")
+**EXAMPLE - User asks "do you have gaming laptops?" and context contains "User prefers laptops under $1000":**
 
-**KEY RULES:**
-- If memory exists, ACKNOWLEDGE it ("I remember you prefer...", "I see you previously mentioned...")
-- Always offer to show options beyond budget ("Would you like to see higher-priced options?")
-- If user says "all" or "everything", ignore budget and show all products
-- Never say "I'll keep that in mind" if you already have it in memory!
+CORRECT:
+"Based on your preference for laptops under $1000, I recommend the **ProBook Laptop 15** ($999.99).
+
+There's also the **ROG Gaming Laptop** ($1499.99) which exceeds your budget. Would you like details on it anyway?"
+
+WRONG:
+"I found two gaming laptops: ROG Gaming ($1499.99) and ProBook ($999.99)..."
+(This ignores the preloaded memory!)
+
+**RULES:**
+- If you see a budget preference in your context → FILTER and RECOMMEND accordingly
+- ALWAYS start with "Based on your preference..." when memory exists
+- Show budget-matching products FIRST, then mention others as alternatives
+- If user says "show all", still highlight which match their preference
 
 === KEY PRINCIPLES ===
 - **Default to comprehensive**: When in doubt, use get_product_info
@@ -136,7 +139,7 @@ Action: search_products("laptops under $800")
 - **Better to over-deliver**: Complete info > partial info
 - **Be helpful**: Provide all relevant details proactively""",
     tools=[
-        preload_memory_tool.PreloadMemoryTool(),  # Load user memories at start
+        preload_memory_tool.PreloadMemoryTool(),  # Preloads user memories into context automatically
         search_products,
         get_product_info,  # PRIMARY tool - use by default for single products
         get_all_saved_products_info,  # EFFICIENT tool for multiple products from last search
@@ -148,7 +151,7 @@ Action: search_products("laptops under $800")
         # AgentTool(multi_product_details_loop)  # DISABLED: Too slow, causes timeouts
     ],
     # before_agent_callback=track_agent_start,  # Track when agent starts
-    # after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context)
-    # after_agent_callback=auto_save_to_memory_explicit,  # EXPLICIT (notebook pattern)
-    after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
+    before_model_callback=log_system_instructions,  # DEBUG: Log system instruction with preloaded memories
+    after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context) ✅ Active
+    # after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
 )

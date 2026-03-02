@@ -5,26 +5,25 @@ This guide explains how to configure the customer support system using `.env` fi
 ## Quick Start
 
 ```bash
-# 1. Copy example files
+# 1. Copy example file
 cp .env.example .env
-cp backend/.env.example backend/.env
 
-# 2. Edit .env files with your values
-nano .env              # Edit root .env
-nano backend/.env      # Edit backend .env
+# 2. Edit .env with your values
+nano .env
 ```
 
 ## .env File Locations
 
-### Root `.env` (Required for deployment & agent code)
+### Root `.env` (Single source of truth)
 
 **Location:** `/customer-support-mas/.env`
 
 **Used by:**
 - `deployment/deploy.py` - Agent Engine deployment
+- `deployment/deploy-cloudrun.sh` - Cloud Run deployment
 - `customer_support_agent/` - Agent system
+- `backend/app/config.py` - FastAPI backend (pydantic-settings reads `../.env`)
 - `scripts/add_embeddings.py` - RAG setup
-- `online_evaluation/` - Evaluation scripts
 
 **Variables:**
 ```bash
@@ -34,21 +33,6 @@ GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-name
 AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
 GOOGLE_GENAI_USE_VERTEXAI=1
 FIRESTORE_DATABASE=customer-support-db
-```
-
-### Backend `.env` (Required for FastAPI backend)
-
-**Location:** `/customer-support-mas/backend/.env`
-
-**Used by:**
-- `backend/app/config.py` - Pydantic settings
-- `backend/app/agent_client.py` - Agent Engine client
-
-**Variables:**
-```bash
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
 FRONTEND_URL=http://localhost:3000
 PORT=8000
 ```
@@ -118,7 +102,7 @@ class Settings(BaseSettings):
     google_cloud_project: str
 
     class Config:
-        env_file = ".env"  # Automatically loads backend/.env
+        env_file = "../.env"  # Loads root .env (single source of truth)
 ```
 
 ### Frontend .env Loading
@@ -162,10 +146,9 @@ python deployment/deploy.py
 # Example: projects/123/locations/us-central1/reasoningEngines/456
 ```
 
-### 4. Create .env Files
+### 4. Create .env File
 
 ```bash
-# Root .env
 cat > .env << EOF
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_LOCATION=us-central1
@@ -173,13 +156,6 @@ GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-staging
 AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
 GOOGLE_GENAI_USE_VERTEXAI=1
 FIRESTORE_DATABASE=customer-support-db
-EOF
-
-# Backend .env
-cat > backend/.env << EOF
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
 FRONTEND_URL=http://localhost:3000
 PORT=8000
 EOF
@@ -191,9 +167,8 @@ EOF
 # Test deployment script reads .env
 python deployment/deploy.py --action test_local
 
-# Test backend reads .env
-cd backend
-python -c "from app.config import settings; print(settings.google_cloud_project)"
+# Test backend reads .env (run from project root)
+python -c "from backend.app.config import settings; print(settings.google_cloud_project)"
 ```
 
 ## Security Best Practices
@@ -253,11 +228,10 @@ export GOOGLE_CLOUD_PROJECT=your-project-id
 
 **Solution:**
 ```bash
-# Ensure backend/.env exists
-ls -la backend/.env
+# Ensure root .env exists
+ls -la .env
 
-# Verify it's in the correct location
-cd backend
+# Verify backend reads it correctly (run from project root)
 python -c "import os; print(os.path.exists('.env'))"
 ```
 

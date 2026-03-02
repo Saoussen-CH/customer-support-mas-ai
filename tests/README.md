@@ -4,360 +4,389 @@ Comprehensive test suite for validating the customer support multi-agent system 
 
 ---
 
-## 📁 Test Structure
+## Test Structure
 
 ```
 tests/
-├── conftest.py                    # Pytest configuration and fixtures
-├── test_customer_support.py       # Main test entry point (run this)
+├── conftest.py                          # Root fixtures: mock Firestore, mock RAG, mock verification
+├── test_config.json                     # Global evaluation criteria (for adk eval CLI)
+├── mock_firestore.py                    # In-memory Firestore (seed data)
+├── mock_rag_search.py                   # Keyword-based RAG search (no embeddings)
 │
-├── unit/                          # Unit tests for individual agents
-│   ├── test_refund_standalone.py  # Standalone refund workflow tests
-│   ├── product_search.evalset.json
-│   ├── order_tracking.evalset.json
-│   ├── billing_queries.evalset.json
-│   ├── sequential_agent.evalset.json
-│   ├── refund_passing.evalset.json
-│   └── refund_failing.evalset.json
+├── eval_configs/                        # Switchable eval profiles (EVAL_PROFILE env var)
+│   ├── __init__.py                      # load_eval_config(), load_eval_set(), get_eval_profile()
+│   ├── unit/
+│   │   ├── fast.json                    # Rouge-1 only (free)
+│   │   ├── standard.json               # + tool_trajectory (free, default)
+│   │   └── full.json                    # + final_response_match_v2 (LLM judge)
+│   ├── integration/
+│   │   ├── fast.json                    # Rouge-1 only (free)
+│   │   ├── standard.json               # + rubric_based_tool_use (LLM judge, default)
+│   │   └── full.json                    # + final_response_match_v2 (LLM judge)
+│   └── post_deploy/
+│       ├── standard.json               # TOOL_USE_QUALITY + FINAL_RESPONSE_QUALITY
+│       └── full.json                    # + HALLUCINATION + SAFETY
 │
-├── integration/                   # Integration tests for agent coordination
-│   ├── memory_persistence.evalset.json
+├── unit/                                # Unit Tests (Layer 1-2)
+│   ├── conftest.py                      # Vertex AI init + mock_backends autouse fixture
+│   ├── test_config.json                 # Unit criteria for adk eval CLI (backward compat)
+│   │
+│   │  # LLM-based agent eval tests (ADK AgentEvaluator, num_runs=2)
+│   ├── test_agent_eval_ci.py            # Agent eval test runner (7 test classes)
+│   ├── product_agent_direct.test.json   # Product agent: search, details, inventory, reviews (15 cases)
+│   ├── order_agent_direct.test.json     # Order agent: track, history, auth (10 cases)
+│   ├── billing_direct.test.json         # Billing agent: invoice, payment, auth (12 cases)
+│   ├── refund_workflow_direct.test.json  # Refund eligibility: check_if_refundable (5 cases)
+│   │
+│   │  # Pure Python tests (no LLM)
+│   ├── test_tools.py                    # Direct tool function tests against mock Firestore
+│   ├── test_refund_standalone.py        # Standalone refund workflow (direct function calls)
+│   ├── test_mock_rag.py                 # MockRAGProductSearch tests (keyword, price, plural)
+│   │
+│   └── cases/                           # Additional eval datasets
+│       ├── test_config.json
+│       ├── out_of_scope.test.json       # Error handling: out-of-scope + ambiguous (6 cases)
+│       ├── authorization_cross_user.test.json  # Auth: user1 → user2 (3 cases)
+│       └── demo_user_002.test.json      # Auth: user2 → user1 (2 cases)
+│
+├── integration/                         # Integration Tests (Layer 3)
+│   ├── conftest.py                      # Vertex AI init + mock_backends
+│   ├── test_config.json                 # Integration criteria for adk eval CLI (backward compat)
+│   │
+│   │  # LLM-based orchestrator handoff tests (ADK AgentEvaluator, num_runs=2)
+│   ├── test_integration_eval_ci.py      # Integration test runner (9 tests)
+│   ├── product_agent_handoffs.evalset.json
+│   ├── order_tracking_handoffs.evalset.json
+│   ├── billing_handoffs.evalset.json
+│   ├── refund_agent_handoffs.evalset.json
+│   ├── error_handling.evalset.json
 │   ├── multi_agent_handoffs.evalset.json
-│   └── workflow_integration.evalset.json
+│   └── e2e_customer_journey.evalset.json
 │
-└── docs/                          # Test documentation
-    ├── SETUP.md                   # Setup instructions
-    └── REFUND_WORKFLOW_TESTS.md   # Refund workflow documentation
+└── post_deploy/                         # Post-Deploy Eval (Layer 4)
+    ├── datasets/
+    │   └── post_deploy_cases.json       # 10 eval cases (product, order, billing, refund)
+    └── dataset_converter.py             # ADK evalset → Vertex AI DataFrame converter
 ```
 
 ---
 
-## 🚀 Quick Start
+## Test Layers
 
-### Run All Tests
+### Layer 1: Pure Python (no LLM, no cost)
+
+| File | Tests | What it covers |
+|------|-------|----------------|
+| `unit/test_mock_rag.py` | 5 | MockRAGProductSearch: keyword match, price filter, plural/singular, no results |
+| `unit/test_tools.py` | 17 | All tool functions directly: product, order, billing, workflow tools |
+| `unit/test_refund_standalone.py` | 5 | Refund workflow sequence: passing (ORD-12345, ORD-22222, ORD-67890), failing (ORD-11111, ORD-99999) |
+
+### Layer 2: Agent Eval — Unit (LLM calls, num_runs=2)
+
+| Test Class | Method | Dataset | Agent module | Cases |
+|------------|--------|---------|--------------|-------|
+| `TestProductAgentCI` | `test_product_agent_direct` | `product_agent_direct.test.json` | `test_product_agent` | 15 |
+| `TestOrderAgentCI` | `test_order_agent_direct` | `order_agent_direct.test.json` | `test_order_agent` | 10 |
+| `TestBillingAgentCI` | `test_billing_agent_direct` | `billing_direct.test.json` | `test_billing_agent` | 12 |
+| `TestRefundEligibilityCI` | `test_refund_eligibility` | `refund_workflow_direct.test.json` | `test_refund_eligibility` | 5 |
+| `TestErrorHandlingCI` | `test_out_of_scope` | `cases/out_of_scope.test.json` | `test_root_agent` | 6 |
+| `TestAuthorizationUser1CI` | `test_cross_user_access_user1` | `cases/authorization_cross_user.test.json` | `test_root_agent` | 3 |
+| `TestAuthorizationUser2CI` | `test_cross_user_access_user2` | `cases/demo_user_002.test.json` | `test_root_agent` | 2 |
+
+> **Note:** Full refund flow (passing/denied) and SequentialAgent tests are NOT tested via AgentEvaluator because the SequentialAgent's gate-stopping behavior is non-deterministic. Instead, they are tested via direct tool calls in `test_tools.py` and `test_refund_standalone.py`.
+
+### Layer 3: Agent Eval — Integration (LLM calls, num_runs=2)
+
+| Test Class | Method | Dataset |
+|------------|--------|---------|
+| `TestMultiAgentHandoffs` | `test_product_agent_handoffs` | `product_agent_handoffs.evalset.json` |
+| `TestMultiAgentHandoffs` | `test_order_tracking_handoffs` | `order_tracking_handoffs.evalset.json` |
+| `TestMultiAgentHandoffs` | `test_billing_agent_handoffs` | `billing_handoffs.evalset.json` |
+| `TestMultiAgentHandoffs` | `test_refund_agent_handoffs` | `refund_agent_handoffs.evalset.json` |
+| `TestMultiAgentHandoffs` | `test_error_handling` | `error_handling.evalset.json` |
+| `TestMultiAgentHandoffs` | `test_multi_agent_handoffs` | `multi_agent_handoffs.evalset.json` |
+| `TestEndToEnd` | `test_e2e_customer_journey` | `e2e_customer_journey.evalset.json` |
+| `TestIntegrationSuite` | `test_all_integration` | `tests/integration/` (all evalsets) |
+
+### Layer 4: Post-Deploy Eval (Vertex AI Eval Service, deployed Agent Engine)
+
+Evaluates the **deployed** agent on Agent Engine using the Vertex AI Gen AI Evaluation Service. Unlike Layers 1-3 which test locally with mocked backends, this layer tests the full deployed stack with real Firestore, real network calls, and real sub-agent execution.
+
+| Script | Dataset | Metrics | Environment |
+|--------|---------|---------|-------------|
+| `scripts/eval_vertex.py` | `tests/post_deploy/datasets/post_deploy_cases.json` (10 cases) | TOOL_USE_QUALITY, FINAL_RESPONSE_QUALITY | Deployed Agent Engine |
+
+**Key difference from Layers 1-3:** Uses a custom inference adapter (`async_stream_query()`) instead of the SDK's `run_inference()`. The SDK's parser fails for multi-agent systems using `AgentTool` because it only captures the first 2 events (function_call + function_response) and misses the root agent's final text response. See `docs/EVAL_ARCHITECTURE.md` for full details.
+
 ```bash
-pytest tests/test_customer_support.py -v
-```
+# Run post-deploy eval
+python scripts/eval_vertex.py \
+    --agent-engine-id projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID \
+    --output eval_results.json
 
-### Run Specific Test Categories
-
-#### Unit Tests Only
-```bash
-pytest tests/test_customer_support.py::TestUnitEvaluation -v
-```
-
-#### Integration Tests Only
-```bash
-pytest tests/test_customer_support.py::TestIntegrationEvaluation -v
-```
-
-#### Refund Workflow Tests Only
-```bash
-# Using ADK AgentEvaluator
-pytest tests/test_customer_support.py::TestUnitEvaluation::test_sequential_agent -v
-
-# Standalone (faster, no network)
-pytest tests/unit/test_refund_standalone.py -v
-```
-
-### Run Regression Suite (All Tests)
-```bash
-pytest tests/test_customer_support.py::TestRegressionSuite -v
-```
-
----
-
-## 📋 Test Categories
-
-### 1. Unit Tests (`tests/unit/`)
-
-Tests for individual agent capabilities and tools.
-
-| Test File | Description | Test Count |
-|-----------|-------------|------------|
-| `product_search.evalset.json` | Product search, filtering, semantic queries | 3 |
-| `order_tracking.evalset.json` | Order tracking, history, status checks | 8 |
-| `billing_queries.evalset.json` | Invoice retrieval, payment status | 7 |
-| `sequential_agent.evalset.json` | Refund workflow with validation gates | 7 |
-| `refund_passing.evalset.json` | Valid refund scenarios | 3 |
-| `refund_failing.evalset.json` | Invalid refund scenarios | 2 |
-| `test_refund_standalone.py` | Direct tool testing (no ADK) | 5 |
-
-**Total Unit Tests:** 35 test cases
-
-### 2. Integration Tests (`tests/integration/`)
-
-Tests for multi-agent coordination and complex workflows.
-
-| Test File | Description | Test Count |
-|-----------|-------------|------------|
-| `memory_persistence.evalset.json` | Cross-session memory (Memory Bank) | 7 |
-| `multi_agent_handoffs.evalset.json` | Agent-to-agent coordination | 7 |
-| `workflow_integration.evalset.json` | Complex multi-domain workflows | 8 |
-
-**Total Integration Tests:** 22 test cases
-
----
-
-## 🎯 Test Coverage
-
-### Agent Coverage
-- ✅ **Root Agent** - Request routing and coordination
-- ✅ **Product Agent** - Search, details, inventory, reviews
-- ✅ **Order Agent** - Tracking, history, status
-- ✅ **Billing Agent** - Invoices, payments
-- ✅ **Refund Workflow** - Sequential validation gates
-
-### Feature Coverage
-- ✅ **RAG Semantic Search** - Vector embeddings, keyword fallback
-- ✅ **Memory Bank** - Long-term user preferences
-- ✅ **Multi-Agent Handoffs** - Product → Order → Billing
-- ✅ **Sequential Workflows** - Validate → Check → Process
-- ✅ **Error Handling** - Invalid orders, failed eligibility
-
-### Tool Coverage
-- ✅ **Product Tools** (7 tools)
-- ✅ **Order Tools** (3 tools)
-- ✅ **Billing Tools** (3 tools)
-- ✅ **Workflow Tools** (3 tools)
-
-**Total Test Coverage:** 57 test cases across all domains
-
----
-
-## 🧪 Test Types
-
-### 1. Evaluation Tests (ADK AgentEvaluator)
-Uses Google ADK's `AgentEvaluator` to test full agent workflows with network calls to Vertex AI.
-
-**Location:** All `.evalset.json` files
-**Run via:** `test_customer_support.py`
-
-**Characteristics:**
-- ✅ Tests full agent pipeline
-- ✅ Validates LLM responses
-- ✅ Checks tool invocations
-- ⚠️ Requires network connection
-- ⚠️ Slower execution (API calls)
-
-### 2. Standalone Tests (Direct Testing)
-Direct function calls without ADK infrastructure.
-
-**Location:** `unit/test_refund_standalone.py`
-**Run via:** `pytest tests/unit/test_refund_standalone.py`
-
-**Characteristics:**
-- ✅ Fast execution (~8 seconds)
-- ✅ No network required (local Firestore)
-- ✅ Direct tool validation
-- ❌ Doesn't test agent coordination
-
----
-
-## 📊 Test Execution Modes
-
-### Development Mode (Fast)
-```bash
-# Run standalone tests only
-pytest tests/unit/test_refund_standalone.py -v
-```
-
-### CI/CD Mode (Comprehensive)
-```bash
-# Run all tests including network-dependent evaluations
-pytest tests/test_customer_support.py::TestRegressionSuite -v
-```
-
-### Specific Feature Testing
-```bash
-# Test product agent only
-pytest tests/test_customer_support.py::TestUnitEvaluation::test_product_search -v
-
-# Test order agent only
-pytest tests/test_customer_support.py::TestUnitEvaluation::test_order_tracking -v
-
-# Test billing agent only
-pytest tests/test_customer_support.py::TestUnitEvaluation::test_billing_queries -v
-
-# Test refund workflow only
-pytest tests/test_customer_support.py::TestUnitEvaluation::test_sequential_agent -v
+# Debug: save raw inference results
+python scripts/eval_vertex.py \
+    --agent-engine-id projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID \
+    --save-inference inference_debug.json
 ```
 
 ---
 
-## 🔧 Prerequisites
+## Test Infrastructure
 
-### 1. Environment Setup
-Ensure `.env` file is configured:
+### Mocking (tests/conftest.py + tests/unit/conftest.py)
+
+All tests run against **in-memory mocks** — no live Firestore or RAG calls:
+
+| Fixture | Scope | Location | What it does |
+|---------|-------|----------|--------------|
+| `ci_environment_setup` | session | `unit/conftest.py` | Loads `.env`, inits Vertex AI |
+| `mock_backends` | function, autouse | `unit/conftest.py` | Patches Firestore + RAG for AgentEvaluator re-runs |
+| `mock_db` | session | `conftest.py` | Patches Firestore with `MockFirestoreClient` (seed data) |
+| `mock_rag` | session | `conftest.py` | Patches RAG search with `MockRAGProductSearch` (keyword-based) |
+| `verify_mock_active` | function, autouse | `conftest.py` | Asserts `MockFirestoreClient` is active — fails fast if mock leaks |
+
+> **Critical:** The `mock_backends` autouse fixture in `unit/conftest.py` ensures that when `AgentEvaluator.evaluate()` re-runs the agent, it uses the same mocked data that was used to generate the eval datasets.
+
+### Agent Wrapper Modules
+
+AgentEvaluator requires a module with an `agent` attribute. These thin wrappers expose individual agents:
+
+| Wrapper | Agent | Purpose |
+|---------|-------|---------|
+| `customer_support_agent/test_product_agent.py` | `product_agent` | Direct product agent tests |
+| `customer_support_agent/test_order_agent.py` | `order_agent` | Direct order agent tests |
+| `customer_support_agent/test_billing_agent.py` | `billing_agent` | Direct billing agent tests |
+| `customer_support_agent/test_refund_eligibility.py` | Minimal agent with `check_if_refundable` | Refund eligibility tests |
+| `customer_support_agent/test_root_agent.py` | `root_agent` (memory callback disabled) | Error handling, authorization tests |
+
+### Logging
+
+Both `tests/unit/conftest.py` and `tests/integration/conftest.py` use `logging.info()` (not `print()`).
+
+### Flaky Detection
+
+All `AgentEvaluator.evaluate()` calls use `num_runs=2` to catch non-deterministic LLM failures.
+
+---
+
+## Running Tests
+
 ```bash
+# Pure Python tests only (fast, free)
+pytest tests/unit/test_mock_rag.py tests/unit/test_tools.py tests/unit/test_refund_standalone.py -v -s
+
+# Unit agent eval tests (default: standard profile)
+pytest tests/unit/test_agent_eval_ci.py -v -s
+
+# Unit agent eval tests with specific profile
+EVAL_PROFILE=fast pytest tests/unit/test_agent_eval_ci.py -v -s
+EVAL_PROFILE=full pytest tests/unit/test_agent_eval_ci.py -v -s
+
+# Single agent test
+pytest tests/unit/test_agent_eval_ci.py::TestProductAgentCI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestOrderAgentCI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestBillingAgentCI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestRefundEligibilityCI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestErrorHandlingCI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestAuthorizationUser1CI -v -s
+pytest tests/unit/test_agent_eval_ci.py::TestAuthorizationUser2CI -v -s
+
+# Integration tests (default: standard profile)
+pytest tests/integration/test_integration_eval_ci.py -v -s
+
+# Integration with specific profile
+EVAL_PROFILE=fast pytest tests/integration/test_integration_eval_ci.py -v -s
+EVAL_PROFILE=full pytest tests/integration/test_integration_eval_ci.py -v -s
+
+# Single integration test
+pytest tests/integration/test_integration_eval_ci.py::TestMultiAgentHandoffs::test_product_agent_handoffs -v -s
+
+# Everything (layers 1-3, local)
+pytest tests/ -v -s
+
+# Post-deploy eval (layer 4, requires deployed Agent Engine)
+python scripts/eval_vertex.py \
+    --agent-engine-id projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID
+
+# Post-deploy with full profile (+ hallucination + safety)
+python scripts/eval_vertex.py \
+    --agent-engine-id projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID \
+    --profile full
+```
+
+---
+
+## Generating Eval Datasets
+
+There are **two ways** to create eval datasets:
+
+### Option A: Script (Recommended)
+
+**Unit tests** — `scripts/generate_eval_dataset.py` (single-turn, individual agents):
+
+```bash
+python scripts/generate_eval_dataset.py --dry-run                    # preview
+python scripts/generate_eval_dataset.py --agent product --delay 10   # one agent
+python scripts/generate_eval_dataset.py --delay 10                   # all agents
+# Available: product, order, billing, refund, error, auth_user1, auth_user2
+```
+
+**Integration tests** — `scripts/generate_integration_evalset.py` (multi-turn, root orchestrator):
+
+```bash
+python scripts/generate_integration_evalset.py --dry-run                          # preview
+python scripts/generate_integration_evalset.py --suite product_handoffs --delay 10 # one suite
+python scripts/generate_integration_evalset.py --delay 10                          # all suites
+# Available: product_handoffs, order_handoffs, billing_handoffs, refund_handoffs,
+#            multi_agent, e2e, error_handling, session_persistence
+```
+
+**How it works:**
+1. Uses `InMemoryRunner` to run agents locally via Vertex AI Gemini API
+2. Mocks Firestore + RAG (same mocks as test suite)
+3. Captures `Event` objects → converts to ADK `EvalSet` pydantic models
+4. Integration script maintains session state across multi-turn conversations
+5. Retries on 429 rate limits with exponential backoff
+6. Outputs JSON compatible with `AgentEvaluator.evaluate()`
+
+### Option B: ADK Web UI
+
+Manual approach via the ADK web evaluation dashboard:
+
+1. `adk web customer_support_agent` (integration) or `adk web customer_support_agent.test_product_agent` (unit)
+2. Chat with the agent, verify traces
+3. Eval tab → Create Evaluation Set → Add Current Session → Export
+4. Save to `tests/unit/*.test.json` or `tests/integration/*.evalset.json`
+
+---
+
+## Eval Profiles
+
+Agent eval tests use a **profile-based evaluation config system** controlled by the `EVAL_PROFILE` environment variable. Defaults to `standard` if not set.
+
+```bash
+EVAL_PROFILE=fast pytest tests/unit/test_agent_eval_ci.py -v -s
+EVAL_PROFILE=full pytest tests/integration/test_integration_eval_ci.py -v -s
+```
+
+### Unit Test Profiles (`tests/eval_configs/unit/`)
+
+| Profile | Metrics | Cost |
+|---------|---------|------|
+| **fast** | `response_match_score: 0.15` (Rouge-1) | Free |
+| **standard** | + `tool_trajectory_avg_score: 0.5` | Free |
+| **full** | + `final_response_match_v2: 0.5` (LLM judge) | Gemini Flash calls |
+
+### Integration Test Profiles (`tests/eval_configs/integration/`)
+
+| Profile | Metrics | Cost |
+|---------|---------|------|
+| **fast** | `response_match_score: 0.3` (Rouge-1) | Free |
+| **standard** | + `rubric_based_tool_use_quality_v1: 0.5` (LLM judge with 3 rubrics) | Gemini Flash calls |
+| **full** | + `final_response_match_v2: 0.5` (LLM judge) | More Gemini Flash calls |
+
+### Why Different Metrics for Unit vs Integration?
+
+- **Unit tests** call tools with structured args (e.g., `product_id: "PROD-001"`) — exact `tool_trajectory_avg_score` matching works reliably
+- **Integration tests** route through the root agent which passes free-form `request` args to sub-agents — the LLM paraphrases differently each run (e.g., expected `"laptops"` vs actual `"Show me laptops"`), so `rubric_based_tool_use_quality_v1` with semantic rubrics is required
+
+### Integration Rubrics (standard + full)
+
+| Rubric ID | What it checks |
+|-----------|---------------|
+| `correct_agent_delegation` | Query routed to correct sub-agent (product/order/billing) |
+| `relevant_request` | Request passed to sub-agent is semantically relevant |
+| `tool_called` | At least one tool call or delegation occurs |
+
+### CI/CD Profile Mapping
+
+```
+pull_request      →  EVAL_PROFILE=fast      (free, ~1min)
+push to main      →  EVAL_PROFILE=standard   (LLM judge, ~5min)
+schedule/dispatch →  EVAL_PROFILE=full       (all metrics, ~10min)
+```
+
+### Legacy Config Files
+
+The `test_config.json` files in `tests/`, `tests/unit/`, and `tests/integration/` are kept for backward compatibility with the `adk eval` CLI command. The profile system is used by the pytest-based test runners.
+
+---
+
+## Refund Workflow Testing
+
+The refund workflow uses a **SequentialAgent** — tools must execute in order:
+
+```
+validate_order_id → check_refund_eligibility → process_refund
+```
+
+| Scenario | Order | Tested via | Result |
+|----------|-------|-----------|--------|
+| Valid refund (in transit) | ORD-12345 | AgentEvaluator + standalone | Approved |
+| Valid refund (delivered, in window) | ORD-67890 | AgentEvaluator + standalone | Approved |
+| Valid refund (processing) | ORD-22222 | standalone | Approved |
+| Denied (past 30-day window) | ORD-11111 | standalone + test_tools | Denied |
+| Invalid order | ORD-99999 | standalone + test_tools | Error |
+| Eligibility check only | Various | AgentEvaluator (`test_refund_eligibility`) | Checked |
+
+> Failing refund scenarios can't be reliably tested via AgentEvaluator because the LLM paraphrases `reason` args non-deterministically. They are tested deterministically via direct tool calls in `test_tools.py` and `test_refund_standalone.py`.
+
+---
+
+## Test Data (Seed)
+
+### Orders
+
+| Order ID | Status | Refund Eligible | Reason |
+|----------|--------|-----------------|--------|
+| ORD-12345 | In Transit | Yes | Can cancel |
+| ORD-22222 | Processing | Yes | Can cancel before ship |
+| ORD-67890 | Delivered | Yes | Within 30-day window |
+| ORD-11111 | Delivered | No | Past 30-day window |
+| ORD-99999 | N/A | N/A | Does not exist |
+
+### Products
+
+| Product ID | Name | Price |
+|------------|------|-------|
+| PROD-001 | ProBook Laptop 15 | $999.99 |
+| PROD-002 | Wireless Headphones Pro | $199.99 |
+| PROD-003 | Mechanical Gaming Keyboard | $149.99 |
+| PROD-006 | ROG Gaming Laptop | $1,499.99 |
+
+---
+
+## Prerequisites
+
+### Layers 1-3 (Local Tests)
+
+```bash
+# .env file
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_GENAI_USE_VERTEXAI=1
-```
 
-### 2. Database Seeding
-Seed Firestore with test data:
-```bash
-python customer_support_agent/database/seed.py --project YOUR_PROJECT_ID
-```
-
-### 3. Dependencies
-Install test dependencies:
-```bash
+# Install
 pip install -r requirements.txt
+pip install -e .
 ```
 
----
+### Layer 4 (Post-Deploy Eval)
 
-## 📖 Test Data
+Requires everything above, plus:
 
-### Sample Orders (Firestore)
-
-| Order ID | Status | Date | Refund Eligible | Reason |
-|----------|--------|------|-----------------|--------|
-| ORD-67890 | Delivered | 2025-01-14 | ✅ Yes | Within 30-day window |
-| ORD-12345 | In Transit | 2025-01-15 | ✅ Yes | Can cancel |
-| ORD-22222 | Processing | 2025-01-12 | ✅ Yes | Can cancel before ship |
-| ORD-11111 | Delivered | 2024-12-24 | ❌ No | Past 30-day window |
-
-### Sample Products
-- **PROD-001**: ProBook Laptop 15 ($999.99)
-- **PROD-002**: Wireless Headphones Pro ($199.99)
-- **PROD-006**: ROG Gaming Laptop ($1499.99)
-
----
-
-## 🐛 Troubleshooting
-
-### Database Not Seeded
-**Error:** `Order not found` or tests fail with `invalid` status
-
-**Solution:**
 ```bash
-python customer_support_agent/database/seed.py --project YOUR_PROJECT_ID --clear
-```
+# Additional .env vars
+GOOGLE_CLOUD_STORAGE_BUCKET=gs://your-bucket-name   # GCS bucket for eval results
+AGENT_ENGINE_RESOURCE_NAME=projects/PROJECT_NUMBER/locations/LOCATION/reasoningEngines/ENGINE_ID
 
-### Network Timeouts
-**Error:** Connection timeouts to Google APIs
-
-**Solution:** Run standalone tests instead:
-```bash
-pytest tests/unit/test_refund_standalone.py -v
-```
-
-### Import Errors
-**Error:** Cannot import workflow tools
-
-**Solution:** Verify tools are exported in `customer_support_agent/tools/__init__.py`
-
-### Evaluation Format Errors
-**Error:** `must contain a list of dictionaries`
-
-**Solution:** Ensure `.evalset.json` files don't have `description` fields at eval_case level
-
----
-
-## 📝 Adding New Tests
-
-### 1. Add Unit Test
-Create new `.evalset.json` in `tests/unit/`:
-
-```json
-{
-  "eval_set_id": "my_new_test",
-  "eval_cases": [
-    {
-      "eval_id": "test_case_1",
-      "conversation": [
-        {
-          "user_content": {
-            "parts": [{"text": "User query here"}],
-            "role": "user"
-          },
-          "final_response": {
-            "parts": [{"text": "Expected response"}],
-            "role": "model"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-### 2. Add Test Method
-In `test_customer_support.py`:
-
-```python
-@pytest.mark.asyncio
-async def test_my_new_feature(self):
-    """Test description here."""
-    await AgentEvaluator.evaluate(
-        agent_module="customer_support_agent.main",
-        eval_dataset_file_path_or_dir="tests/unit/my_new_test.evalset.json",
-        print_detailed_results=False
-    )
-```
-
-### 3. Add Standalone Test
-Create test file in `tests/unit/`:
-
-```python
-class TestMyFeature:
-    def test_specific_functionality(self):
-        # Direct tool testing
-        result = my_tool_function(input_data)
-        assert result["status"] == "success"
+# Firestore permissions for Agent Engine service agent
+gcloud projects add-iam-policy-binding PROJECT_ID \
+    --member="serviceAccount:service-PROJECT_NUMBER@gcp-sa-aiplatform.iam.gserviceaccount.com" \
+    --role="roles/datastore.user"
 ```
 
 ---
 
-## 🎯 Success Criteria
-
-All tests should pass with:
-- ✅ 0 failures
-- ✅ 0 errors
-- ✅ No warnings about missing tools
-- ✅ No network timeouts (for standalone tests)
-- ✅ All assertions successful
-
----
-
-## 📚 Documentation
-
-- **Setup Guide:** `docs/SETUP.md`
-- **Refund Workflow:** `docs/REFUND_WORKFLOW_TESTS.md`
-- **Architecture:** `../docs/ARCHITECTURE.md`
-- **API Reference:** Agent docstrings in `customer_support_agent/agents/`
-
----
-
-## 🔗 Related Files
-
-- **Agent Implementation:** `customer_support_agent/`
-- **Tools:** `customer_support_agent/tools/`
-- **Database:** `customer_support_agent/database/`
-- **Configuration:** `customer_support_agent/config.py`
-
----
-
-## 💡 Best Practices
-
-1. **Run Standalone Tests First** - Faster feedback loop during development
-2. **Run Full Suite Before Deploy** - Ensure no regressions
-3. **Keep Test Data Consistent** - Use seeded Firestore data
-4. **Update Evalsets Together** - When changing agent behavior
-5. **Document New Tests** - Add descriptions to evalset files
-
----
-
-## 🏆 Test Metrics
-
-- **Total Test Cases:** 57
-- **Coverage:** ~95% of agent code paths
-- **Execution Time:** ~5-10 minutes (full suite with network)
-- **Standalone Time:** ~8 seconds (no network)
-
----
-
-Last Updated: 2025-12-03
+Last Updated: 2026-02-13

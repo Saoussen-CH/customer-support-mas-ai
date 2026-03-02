@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { sessionService } from '../services/api';
+import { useToast } from './Toast';
 import type { SessionInfo } from '../types';
 
 interface SessionSidebarProps {
@@ -19,6 +20,7 @@ export default function SessionSidebar({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const previousSessionIdRef = useRef<string | null>(null);
+  const toast = useToast();
 
   const loadSessions = async () => {
     try {
@@ -27,7 +29,9 @@ export default function SessionSidebar({
       const response = await sessionService.listSessions();
       setSessions(response.sessions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sessions');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load sessions';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +68,11 @@ export default function SessionSidebar({
           : s
       ));
       setEditingSessionId(null);
+      toast.success('Session renamed');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename session');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to rename session';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -81,8 +88,11 @@ export default function SessionSidebar({
       if (currentSessionId === sessionId) {
         onNewSession();
       }
+      toast.success('Session deleted');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete session');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete session';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 

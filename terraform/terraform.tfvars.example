@@ -1,0 +1,20 @@
+# ==============================================================================
+# terraform.tfvars.example
+# Copy to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit it.
+# ==============================================================================
+
+# Required
+project_id          = "your-gcp-project-id"
+staging_bucket_name = "your-project-id-staging"   # must be globally unique
+github_owner        = "your-github-username-or-org"
+
+# Optional — defaults shown
+# region                = "us-central1"
+# firestore_location    = "nam5"            # nam5=US, eur3=Europe
+# firestore_database_id = "customer-support-db"
+# ar_repo_name          = "customer-support"
+# cloud_run_service_name = "customer-support-app"
+# github_repo           = "customer-support-mas-kaggle"
+# model_armor_enabled   = true
+# model_armor_floor_mode = "INSPECT_AND_BLOCK"  # or "INSPECT_ONLY"

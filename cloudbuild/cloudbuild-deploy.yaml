@@ -1,0 +1,193 @@
+# CI + CD Pipeline — Used by push to main trigger
+# Runs full CI, then builds/deploys on success
+#
+# Trigger: Push to main → _EVAL_PROFILE=standard
+
+substitutions:
+  _EVAL_PROFILE: "standard"
+  _PYTHON_VERSION: "3.11"
+  _FIRESTORE_DATABASE: "customer-support-db"
+  _GOOGLE_CLOUD_LOCATION: "us-central1"
+  _REGION: "us-central1"
+  _SERVICE_NAME: "customer-support-app"
+  _AR_REPO: "customer-support"
+  _DEPLOY_AGENT_ENGINE: "false"
+  _MODEL_ARMOR_ENABLED: "false"
+  _MODEL_ARMOR_TEMPLATE_ID: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CI STEPS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+steps:
+  # ===========================================================================
+  # Install dependencies into shared /workspace/.venv
+  # ===========================================================================
+  - id: "install-deps"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        pip install uv --quiet &&
+        uv sync --frozen --group dev &&
+        cp -r .venv /workspace/.venv
+    waitFor: ["-"]
+
+  # ===========================================================================
+  # Lint (parallel with tool-tests)
+  # ===========================================================================
+  - id: "lint"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        ruff check customer_support_agent/ --ignore=E501
+    waitFor: ["install-deps"]
+
+  # ===========================================================================
+  # Tool Tests (parallel with lint)
+  # ===========================================================================
+  - id: "tool-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/unit/test_tools.py tests/unit/test_mock_rag.py tests/unit/test_refund_standalone.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+    waitFor: ["install-deps"]
+
+  # ===========================================================================
+  # Unit Agent Evaluation (after tool-tests)
+  # ===========================================================================
+  - id: "unit-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/unit/test_agent_eval_ci.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+      - "EVAL_PROFILE=${_EVAL_PROFILE}"
+    waitFor: ["tool-tests"]
+
+  # ===========================================================================
+  # Integration Evaluation (after unit-tests)
+  # ===========================================================================
+  - id: "integration-tests"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pytest tests/integration/test_integration_eval_ci.py -v --tb=short
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+      - "EVAL_PROFILE=${_EVAL_PROFILE}"
+    waitFor: ["unit-tests"]
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CD STEPS — Only run after all CI steps pass
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # ===========================================================================
+  # Docker Build (multi-stage: React frontend + FastAPI backend)
+  # ===========================================================================
+  - id: "docker-build"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+      - "-f"
+      - "backend/Dockerfile"
+      - "."
+    waitFor: ["integration-tests", "lint"]
+
+  # ===========================================================================
+  # Push to Artifact Registry
+  # ===========================================================================
+  - id: "docker-push"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "--all-tags"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}"
+    waitFor: ["docker-build"]
+
+  # ===========================================================================
+  # Deploy to Cloud Run
+  # ===========================================================================
+  - id: "deploy-cloud-run"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "--region=${_REGION}"
+      - "--platform=managed"
+      - "--allow-unauthenticated"
+      - "--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=True,MODEL_ARMOR_ENABLED=${_MODEL_ARMOR_ENABLED},MODEL_ARMOR_TEMPLATE_ID=${_MODEL_ARMOR_TEMPLATE_ID}"
+      - "--memory=1Gi"
+      - "--cpu=1"
+      - "--min-instances=0"
+      - "--max-instances=10"
+      - "--port=8080"
+    waitFor: ["docker-push"]
+
+  # ===========================================================================
+  # Deploy Agent Engine (optional — set _DEPLOY_AGENT_ENGINE=true to enable)
+  # ===========================================================================
+  - id: "deploy-agent-engine"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        if [ "${_DEPLOY_AGENT_ENGINE}" != "true" ]; then
+          echo "Skipping Agent Engine deploy (_DEPLOY_AGENT_ENGINE != true)"
+          exit 0
+        fi
+        export PATH="/workspace/.venv/bin:$$PATH"
+        python deployment/deploy.py --action deploy
+    env:
+      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
+      - "GOOGLE_CLOUD_LOCATION=${_REGION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
+    secretEnv: ["STAGING_BUCKET"]
+    waitFor: ["deploy-cloud-run"]
+
+availableSecrets:
+  secretManager:
+    - versionName: "projects/$PROJECT_ID/secrets/staging-bucket/versions/latest"
+      env: "STAGING_BUCKET"
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
+
+timeout: "2400s"

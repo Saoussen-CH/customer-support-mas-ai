@@ -86,7 +86,7 @@ echo -e "${YELLOW}[2/3] Seeding database with sample data...${NC}"
 echo ""
 
 echo -e "  Running seed script..."
-if PYTHONPATH=. python -m customer_support_agent.database.seed; then
+if PYTHONPATH=. python -m customer_support_agent.database.seed --project "$PROJECT_ID" --database "$DATABASE_ID"; then
     echo -e "  ${GREEN}✓${NC} Database seeded successfully"
 else
     echo -e "  ${RED}✗${NC} Error seeding database"
@@ -106,7 +106,7 @@ read -p "Do you want to add vector embeddings for RAG search? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "  Adding vector embeddings..."
-    if PYTHONPATH=. python scripts/add_embeddings.py; then
+    if PYTHONPATH=. python scripts/add_embeddings.py --project "$PROJECT_ID" --database "$DATABASE_ID"; then
         echo -e "  ${GREEN}✓${NC} Vector embeddings added"
     else
         echo -e "  ${YELLOW}⚠${NC} Error adding embeddings (optional feature)"

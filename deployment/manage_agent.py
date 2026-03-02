@@ -4,15 +4,14 @@ Manage deployed Agent Engine instances.
 This script provides utilities to list, query, and manage deployed agents.
 """
 
+import argparse
 import os
 import sys
-import argparse
 
 
 def list_agents(project_id: str, location: str):
     """List all deployed Agent Engine instances"""
     import vertexai
-    from vertexai import agent_engines
 
     vertexai.init(project=project_id, location=location)
 
@@ -22,6 +21,7 @@ def list_agents(project_id: str, location: str):
     try:
         # List all reasoning engines (Agent Engine instances)
         from vertexai.preview import reasoning_engines
+
         engines = reasoning_engines.ReasoningEngine.list()
 
         if not engines:
@@ -69,18 +69,14 @@ def query_agent(resource_name: str, message: str, user_id: str = "cli_user"):
         print("🔄 Processing...")
         print()
 
-        events = list(app.stream_query(
-            user_id=user_id,
-            session_id=session.id,
-            message=message
-        ))
+        events = list(app.stream_query(user_id=user_id, session_id=session.id, message=message))
 
         print("=" * 70)
         print("📨 Response:")
         print()
 
         for event in events:
-            if hasattr(event, 'content'):
+            if hasattr(event, "content"):
                 print(event.content)
 
         print("=" * 70)
@@ -88,6 +84,7 @@ def query_agent(resource_name: str, message: str, user_id: str = "cli_user"):
     except Exception as e:
         print(f"❌ Error querying agent: {str(e)}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -118,35 +115,20 @@ def delete_agent(resource_name: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Agent Engine instances")
-    parser.add_argument(
-        "command",
-        choices=["list", "query", "delete"],
-        help="Command to execute"
-    )
+    parser.add_argument("command", choices=["list", "query", "delete"], help="Command to execute")
     parser.add_argument(
         "--project",
         default=os.getenv("GOOGLE_CLOUD_PROJECT", "project-ddc15d84-7238-4571-a39"),
-        help="Google Cloud project ID"
+        help="Google Cloud project ID",
     )
     parser.add_argument(
-        "--location",
-        default=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
-        help="Google Cloud location"
+        "--location", default=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"), help="Google Cloud location"
     )
     parser.add_argument(
-        "--resource-name",
-        default=os.getenv("AGENT_ENGINE_RESOURCE_NAME"),
-        help="Agent Engine resource name"
+        "--resource-name", default=os.getenv("AGENT_ENGINE_RESOURCE_NAME"), help="Agent Engine resource name"
     )
-    parser.add_argument(
-        "--message",
-        help="Message to send to the agent (for query command)"
-    )
-    parser.add_argument(
-        "--user-id",
-        default="cli_user",
-        help="User ID for the session"
-    )
+    parser.add_argument("--message", help="Message to send to the agent (for query command)")
+    parser.add_argument("--user-id", default="cli_user", help="User ID for the session")
 
     args = parser.parse_args()
 

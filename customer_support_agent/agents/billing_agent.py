@@ -7,21 +7,28 @@ This module contains the billing specialist agent that handles invoices, payment
 from google.adk.agents import Agent
 from google.adk.tools import preload_memory_tool
 
+# process_refund,  # REMOVED - use refund_workflow for proper validation
+# Import callbacks
+from customer_support_agent.agents.callbacks import (
+    auto_save_to_memory,
+    log_system_instructions,
+)
+
 # Import centralized configuration
 from customer_support_agent.config import get_agent_config
 
 # Import tools
 from customer_support_agent.tools import (
+    check_payment_status,
+    get_acceptable_refund_reasons,  # Informational - list valid refund reasons
     get_invoice,
     get_invoice_by_order_id,
-    check_payment_status,
-    # process_refund,  # REMOVED - use refund_workflow for proper validation
+    get_my_invoices,
+    get_my_payments,
+    get_refundable_items,  # Informational - check what can be refunded
 )
 
-# Import callbacks
-from customer_support_agent.agents.callbacks import auto_save_to_memory, track_agent_start
-from customer_support_agent.agents.callbacks_explicit import auto_save_to_memory_explicit
-from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
+# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
 
 
 # =============================================================================
@@ -35,30 +42,55 @@ billing_agent = Agent(
     description=billing_config["description"],
     instruction="""You handle billing inquiries, invoices, and payment status.
 
+AUTHENTICATED USER BEHAVIOR:
+- The user is already logged in - their identity is automatically available
+- NEVER ask for customer ID - all tools automatically use the authenticated user
+- All tools verify ownership - users can only access their own billing data
+
+AVAILABLE TOOLS:
+- get_my_invoices(): List all invoices for the authenticated user
+- get_invoice(invoice_id): Get specific invoice by ID (verifies ownership)
+- get_invoice_by_order_id(order_id): Get invoice for an order (verifies ownership)
+- get_my_payments(): List all payment records for the authenticated user
+- check_payment_status(order_id): Check payment status for an order (verifies ownership)
+- get_refundable_items(order_id): Check which items in an order can still be refunded
+- get_acceptable_refund_reasons(): List acceptable vs unacceptable refund reasons
+
+TOOL SELECTION:
+- "show my invoices" / "all my bills" → get_my_invoices()
+- "invoice for ORD-12345" → get_invoice_by_order_id(order_id)
+- "show invoice INV-2025-001" → get_invoice(invoice_id)
+- "my payment history" → get_my_payments()
+- "payment status for ORD-12345" → check_payment_status(order_id)
+- "what can I refund from ORD-12345?" → get_refundable_items(order_id)
+- "what reasons are valid for refunds?" → get_acceptable_refund_reasons()
+
 MEMORY-AWARE BEHAVIOR:
 - Check preloaded memories for preferred payment methods or past billing issues
 - If customer had payment problems before, offer proactive assistance
 - Remember refund history to provide better context
 - Recognize patterns like "customer always pays with credit card"
 
-Key behaviors:
-- Use get_invoice_by_order_id() when customer asks for invoice by order (e.g., "invoice for ORD-12345")
-- Use get_invoice() when customer provides specific invoice ID (e.g., "show me INV-2025-001")
-- Use check_payment_status() for payment inquiries
-- For REFUND requests: Do NOT process them here - inform the user that refunds require validation and the coordinator will route them to the refund workflow
+KEY BEHAVIORS:
 - REMEMBER invoice and order IDs from the conversation
 - Understand follow-ups like "what's the status?" refer to previously mentioned invoice/order
+- For REFUND requests: Do NOT process them here - inform the user that refunds require validation and the coordinator will route them to the refund workflow
+
+SECURITY: All tools verify that the invoice/order belongs to the authenticated user. If a user tries to access someone else's data, they will get an authorization error.
 
 Be clear about payment amounts and due dates.""",
     tools=[
-        get_invoice,
-        get_invoice_by_order_id,
-        check_payment_status,
-        # process_refund,  # REMOVED - use refund_workflow for proper validation
-        preload_memory_tool.PreloadMemoryTool()
+        get_invoice,  # Verifies ownership
+        get_invoice_by_order_id,  # Verifies ownership
+        get_my_invoices,  # All invoices for authenticated user
+        check_payment_status,  # Verifies ownership
+        get_my_payments,  # All payments for authenticated user
+        get_refundable_items,  # Check what items can be refunded (informational)
+        get_acceptable_refund_reasons,  # List valid refund reasons (informational)
+        preload_memory_tool.PreloadMemoryTool(),
     ],
-    #before_agent_callback=track_agent_start,  # Track when agent starts
-    # after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context)
-    # after_agent_callback=auto_save_to_memory_explicit,  # EXPLICIT (notebook pattern)
-    after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
+    # before_agent_callback=track_agent_start,  # Track when agent starts
+    before_model_callback=log_system_instructions,  # DEBUG: Log system instruction with preloaded memories
+    after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context) ✅ Active
+    # after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
 )

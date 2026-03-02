@@ -71,6 +71,7 @@ APIS=(
     "iam.googleapis.com"                  # IAM
     "logging.googleapis.com"              # Cloud Logging
     "monitoring.googleapis.com"           # Cloud Monitoring
+    "telemetry.googleapis.com"            # Tracing for Agent Engine (LoggingPlugin)
 )
 
 for api in "${APIS[@]}"; do
@@ -85,48 +86,128 @@ done
 echo ""
 
 # ============================================================================
-# 2. Create Service Account
+# 2. Create Service Account (COMMENTED OUT - using default compute SA instead)
+# ============================================================================
+# NOTE: We use the default Compute Engine service account for Cloud Run
+# instead of a custom service account. This simplifies the setup.
+# Uncomment this section if you need a dedicated service account.
+
+# echo -e "${YELLOW}[2/5] Creating Service Account...${NC}"
+# echo ""
+#
+# SERVICE_ACCOUNT_NAME="customer-support-agent"
+# SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+#
+# if gcloud iam service-accounts describe "$SERVICE_ACCOUNT_EMAIL" --project="$PROJECT_ID" &>/dev/null; then
+#     echo -e "  ${YELLOW}⚠${NC} Service account already exists: $SERVICE_ACCOUNT_EMAIL"
+# else
+#     echo -e "  Creating service account: ${BLUE}$SERVICE_ACCOUNT_EMAIL${NC}"
+#     gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
+#         --display-name="Customer Support Agent" \
+#         --description="Service account for multi-agent customer support system" \
+#         --project="$PROJECT_ID"
+#     echo -e "  ${GREEN}✓${NC} Service account created"
+# fi
+#
+# echo ""
+
+# ============================================================================
+# 3. Grant IAM Roles to Custom Service Account (COMMENTED OUT)
+# ============================================================================
+# NOTE: Commented out since we're using the default compute SA.
+# Uncomment if using a custom service account.
+
+# echo -e "${YELLOW}[3/5] Granting IAM Roles to Service Account...${NC}"
+# echo ""
+#
+# ROLES=(
+#     "roles/aiplatform.user"              # Vertex AI access
+#     "roles/aiplatform.serviceAgent"      # Vertex AI service operations
+#     "roles/datastore.user"               # Firestore read/write
+#     "roles/storage.objectAdmin"          # GCS bucket access
+#     "roles/logging.logWriter"            # Write logs
+#     "roles/run.invoker"                  # Invoke Cloud Run services
+# )
+#
+# for role in "${ROLES[@]}"; do
+#     echo -e "  Granting ${BLUE}$role${NC}..."
+#     if gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+#         --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
+#         --role="$role" \
+#         --condition=None \
+#         --quiet &>/dev/null; then
+#         echo -e "    ${GREEN}✓${NC} Granted"
+#     else
+#         echo -e "    ${YELLOW}⚠${NC} Already granted or error"
+#     fi
+# done
+#
+# echo ""
+
+# ============================================================================
+# 2. Grant IAM Roles to Agent Engine Service Account
 # ============================================================================
 
-echo -e "${YELLOW}[2/5] Creating Service Account...${NC}"
+echo -e "${YELLOW}[2/5] Granting IAM Roles to Agent Engine Service Account...${NC}"
 echo ""
 
-SERVICE_ACCOUNT_NAME="customer-support-agent"
-SERVICE_ACCOUNT_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+# Get numeric project ID
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 
-if gcloud iam service-accounts describe "$SERVICE_ACCOUNT_EMAIL" --project="$PROJECT_ID" &>/dev/null; then
-    echo -e "  ${YELLOW}⚠${NC} Service account already exists: $SERVICE_ACCOUNT_EMAIL"
-else
-    echo -e "  Creating service account: ${BLUE}$SERVICE_ACCOUNT_EMAIL${NC}"
-    gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
-        --display-name="Customer Support Agent" \
-        --description="Service account for multi-agent customer support system" \
-        --project="$PROJECT_ID"
-    echo -e "  ${GREEN}✓${NC} Service account created"
-fi
+# Two Vertex AI service agents need Firestore access:
+#   gcp-sa-aiplatform-re  — runs your agent/tool code at runtime (created on first Agent Engine deploy)
+#   gcp-sa-aiplatform     — general Vertex AI platform operations
+# NOTE: If you run this script before your first Agent Engine deployment, the -re SA may not
+# exist yet. Re-run `make setup-gcp` after your first `make deploy-agent-engine`.
+AGENT_ENGINE_SA="service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
+VERTEX_AI_SA="service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com"
 
-echo ""
+echo -e "  Agent Engine SA: ${BLUE}$AGENT_ENGINE_SA${NC}"
+echo -e "  Vertex AI SA:    ${BLUE}$VERTEX_AI_SA${NC}"
 
-# ============================================================================
-# 3. Grant IAM Roles
-# ============================================================================
-
-echo -e "${YELLOW}[3/5] Granting IAM Roles to Service Account...${NC}"
-echo ""
-
-ROLES=(
+AGENT_ENGINE_ROLES=(
+    "roles/datastore.user"               # Firestore read/write (required for tool calls)
     "roles/aiplatform.user"              # Vertex AI access
-    "roles/aiplatform.serviceAgent"      # Vertex AI service operations
-    "roles/datastore.user"               # Firestore read/write
-    "roles/storage.objectAdmin"          # GCS bucket access
-    "roles/logging.logWriter"            # Write logs
-    "roles/run.invoker"                  # Invoke Cloud Run services
+    "roles/storage.objectViewer"         # Read from GCS
 )
 
-for role in "${ROLES[@]}"; do
+for sa in "$AGENT_ENGINE_SA" "$VERTEX_AI_SA"; do
+    for role in "${AGENT_ENGINE_ROLES[@]}"; do
+        echo -e "  Granting ${BLUE}$role${NC} to ${BLUE}$sa${NC}..."
+        if gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+            --member="serviceAccount:$sa" \
+            --role="$role" \
+            --condition=None \
+            --quiet &>/dev/null; then
+            echo -e "    ${GREEN}✓${NC} Granted"
+        else
+            echo -e "    ${YELLOW}⚠${NC} Already granted or error"
+        fi
+    done
+done
+
+echo ""
+
+# ============================================================================
+# 3. Grant IAM Roles to Cloud Run Default Compute Service Account
+# ============================================================================
+
+echo -e "${YELLOW}[3/5] Granting IAM Roles to Cloud Run Service Account...${NC}"
+echo ""
+
+CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+echo -e "  Cloud Run SA: ${BLUE}$CLOUD_RUN_SA${NC}"
+
+CLOUD_RUN_ROLES=(
+    "roles/aiplatform.user"              # Access Vertex AI Agent Engine
+    "roles/datastore.user"               # Access Firestore database
+)
+
+for role in "${CLOUD_RUN_ROLES[@]}"; do
     echo -e "  Granting ${BLUE}$role${NC}..."
     if gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-        --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
+        --member="serviceAccount:$CLOUD_RUN_SA" \
         --role="$role" \
         --condition=None \
         --quiet &>/dev/null; then
@@ -200,9 +281,9 @@ else
     echo -e "  ${GREEN}✓${NC} Bucket created"
 fi
 
-# Grant service account access to bucket
-echo -e "  Granting bucket access to service account..."
-gsutil iam ch "serviceAccount:$SERVICE_ACCOUNT_EMAIL:roles/storage.objectAdmin" "gs://$BUCKET_NAME" 2>/dev/null || true
+# Grant Cloud Run service account access to bucket
+echo -e "  Granting bucket access to Cloud Run service account..."
+gsutil iam ch "serviceAccount:$CLOUD_RUN_SA:roles/storage.objectAdmin" "gs://$BUCKET_NAME" 2>/dev/null || true
 echo -e "  ${GREEN}✓${NC} Bucket permissions configured"
 
 echo ""
@@ -216,10 +297,11 @@ echo -e "${GREEN}║  Setup Complete!                                           
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}Configuration:${NC}"
-echo -e "  Project ID:      ${GREEN}$PROJECT_ID${NC}"
-echo -e "  Location:        ${GREEN}$LOCATION${NC}"
-echo -e "  Service Account: ${GREEN}$SERVICE_ACCOUNT_EMAIL${NC}"
-echo -e "  Storage Bucket:  ${GREEN}gs://$BUCKET_NAME${NC}"
+echo -e "  Project ID:         ${GREEN}$PROJECT_ID${NC}"
+echo -e "  Location:           ${GREEN}$LOCATION${NC}"
+echo -e "  Agent Engine SA:    ${GREEN}$AGENT_ENGINE_SA${NC}"
+echo -e "  Cloud Run SA:       ${GREEN}$CLOUD_RUN_SA${NC}"
+echo -e "  Storage Bucket:     ${GREEN}gs://$BUCKET_NAME${NC}"
 echo ""
 echo -e "${BLUE}Next Steps:${NC}"
 echo -e "  1. Update .env file with bucket name:"

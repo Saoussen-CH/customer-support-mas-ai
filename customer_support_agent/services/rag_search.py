@@ -16,44 +16,46 @@ This provides the same semantic search functionality without requiring the vecto
 To re-enable vector search in the future, modify the search() method to use find_nearest.
 """
 
+import logging
 import os
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from google.cloud import firestore
-from vertexai.language_models import TextEmbeddingModel
-import vertexai
-from google.api_core import retry
-from google.api_core import exceptions
+
+logger = logging.getLogger(__name__)
+import vertexai  # noqa: E402
+from google.api_core import exceptions, retry  # noqa: E402
+from vertexai.language_models import TextEmbeddingModel  # noqa: E402
 
 # Configure retry policy for transient errors
 # Handles: Rate limits (429), Server errors (500), Service unavailable (503), Gateway timeout (504)
 RETRY_POLICY = retry.Retry(
-    initial=1.0,          # Initial delay: 1 second
-    maximum=60.0,         # Maximum delay: 60 seconds
-    multiplier=2.0,       # Exponential backoff multiplier
-    deadline=300.0,       # Total deadline: 5 minutes
+    initial=1.0,  # Initial delay: 1 second
+    maximum=60.0,  # Maximum delay: 60 seconds
+    multiplier=2.0,  # Exponential backoff multiplier
+    deadline=300.0,  # Total deadline: 5 minutes
     predicate=retry.if_exception_type(
-        exceptions.ResourceExhausted,    # 429 Rate Limit
-        exceptions.ServiceUnavailable,   # 503 Service Unavailable
-        exceptions.DeadlineExceeded,     # 504 Gateway Timeout
+        exceptions.ResourceExhausted,  # 429 Rate Limit
+        exceptions.ServiceUnavailable,  # 503 Service Unavailable
+        exceptions.DeadlineExceeded,  # 504 Gateway Timeout
         exceptions.InternalServerError,  # 500 Internal Server Error
-        exceptions.TooManyRequests,      # 429 Too Many Requests
-    )
+        exceptions.TooManyRequests,  # 429 Too Many Requests
+    ),
 )
 
 
 class RAGProductSearch:
     """Semantic search for products using vector embeddings with retry logic."""
 
-    def __init__(self, project_id: str, database_id: str, location: str = "us-central1"):
-        self.project_id = project_id
+    def __init__(self, database_id: str, location: str = "us-central1"):
         self.database_id = database_id
         self.location = location
 
-        # Initialize Vertex AI
-        vertexai.init(project=project_id, location=location)
+        # Initialize Vertex AI (uses ADC for project)
+        vertexai.init(location=location)
 
-        # Initialize Firestore
-        self.db = firestore.Client(project=project_id, database=database_id)
+        # Initialize Firestore (uses ADC for project)
+        self.db = firestore.Client(database=database_id)
 
         # Load embedding model
         self.embedding_model = TextEmbeddingModel.from_pretrained("text-embedding-004")
@@ -74,6 +76,7 @@ class RAGProductSearch:
         Returns:
             List of embedding values
         """
+
         @RETRY_POLICY
         def _generate():
             return self.embedding_model.get_embeddings([text])[0].values
@@ -81,9 +84,9 @@ class RAGProductSearch:
         try:
             return _generate()
         except Exception as e:
-            print(f"[RAG] Embedding generation failed after retries: {e}")
+            logger.debug(f"[RAG] Embedding generation failed after retries: {e}")
             raise
-    
+
     def _extract_category_keywords(self, query: str) -> List[str]:
         """
         Extract category keywords from query to filter results.
@@ -124,7 +127,7 @@ class RAGProductSearch:
         if not category_keywords:
             return products  # No category filtering needed
 
-        print(f"[RAG] Filtering by category keywords: {category_keywords}")
+        logger.debug(f"[RAG] Filtering by category keywords: {category_keywords}")
 
         # Score products by category match (STRICT filtering)
         filtered = []
@@ -148,17 +151,14 @@ class RAGProductSearch:
             if match_score > 0:
                 product["category_match_score"] = match_score
                 filtered.append(product)
-                print(f"[RAG]   ✓ Included: {name} (score={match_score})")
+                logger.debug(f"[RAG]   ✓ Included: {name} (score={match_score})")
             else:
-                print(f"[RAG]   ✗ Excluded: {name} (no keyword match)")
+                logger.debug(f"[RAG]   ✗ Excluded: {name} (no keyword match)")
 
         # Sort by category match first, then similarity
-        filtered.sort(
-            key=lambda x: (x.get("category_match_score", 0), x.get("similarity", 0)),
-            reverse=True
-        )
+        filtered.sort(key=lambda x: (x.get("category_match_score", 0), x.get("similarity", 0)), reverse=True)
 
-        print(f"[RAG] Category filter: {len(products)} → {len(filtered)} products")
+        logger.debug(f"[RAG] Category filter: {len(products)} → {len(filtered)} products")
 
         return filtered
 
@@ -177,12 +177,12 @@ class RAGProductSearch:
 
         # Pattern: "under $X", "below $X", "less than $X", "cheaper than $X"
         patterns = [
-            r'under\s*\$?(\d+)',
-            r'below\s*\$?(\d+)',
-            r'less than\s*\$?(\d+)',
-            r'cheaper than\s*\$?(\d+)',
-            r'max\s*\$?(\d+)',
-            r'maximum\s*\$?(\d+)',
+            r"under\s*\$?(\d+)",
+            r"below\s*\$?(\d+)",
+            r"less than\s*\$?(\d+)",
+            r"cheaper than\s*\$?(\d+)",
+            r"max\s*\$?(\d+)",
+            r"maximum\s*\$?(\d+)",
         ]
 
         for pattern in patterns:
@@ -209,24 +209,26 @@ class RAGProductSearch:
             max_price = self._extract_price_constraint(query)
 
         if max_price:
-            print(f"[RAG] Filtering by price: max ${max_price}")
+            logger.debug(f"[RAG] Filtering by price: max ${max_price}")
 
-        print(f"[RAG] Search query: '{query}'")
+        logger.debug(f"[RAG] Search query: '{query}'")
 
         # Generate query embedding with retry logic
         try:
             query_embedding = self._generate_embedding_with_retry(query)
         except Exception as e:
-            print(f"[RAG] Failed to generate embedding, using fallback: {e}")
+            logger.debug(f"[RAG] Failed to generate embedding, using fallback: {e}")
             # Fallback: return empty results rather than crashing
             return []
 
         # Try vector search (requires Firestore vector index)
         # TEMPORARILY DISABLED - using fallback until vector index issue resolved
-        print(f"[RAG] Using fallback cosine similarity search (vector index not working)")
+        logger.debug("[RAG] Using fallback cosine similarity search (vector index not working)")
         return self._fallback_search(query_embedding, limit, query, max_price)
 
-    def _fallback_search(self, query_embedding: List[float], limit: int, query: str, max_price: Optional[float] = None) -> List[Dict]:
+    def _fallback_search(
+        self, query_embedding: List[float], limit: int, query: str, max_price: Optional[float] = None
+    ) -> List[Dict]:
         """
         Fallback search using manual cosine similarity with category filtering.
         Use this if Firestore vector index isn't set up yet.
@@ -245,24 +247,24 @@ class RAGProductSearch:
 
             # Calculate cosine similarity
             product_vec = np.array(data["embedding"])
-            similarity = np.dot(query_vec, product_vec) / (
-                np.linalg.norm(query_vec) * np.linalg.norm(product_vec)
-            )
+            similarity = np.dot(query_vec, product_vec) / (np.linalg.norm(query_vec) * np.linalg.norm(product_vec))
 
-            all_products.append({
-                "id": doc.id,
-                "name": data.get("name"),
-                "price": data.get("price"),
-                "category": data.get("category"),
-                "description": data.get("description"),
-                "similarity": float(similarity)
-            })
+            all_products.append(
+                {
+                    "id": doc.id,
+                    "name": data.get("name"),
+                    "price": data.get("price"),
+                    "category": data.get("category"),
+                    "description": data.get("description"),
+                    "similarity": float(similarity),
+                }
+            )
 
         # Sort by similarity
         all_products.sort(key=lambda x: x["similarity"], reverse=True)
 
         # Get more results for filtering
-        top_products = all_products[:limit * 3]
+        top_products = all_products[: limit * 3]
 
         # Filter by category
         filtered = self._filter_by_category(top_products, query)
@@ -270,16 +272,18 @@ class RAGProductSearch:
         # Filter by price if constraint exists
         if max_price:
             before_price_filter = len(filtered)
-            filtered = [p for p in filtered if p.get("price", float('inf')) <= max_price]
-            print(f"[RAG] After price filter: {before_price_filter} → {len(filtered)} products under ${max_price}")
+            filtered = [p for p in filtered if p.get("price", float("inf")) <= max_price]
+            logger.debug(
+                f"[RAG] After price filter: {before_price_filter} → {len(filtered)} products under ${max_price}"
+            )
             if filtered:
-                print(f"[RAG] Products under ${max_price}:")
+                logger.debug(f"[RAG] Products under ${max_price}:")
                 for p in filtered:
-                    print(f"[RAG]   - {p.get('name')}: ${p.get('price')}")
+                    logger.debug(f"[RAG]   - {p.get('name')}: ${p.get('price')}")
 
         # If filtering removed all results, fall back to original
         if not filtered:
-            print(f"[RAG] Filters removed all results, using unfiltered")
+            logger.debug("[RAG] Filters removed all results, using unfiltered")
             return all_products[:limit]
 
         return filtered[:limit]
@@ -288,12 +292,12 @@ class RAGProductSearch:
 # Global instance (initialized lazily)
 _rag_search = None
 
+
 def get_rag_search() -> RAGProductSearch:
     """Get or create RAG search instance."""
     global _rag_search
     if _rag_search is None:
-        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-ddc15d84-7238-4571-a39")
         database_id = os.environ.get("FIRESTORE_DATABASE", "customer-support-db")
         location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-        _rag_search = RAGProductSearch(project_id, database_id, location)
+        _rag_search = RAGProductSearch(database_id, location)
     return _rag_search

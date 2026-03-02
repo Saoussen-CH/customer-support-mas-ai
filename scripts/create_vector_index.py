@@ -16,11 +16,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from google.cloud import firestore
-from google.cloud.firestore_admin_v1 import FirestoreAdminClient, CreateIndexRequest
-from google.cloud.firestore_admin_v1.types import Index
-import os
-from dotenv import load_dotenv
+import os  # noqa: E402
+
+from dotenv import load_dotenv  # noqa: E402
+from google.cloud.firestore_admin_v1 import FirestoreAdminClient  # noqa: E402
+from google.cloud.firestore_admin_v1.types import Index  # noqa: E402
 
 # Load environment
 load_dotenv()
@@ -33,17 +33,18 @@ print("Creating Firestore Vector Index for RAG Search")
 print("=" * 80)
 print(f"\nProject: {PROJECT_ID}")
 print(f"Database: {DATABASE_ID}")
-print(f"Collection: products")
-print(f"Field: embedding")
-print(f"Dimensions: 768")
+print("Collection: products")
+print("Field: embedding")
+print("Dimensions: 768")
 print()
+
 
 def create_vector_index():
     """Create vector index using Firestore Admin API."""
 
     try:
         # Initialize Firestore Admin client
-        admin_client = FirestoreAdminClient()
+        FirestoreAdminClient()
 
         # Build parent path
         parent = f"projects/{PROJECT_ID}/databases/{DATABASE_ID}/collectionGroups/products"
@@ -107,6 +108,7 @@ def create_vector_index():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -125,7 +127,7 @@ def verify_index_exists():
             print(f"\n   Index: {index.name}")
             for field in index.fields:
                 print(f"   - Field: {field.field_path}")
-                if hasattr(field, 'vector_config') and field.vector_config:
+                if hasattr(field, "vector_config") and field.vector_config:
                     print(f"     Type: VECTOR (dimension: {field.vector_config.dimension})")
                     vector_index_found = True
                 elif field.order:

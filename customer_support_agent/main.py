@@ -25,29 +25,38 @@ USAGE:
     )
 """
 
-import os
 import logging
+import os
+
+# Load .env file FIRST before any env var checks
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, assume env vars set externally
 
 # Configure Python logging for observability
 logging.basicConfig(
-    level=logging.INFO,  # Set to DEBUG for more detailed logs
+    level=getattr(logging, os.environ.get("LOG_LEVEL", "WARNING")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler(),  # Print to console/Cloud Run logs
-    ]
+        logging.StreamHandler(),
+    ],
 )
 
-# Set environment defaults
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-ddc15d84-7238-4571-a39")
+# Get project ID from environment (required)
+PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
+if not PROJECT_ID:
+    raise ValueError("GOOGLE_CLOUD_PROJECT environment variable must be set")
 
 # Import the root agent (this will cascade import all agents and tools)
-from customer_support_agent.agents import root_agent
+from customer_support_agent.agents import root_agent  # noqa: E402
 
 # Export root agent as the primary interface
 # Note: 'agent' is an alias for AgentEvaluator compatibility
 agent = root_agent
 __all__ = ["root_agent", "agent"]
 
-# Print initialization confirmation
-print("[INIT] Customer Support Multi-Agent System loaded successfully")
-print(f"[INIT] Project ID: {PROJECT_ID}")
+logger = logging.getLogger(__name__)
+logger.debug("Customer Support Multi-Agent System loaded (project: %s)", PROJECT_ID)

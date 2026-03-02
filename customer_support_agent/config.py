@@ -23,13 +23,19 @@ COST OPTIMIZATION:
 """
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 # =============================================================================
 # ENVIRONMENT CONFIGURATION
 # =============================================================================
 
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "project-ddc15d84-7238-4571-a39")
+# Required environment variables (no defaults for sensitive values)
+PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
+if not PROJECT_ID:
+    raise ValueError(
+        "GOOGLE_CLOUD_PROJECT environment variable must be set. " "Example: export GOOGLE_CLOUD_PROJECT=your-project-id"
+    )
+
 LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
 FIRESTORE_DATABASE = os.environ.get("FIRESTORE_DATABASE", "customer-support-db")
 ENVIRONMENT = os.environ.get("ENV", "production")
@@ -67,7 +73,6 @@ AGENT_CONFIGS = {
         "max_iterations": 10,  # Maximum tool calling iterations to prevent infinite loops
         "timeout": 60,  # 60 seconds timeout for entire agent execution
     },
-
     # =========================================================================
     # DOMAIN AGENTS (Product, Order, Billing)
     # =========================================================================
@@ -79,7 +84,6 @@ AGENT_CONFIGS = {
         "max_iterations": 5,  # Limit tool calls to prevent hanging
         "timeout": 30,  # 30 seconds timeout
     },
-
     "order_agent": {
         "name": "order_agent",
         "model": FAST_MODEL,
@@ -88,7 +92,6 @@ AGENT_CONFIGS = {
         "max_iterations": 3,  # Simple queries, limit iterations
         "timeout": 20,  # 20 seconds timeout
     },
-
     "billing_agent": {
         "name": "billing_agent",
         "model": FAST_MODEL,
@@ -97,7 +100,6 @@ AGENT_CONFIGS = {
         "max_iterations": 3,  # Simple queries, limit iterations
         "timeout": 20,  # 20 seconds timeout
     },
-
     # =========================================================================
     # WORKFLOW PATTERN AGENTS
     # =========================================================================
@@ -107,7 +109,6 @@ AGENT_CONFIGS = {
     #     "description": "Parallel execution pattern for comprehensive product information",
     #     "temperature": 0.1,
     # },
-
     "sequential_refund": {
         "name": "sequential_refund_workflow",
         "model": DEFAULT_MODEL,
@@ -116,7 +117,6 @@ AGENT_CONFIGS = {
         "max_iterations": 5,  # 3 sub-agents + buffer
         "timeout": 40,  # 40 seconds for full workflow
     },
-
     # "loop_multi_product": {  # DISABLED - not used anymore
     #     "name": "loop_multi_product_details",
     #     "model": DEFAULT_MODEL,
@@ -130,7 +130,6 @@ AGENT_CONFIGS = {
     #     "description": "Product details fetcher for loop iteration",
     #     "temperature": 0.1,
     # },
-
     # =========================================================================
     # SUB-AGENTS (ParallelAgent components) - DISABLED (not used anymore)
     # =========================================================================
@@ -167,21 +166,27 @@ AGENT_CONFIGS = {
     # IMPORTANT: You MUST call the get_product_reviews tool with the product_id extracted from user messages or conversation history.""",
     #     "temperature": 0.1,
     # },
-
     # =========================================================================
     # SUB-AGENTS (SequentialAgent components)
     # =========================================================================
     "order_validator": {
         "name": "order_validator",
         "model": FAST_MODEL,
-        "instruction": """Validate the order ID using the validate_order_id tool.
+        "instruction": """Validate the refund request using the validate_refund_request tool.
+
+This tool verifies:
+- User owns the order (authorization check)
+- Order status is "Delivered" (can't refund in-transit/processing orders)
+- Requested items exist in the order (if specific items requested)
 
 EXTRACT FROM CONTEXT:
 - Find the order ID mentioned in the conversation (format: ORD-XXXXX or ORD-12345)
+- Optionally, find specific item IDs if user wants partial refund
 - Look in the current user message and previous messages
 
 THEN:
-- Call validate_order_id(order_id="ORD-XXXXX") with the extracted order ID
+- Call validate_refund_request(order_id="ORD-XXXXX") with the extracted order ID
+- Optionally include item_ids=["PROD-001"] if user specified specific items
 - DO NOT ask the user for the order ID if it's already in the conversation
 
 CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry.""",
@@ -189,11 +194,14 @@ CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry
         "max_iterations": 2,  # One tool call max
         "timeout": 10,  # 10 seconds timeout
     },
-
     "eligibility_checker": {
         "name": "eligibility_checker",
         "model": FAST_MODEL,
         "instruction": """Check refund eligibility using the check_refund_eligibility tool.
+
+This tool dynamically calculates eligibility based on:
+- Days since delivery (must be within 30-day return window)
+- Items not already refunded (prevents duplicate refunds)
 
 EXTRACT FROM CONTEXT:
 - Find the order ID mentioned in the conversation (format: ORD-XXXXX)
@@ -203,20 +211,35 @@ THEN:
 - Call check_refund_eligibility(order_id="ORD-XXXXX") with the order ID
 - DO NOT ask the user for information already provided
 
+The tool returns:
+- eligible=True: Shows days remaining in window and refundable items
+- eligible=False: Shows reason (window expired, items already refunded)
+
 CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry.""",
         "temperature": 0.1,
         "max_iterations": 2,  # One tool call max
         "timeout": 10,  # 10 seconds timeout
     },
-
     "refund_processor": {
         "name": "refund_processor",
         "model": FAST_MODEL,
         "instruction": """Process the refund using the process_refund tool.
 
+This tool validates the reason and creates a detailed refund record:
+- VALIDATES reason is acceptable (product issues only, not "changed my mind")
+- Creates refund record with specific items (prevents duplicates)
+- Calculates refund amount from eligible items
+- Generates unique refund ID for tracking
+
+ACCEPTABLE REASONS (product-related issues):
+- defective, damaged, wrong item, not as described, missing parts, quality issue
+
+NOT ACCEPTABLE REASONS (will be rejected):
+- "changed my mind", "no longer need", "found cheaper", "ordering mistake"
+
 EXTRACT FROM CONTEXT:
 - Find the order ID mentioned in the conversation (format: ORD-XXXXX)
-- Find the refund reason mentioned by the user (e.g., "broken item", "defective", "wrong item", etc.)
+- Find the refund reason mentioned by the user
 - Look through all previous messages in the conversation
 
 THEN:
@@ -231,6 +254,31 @@ CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry
         "max_iterations": 2,  # One tool call max
         "timeout": 10,  # 10 seconds timeout
     },
+}
+
+# =============================================================================
+# MODEL ARMOR CONFIGURATION
+# =============================================================================
+# Model Armor screens prompts and responses for harmful content, prompt
+# injection, and jailbreak attempts before they reach or leave Gemini.
+#
+# Floor settings (project-level) are configured via setup_model_armor.sh and
+# apply automatically to all generateContent calls made by Agent Engine.
+#
+# Template ID (optional): enables per-deployment fine-grained control on top
+# of floor settings. Set MODEL_ARMOR_TEMPLATE_ID in the environment when a
+# stricter or domain-specific policy is required.
+
+MODEL_ARMOR_CONFIG = {
+    # Master switch — set MODEL_ARMOR_ENABLED=true in Cloud Run / .env
+    "enabled": os.environ.get("MODEL_ARMOR_ENABLED", "false").lower() == "true",
+    # Optional template for fine-grained per-deployment policy
+    # Format: projects/{project}/locations/{location}/templates/{template_id}
+    "template_id": os.environ.get("MODEL_ARMOR_TEMPLATE_ID", ""),
+    # Enforcement mode when floor settings are configured via gcloud
+    # INSPECT_ONLY = log violations but allow through
+    # INSPECT_AND_BLOCK = reject requests that violate thresholds
+    "floor_mode": os.environ.get("MODEL_ARMOR_MODE", "INSPECT_AND_BLOCK"),
 }
 
 # =============================================================================
@@ -258,6 +306,7 @@ LOGGING_CONFIG = {
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def get_agent_config(agent_key: str) -> Dict[str, Any]:
     """
     Get configuration for a specific agent.
@@ -273,8 +322,7 @@ def get_agent_config(agent_key: str) -> Dict[str, Any]:
     """
     if agent_key not in AGENT_CONFIGS:
         raise KeyError(
-            f"Agent '{agent_key}' not found in AGENT_CONFIGS. "
-            f"Available agents: {list(AGENT_CONFIGS.keys())}"
+            f"Agent '{agent_key}' not found in AGENT_CONFIGS. " f"Available agents: {list(AGENT_CONFIGS.keys())}"
         )
     return AGENT_CONFIGS[agent_key]
 

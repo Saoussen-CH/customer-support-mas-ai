@@ -5,25 +5,26 @@ This module contains the root agent that routes queries to specialist agents.
 """
 
 from google.adk.agents import Agent
-from google.adk.tools import AgentTool
+from google.adk.tools import AgentTool, preload_memory_tool
 
-# Import centralized configuration
-from customer_support_agent.config import get_agent_config
+from customer_support_agent.agents.billing_agent import billing_agent
 
 # Import callbacks
-from customer_support_agent.agents.callbacks import auto_save_to_memory, track_agent_start
-from customer_support_agent.agents.callbacks_explicit import auto_save_to_memory_explicit
-from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk  # SDK-based (official approach)
+from customer_support_agent.agents.callbacks import auto_save_to_memory
+from customer_support_agent.agents.order_agent import order_agent
 
+# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk  # SDK-based (official approach)
 # Import domain agents
 from customer_support_agent.agents.product_agent import product_agent
-from customer_support_agent.agents.order_agent import order_agent
-from customer_support_agent.agents.billing_agent import billing_agent
 
 # Import workflow agents
 from customer_support_agent.agents.workflow_agents import sequential_refund_workflow
 
-from google.adk.tools import preload_memory_tool
+# Import centralized configuration
+from customer_support_agent.config import get_agent_config
+
+# Import refund pre-check tool for conversational flow
+from customer_support_agent.tools import check_if_refundable
 
 # =============================================================================
 # ROOT AGENT (Coordinator)
@@ -56,8 +57,17 @@ ROUTING RULES:
 3. BILLING & INVOICES (payments, invoice lookup)
    → Call billing_agent
 
-4. REFUNDS (refund requests)
-   → Call refund_workflow
+4. REFUNDS (refund requests) - CONVERSATIONAL FLOW:
+   Step A: When user requests refund with order_id but NO reason yet:
+     → Call check_if_refundable(order_id) FIRST
+     → If NOT eligible: Tell user why (past window, not delivered, already refunded) and STOP
+     → If ELIGIBLE: Ask "Your order is eligible for a refund. What's the reason for your refund request?"
+
+   Step B: When user provides reason (after eligibility confirmed):
+     → Call refund_workflow with order_id + reason
+     → Pass the user's exact request verbatim
+
+   IMPORTANT: ALWAYS check eligibility BEFORE asking for reason. This saves user time if order isn't refundable.
 
 5. **MULTI-DOMAIN** ("show me order X and its invoice", "track order X and payment status")
    → Call MULTIPLE agents in sequence
@@ -81,21 +91,20 @@ EXAMPLES:
 - "Details on both" → product_agent (it handles multiple products efficiently)
 - "Everything about PROD-001" → product_agent (it gets comprehensive info)
 - "Track my order" → order_agent
-- "I want a refund" → refund_workflow""",
+- "I want a refund for ORD-12345" → check_if_refundable first, then ask for reason if eligible
+- "The product is damaged" (after eligibility confirmed) → refund_workflow with order_id + reason""",
     tools=[
         preload_memory_tool.PreloadMemoryTool(),
         AgentTool(product_agent),  # Handles ALL product complexity internally
         AgentTool(order_agent),
         AgentTool(billing_agent),
-        AgentTool(sequential_refund_workflow)  # Refund workflow
+        check_if_refundable,  # Pre-check refund eligibility before asking for reason
+        AgentTool(sequential_refund_workflow),  # Refund workflow (after eligibility + reason confirmed)
     ],
     # before_agent_callback=track_agent_start,  # Track when agent starts
-
-    # Memory Bank callback - Three options:
+    # Memory Bank callback - Two options:
     # Option 1 (IMPLICIT): Uses memory service from invocation context
-    # after_agent_callback=auto_save_to_memory,
-    # Option 2 (EXPLICIT): Creates VertexAiMemoryBankService manually
-    # after_agent_callback=auto_save_to_memory_explicit,
-    # Option 3 (SDK): Uses Vertex AI Client SDK (official approach from docs)
-    after_agent_callback=auto_save_to_memory_sdk,  # ✅ Official SDK approach
+    after_agent_callback=auto_save_to_memory,
+    # Option 2 (SDK): Uses Vertex AI Client SDK (official approach from docs)
+    # after_agent_callback=auto_save_to_memory_sdk,  # ✅ Official SDK approach
 )

@@ -8,22 +8,15 @@ Run with: python -m pytest tests/test_refund_standalone.py -v -s
 """
 
 import pytest
-import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Initialize Firestore
-from google.cloud import firestore
-
-project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-db_client = firestore.Client(project=project_id)
+from customer_support_agent.database import db_client
 
 
 def validate_order_id(order_id: str) -> dict:
     """Validate order exists."""
-    return {"status": "valid"} if db_client.collection("orders").document(order_id).get().exists else {"status": "invalid"}
+    return (
+        {"status": "valid"} if db_client.collection("orders").document(order_id).get().exists else {"status": "invalid"}
+    )
 
 
 def check_refund_eligibility(order_id: str) -> dict:
@@ -38,7 +31,9 @@ def process_refund(order_id: str, reason: str) -> dict:
     if not order_doc.exists:
         return {"status": "error", "message": "Order not found"}
     refund_id = f"REF-{order_id.replace('ORD-', '')}"
-    db_client.collection("refunds").document(refund_id).set({"order_id": order_id, "reason": reason, "status": "pending"})
+    db_client.collection("refunds").document(refund_id).set(
+        {"order_id": order_id, "reason": reason, "status": "pending"}
+    )
     return {"status": "success", "refund_id": refund_id, "message": "Refund submitted"}
 
 
@@ -57,7 +52,7 @@ class TestRefundWorkflowStandalone:
         # Step 2: Check eligibility
         result2 = check_refund_eligibility(order_id)
         assert result2.get("status") == "success", f"Expected success, got {result2}"
-        assert result2.get("eligible", False) == True, f"Expected eligible=True, got {result2}"
+        assert result2.get("eligible", False), f"Expected eligible=True, got {result2}"
         assert "Within 30-day return window" in result2.get("reason", ""), f"Wrong reason: {result2}"
 
         # Step 3: Process refund
@@ -65,13 +60,11 @@ class TestRefundWorkflowStandalone:
         assert result3["status"] == "success", f"Expected success, got {result3}"
         assert result3["refund_id"] == "REF-67890", f"Wrong refund ID: {result3}"
 
-        # Cleanup
-        db_client.collection("refunds").document(result3['refund_id']).delete()
+        # No cleanup needed — mock is in-memory
 
     def test_failing_scenario_ord_11111(self):
         """TEST 2: FAILING - Order past return window (ORD-11111)"""
         order_id = "ORD-11111"
-        reason = "Not comfortable"
 
         # Step 1: Validate (should pass)
         result1 = validate_order_id(order_id)
@@ -80,7 +73,7 @@ class TestRefundWorkflowStandalone:
         # Step 2: Check eligibility (should fail here)
         result2 = check_refund_eligibility(order_id)
         assert result2.get("status") == "success", f"Expected success, got {result2}"
-        assert result2.get("eligible", False) == False, f"Expected eligible=False, got {result2}"
+        assert not result2.get("eligible", False), f"Expected eligible=False, got {result2}"
         assert "Past 30-day return window" in result2.get("reason", ""), f"Wrong reason: {result2}"
 
         # Step 3: Would not execute in SequentialAgent workflow
@@ -107,15 +100,14 @@ class TestRefundWorkflowStandalone:
         # Step 2: Check eligibility
         result2 = check_refund_eligibility(order_id)
         assert result2.get("status") == "success", f"Expected success, got {result2}"
-        assert result2.get("eligible", False) == True, f"Expected eligible=True, got {result2}"
+        assert result2.get("eligible", False), f"Expected eligible=True, got {result2}"
 
         # Step 3: Process refund
         result3 = process_refund(order_id, reason)
         assert result3["status"] == "success", f"Expected success, got {result3}"
         assert result3["refund_id"] == "REF-12345", f"Wrong refund ID: {result3}"
 
-        # Cleanup
-        db_client.collection("refunds").document(result3['refund_id']).delete()
+        # No cleanup needed — mock is in-memory
 
     def test_passing_scenario_ord_22222(self):
         """TEST 5: PASSING - Processing order cancellation (ORD-22222)"""
@@ -129,15 +121,14 @@ class TestRefundWorkflowStandalone:
         # Step 2: Check eligibility
         result2 = check_refund_eligibility(order_id)
         assert result2.get("status") == "success", f"Expected success, got {result2}"
-        assert result2.get("eligible", False) == True, f"Expected eligible=True, got {result2}"
+        assert result2.get("eligible", False), f"Expected eligible=True, got {result2}"
 
         # Step 3: Process refund
         result3 = process_refund(order_id, reason)
         assert result3["status"] == "success", f"Expected success, got {result3}"
         assert result3["refund_id"] == "REF-22222", f"Wrong refund ID: {result3}"
 
-        # Cleanup
-        db_client.collection("refunds").document(result3['refund_id']).delete()
+        # No cleanup needed — mock is in-memory
 
 
 if __name__ == "__main__":
