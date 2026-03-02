@@ -75,11 +75,24 @@ setup-firestore: ## Create Firestore database and seed sample data
 	bash scripts/setup_firestore.sh
 
 setup-cloud-build: ## Configure Cloud Build IAM, Artifact Registry, and Secret Manager
-	@if [ -z "$(PROJECT_ID)" ] || [ -z "$(REGION)" ] || [ -z "$(STAGING_BUCKET)" ]; then \
-		echo "Usage: make setup-cloud-build PROJECT_ID=<id> REGION=<region> STAGING_BUCKET=<bucket>"; \
+	@PROJECT_ID="$(PROJECT_ID)"; \
+	REGION="$(REGION)"; \
+	STAGING_BUCKET="$(STAGING_BUCKET)"; \
+	if [ -f .env ]; then \
+		if [ -z "$$PROJECT_ID" ];     then PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT='           .env | cut -d= -f2-); fi; \
+		if [ -z "$$REGION" ];         then REGION=$$(grep '^GOOGLE_CLOUD_LOCATION='              .env | cut -d= -f2-); fi; \
+		if [ -z "$$STAGING_BUCKET" ]; then STAGING_BUCKET=$$(grep '^GOOGLE_CLOUD_STORAGE_BUCKET=' .env | cut -d= -f2- | sed 's|gs://||'); fi; \
+	fi; \
+	if [ -z "$$PROJECT_ID" ] || [ -z "$$REGION" ] || [ -z "$$STAGING_BUCKET" ]; then \
+		echo "Error: PROJECT_ID, REGION, and STAGING_BUCKET are required."; \
+		echo "Add them to .env or pass inline: make setup-cloud-build PROJECT_ID=<id> REGION=<region> STAGING_BUCKET=<bucket>"; \
 		exit 1; \
-	fi
-	bash scripts/setup-cloud-build.sh $(PROJECT_ID) $(REGION) $(STAGING_BUCKET)
+	fi; \
+	GITHUB_OWNER_ARG="$(GITHUB_OWNER)"; \
+	if [ -z "$$GITHUB_OWNER_ARG" ] && [ -f .env ]; then \
+		GITHUB_OWNER_ARG=$$(grep '^GITHUB_OWNER=' .env | cut -d= -f2- || echo ""); \
+	fi; \
+	bash scripts/setup-cloud-build.sh "$$PROJECT_ID" "$$REGION" "$$STAGING_BUCKET" "$$GITHUB_OWNER_ARG"
 
 setup-model-armor: ## Enable Model Armor and configure floor settings
 	@ARGS=""; \

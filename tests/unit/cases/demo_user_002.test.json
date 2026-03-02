@@ -24,9 +24,9 @@
           "intermediate_data": {
             "tool_uses": [
               {
-                "name": "track_order",
+                "name": "order_agent",
                 "args": {
-                  "order_id": "ORD-22222"
+                  "request": "Track order ORD-22222"
                 }
               }
             ]
@@ -61,8 +61,10 @@
           "intermediate_data": {
             "tool_uses": [
               {
-                "name": "get_my_order_history",
-                "args": {}
+                "name": "order_agent",
+                "args": {
+                  "request": "Show me my orders"
+                }
               }
             ]
           }
@@ -96,9 +98,9 @@
           "intermediate_data": {
             "tool_uses": [
               {
-                "name": "get_invoice_by_order_id",
+                "name": "billing_agent",
                 "args": {
-                  "order_id": "ORD-22222"
+                  "request": "What's the invoice for order ORD-22222?"
                 }
               }
             ]
@@ -133,9 +135,9 @@
           "intermediate_data": {
             "tool_uses": [
               {
-                "name": "track_order",
+                "name": "order_agent",
                 "args": {
-                  "order_id": "ORD-12345"
+                  "request": "Track order ORD-12345"
                 }
               }
             ]
@@ -170,8 +172,10 @@
           "intermediate_data": {
             "tool_uses": [
               {
-                "name": "get_my_invoices",
-                "args": {}
+                "name": "billing_agent",
+                "args": {
+                  "request": "Show me all my invoices"
+                }
               }
             ]
           }

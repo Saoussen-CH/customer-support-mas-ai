@@ -25,6 +25,34 @@ if ROOT not in sys.path:
 
 
 @pytest.fixture(scope="session", autouse=True)
+def register_custom_eval_metrics():
+    """Register custom eval metrics with ADK's DEFAULT_METRIC_EVALUATOR_REGISTRY.
+
+    EvalConfig.custom_metrics sets custom_function_path on EvalMetric, but
+    get_evaluator() still requires the metric name to exist in the registry
+    (mapped to _CustomMetricEvaluator). This fixture registers our custom
+    metrics once per session before any test runs.
+    """
+    from google.adk.evaluation.custom_metric_evaluator import _CustomMetricEvaluator
+    from google.adk.evaluation.eval_metrics import Interval, MetricInfo, MetricValueInfo
+    from google.adk.evaluation.metric_evaluator_registry import DEFAULT_METRIC_EVALUATOR_REGISTRY
+
+    DEFAULT_METRIC_EVALUATOR_REGISTRY.register_evaluator(
+        metric_info=MetricInfo(
+            metric_name="tool_name_f1",
+            description=(
+                "F1 score on tool names only (ignores argument values). "
+                "precision = |actual ∩ expected| / |actual|, "
+                "recall = |actual ∩ expected| / |expected|."
+            ),
+            metric_value_info=MetricValueInfo(interval=Interval(min_value=0.0, max_value=1.0)),
+        ),
+        evaluator=_CustomMetricEvaluator,
+    )
+    logger.info("[EVAL] Registered custom metric: tool_name_f1")
+
+
+@pytest.fixture(scope="session", autouse=True)
 def ci_environment_setup():
     """
     Setup for CI environment - Uses Vertex AI Gemini API (NOT Agent Engine).

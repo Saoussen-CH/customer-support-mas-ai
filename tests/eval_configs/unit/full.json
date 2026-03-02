@@ -1,6 +1,6 @@
 {
   "criteria": {
-    "tool_trajectory_avg_score": 0.5,
+    "tool_name_f1": 0.5,
     "final_response_match_v2": {
       "threshold": 0.5,
       "judgeModelOptions": {
@@ -9,5 +9,12 @@
       }
     },
     "response_match_score": 0.15
+  },
+  "custom_metrics": {
+    "tool_name_f1": {
+      "code_config": {
+        "name": "customer_support_agent.evaluation.tool_metrics.tool_name_f1"
+      }
+    }
   }
 }

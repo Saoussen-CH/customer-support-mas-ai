@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 PROFILES_DIR = Path(__file__).parent
 DEFAULT_PROFILE = "standard"
-VALID_PROFILES = {"fast", "standard", "full"}
+VALID_PROFILES = {"fast", "standard", "standard_exact", "full"}
 
 
 def get_eval_profile() -> str:

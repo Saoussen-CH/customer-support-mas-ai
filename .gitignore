@@ -61,6 +61,7 @@ logs/
 !*evalset.json
 !test_config.json
 !*.test.json
+!tests/**/*.json
 
 # Node modules
 node_modules/
