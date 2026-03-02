@@ -25,8 +25,7 @@ steps:
       - "-c"
       - |
         pip install uv --quiet &&
-        uv sync --frozen --group dev &&
-        cp -r .venv /workspace/.venv
+        uv sync --frozen --group dev
     waitFor: ["-"]
 
   # ===========================================================================
