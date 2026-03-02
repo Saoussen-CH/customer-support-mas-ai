@@ -60,6 +60,7 @@ logs/
 !tsconfig.json
 !*evalset.json
 !test_config.json
+!*.test.json
 
 # Node modules
 node_modules/

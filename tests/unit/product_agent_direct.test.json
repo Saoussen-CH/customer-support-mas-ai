@@ -1,0 +1,1372 @@
+{
+  "eval_set_id": "product_agent_direct_tests",
+  "eval_cases": [
+    {
+      "eval_id": "search_keyboards",
+      "conversation": [
+        {
+          "invocation_id": "e-03e53ce6-9ded-41e3-a47d-d9ee187c8857",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What gaming keyboards do you have?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found the following gaming keyboards:\n\n*   **Mechanical Gaming Keyboard** (PROD-003) - RGB mechanical keyboard with Cherry MX switches, priced at $149.99.\n\nI also found the ROG Gaming Laptop (PROD-006), but it seems to be a laptop, not a keyboard.\n\nWould you like more details on the Mechanical Gaming Keyboard?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-b3caa1c9-fedf-4241-9edf-34e7ffb6c35b",
+                        "args": {
+                          "query": "gaming keyboards"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CusBAY89a19Sg3dhy8WuaBko3PPfewBIXXL5nDFK304MPav4GLqZDmmw8zBpBj1Cad7kOm8fHhN-WkAKHZxR73MbP-yS3TIIV4PyQ4yxdgcluTUk7MTwUQh5aW-JJXW4bqL6Mnm4n8T6gk8tMG1yHMzt-6rwcAr6EzWNuwFDu16hqG4g7TTQHllKLnvChc7N2nF9Pk2aX6atwtdebckt3FO8ZemwVSs_9lyILrYPxexH9qYr_TsWvFZ_Yb8PoY2lMvBI4UdYKTArwcrIi4GIEnaF3Ks5JTWBpZ5qwxZoV0aTEu5kGS3ETpJQAp5KTQ=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-b3caa1c9-fedf-4241-9edf-34e7ffb6c35b",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-003",
+                              "name": "Mechanical Gaming Keyboard",
+                              "price": 149.99,
+                              "category": "Electronics",
+                              "description": "RGB mechanical keyboard with Cherry MX switches",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408642.791515
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_chairs",
+      "conversation": [
+        {
+          "invocation_id": "e-aa1722c8-7c56-42ee-9aab-d17c1ae7cbed",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me office chairs"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found two products:\n\n*   **Ergonomic Office Chair** (PROD-004) - A premium ergonomic chair with lumbar support for $449.99.\n*   **Standing Desk Pro** (PROD-005) - An electric sit-stand desk with memory presets for $599.99.\n\nWould you like more details on the Ergonomic Office Chair, or perhaps both?",
+                "thought_signature": "CoADAY89a1_cftoElYPAJEpa1yjnk4HstxHxLtpUBXJ1wdh4i7pJS95JlTFkikeqhqV6Fw0iqLetib3b-hoPb8C2xgoHyTzm76zoGLHteHNyx-kIEQ2-uWSGJ19PXvL9oTdPXcAMPbWmgB23S6hflX-leMWlonU3r4JhQ8RbZJWFdXCr0ezCqrV5gt0p-62EA7GLRi95407xxdsmeMY_GA5UTIhcn21SFqY7b5THyhwynAoNgsBsKuTRNo8vAlf-yqnY2-NZwg4tscVsi4Ii_wmwPP9_5tRE30JbWu0nsBKIU4PGWHGBvqq-aQLBUpNu9LW5Byo2y6wOlH2exIHQH6gyGAAfv7K6pbeElLl39mE8Gk-4h4hGkt4Bo-AmBcWfW52nEtA4VGCaI5yodoTOCtfL-HH9xUxAf-kdWeAr5OJEToJd1_bECy70f5vN512LMmyg-DPsvWVC9Vp_XkkW5ScHkXAlI_HQZyBb4VpfyqS2VWW_1x9vCsELvo7buqliplbr"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-ba51a6e1-86b1-498b-b7fd-ea106e030f40",
+                        "args": {
+                          "query": "office chairs"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CscBAY89a18XcpEbNh0RF3hKJHj2DK6TdFdvCv0HqCX8yuInnsnllyaNYqOLyW5HT6yUAmWwDyJ7mlTfA34N1LgqsBzVnUkO-B-_uihCsLUrb9dmsV3vdV97In6kgg5iMVOwAwDZYtYb5wwdGNLPW2Zl7nrcriflQB2usMMA4X9ZC9qEMUwTSw0lqbYjX0VolkzRo9wGz5WnRsbjHEPgjzQazcbHDx9n-ddviackDOZSYB7hQGJYwlKasu5pxsDQ5laYhX_GxEw4Rg=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-ba51a6e1-86b1-498b-b7fd-ea106e030f40",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-004",
+                              "name": "Ergonomic Office Chair",
+                              "price": 449.99,
+                              "category": "Furniture",
+                              "description": "Premium ergonomic chair with lumbar support",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-005",
+                              "name": "Standing Desk Pro",
+                              "price": 599.99,
+                              "category": "Furniture",
+                              "description": "Electric sit-stand desk with memory presets",
+                              "similarity": 0.5
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408679.532399
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_headphones",
+      "conversation": [
+        {
+          "invocation_id": "e-7f7a065b-5471-4fff-a0d7-d5174c1563ac",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I need wireless headphones"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found the **Wireless Headphones Pro** for $199.99. They are premium noise-canceling wireless headphones.\n\nWould you like to know more about them?",
+                "thought_signature": "CoQCAY89a19NML0uhr-otT17hZgfW9nHZfKI2T_JG12MN67Z4wplYj4zHvs-HjbEBu1wyKtjmQXb6B3ckesPpb9_VpiT-LRQ1nYC1xU92HTdVl7MUC06oTEy2jRftKypw-BVFA3_Z6dYhfitGzno6ehmdbPYJqBtA46YyBQp2SDnrXyzpmc0Iq5ncluJhR6uhS0X-fcuxLb8GuvkEpPbnrxqsqfxCmWaAf0w4cFmNAdjqS-X2PDSigaAJns4hWJSMLMHCbhwaTlfj9hQAhaLN1EzZaLH8oyJfg4aZ-q2WaKDuX8ThJgrXP5ZOqOgyh61rxOibB3uqTuVzFb0IrLdN7cWyGRY0UY="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-673c2fde-8674-4488-942e-73eab6b64ac3",
+                        "args": {
+                          "query": "wireless headphones"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CtABAY89a19iE8ON73__Vk6TkEPOwc7zCHdnSsR6Q5Ox7UAUOQb9iPHCEFEjlQYfO09XAqkuUkvAWD8-p1d4XvXgSwHxGi0IJ1RmhAP7st7Qg1lSjW-CQ3uF2JywoKitHr5EbvOrt9tLD88o7LEvDL1qEQQUGO4WyEGctGLI7kY6Sfn5mPZIuXvS6rCAODJCT8kmxKrXh_aq9Xg5KUui1yRrH7ybA9-H7vgGpjfDk1F6ei-y4W5997qAFlYB_SFeN-EiiTqKAIv4oRzDVFUfvclvRw=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-673c2fde-8674-4488-942e-73eab6b64ac3",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-002",
+                              "name": "Wireless Headphones Pro",
+                              "price": 199.99,
+                              "category": "Electronics",
+                              "description": "Premium noise-canceling wireless headphones",
+                              "similarity": 1.0
+                            }
+                          ],
+                          "count": 1,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408696.5698578
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_under_500",
+      "conversation": [
+        {
+          "invocation_id": "e-23bee0c5-ae4e-4a0b-9a29-3ea07bcdd91c",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me products under $500"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here are some products under $500:\n\n*   **Wireless Headphones Pro (PROD-002)**: Premium noise-canceling wireless headphones for $199.99.\n*   **Mechanical Gaming Keyboard (PROD-003)**: RGB mechanical keyboard with Cherry MX switches for $149.99.\n*   **Ergonomic Office Chair (PROD-004)**: Premium ergonomic chair with lumbar support for $449.99.\n\nWould you like more details on any of these?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-0fc85217-be42-48ef-a8a7-057552cdecd4",
+                        "args": {
+                          "query": "products under $500"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CoMCAY89a18-GxqHy98UXKNAyuJLLrwhOBExnvXVTO9dS-cZZgRaeIgb59yPAouyJnjKDnE7y8zKo1OzKl_nBB9M9fBzmLKTy1JfjstdlY2Po25esE8k1utsoRaMNtMrqO_WW4uHC3PGUHK5LlZz38SlSvahl8BP_KOEqmqYmgs5Yn_5pje6X9K0Pnqp61NfuqHNh2kq4sBcvdOndbAXCahNKp6YAMBstrQLaTuWlduHXA5gZl7ukclgzOMqdTA2zWMQYT9JfBwlgkkld7FNPbDmbe47NYF12ISwyF33QBGUChO4UCNToXWxQZviUOJnWcAMKQ9uwoBiXni-_tn_WGUTmF3g0g=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-0fc85217-be42-48ef-a8a7-057552cdecd4",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-002",
+                              "name": "Wireless Headphones Pro",
+                              "price": 199.99,
+                              "category": "Electronics",
+                              "description": "Premium noise-canceling wireless headphones",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-003",
+                              "name": "Mechanical Gaming Keyboard",
+                              "price": 149.99,
+                              "category": "Electronics",
+                              "description": "RGB mechanical keyboard with Cherry MX switches",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-004",
+                              "name": "Ergonomic Office Chair",
+                              "price": 449.99,
+                              "category": "Furniture",
+                              "description": "Premium ergonomic chair with lumbar support",
+                              "similarity": 1.0
+                            }
+                          ],
+                          "count": 3,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408827.8836164
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_under_200",
+      "conversation": [
+        {
+          "invocation_id": "e-980a47db-2771-43f7-9d01-3e580705cec1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What can I get for under $200?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found a couple of options for you under $200:\n\n*   **Wireless Headphones Pro** - Premium noise-canceling wireless headphones for $199.99\n*   **Mechanical Gaming Keyboard** - RGB mechanical keyboard with Cherry MX switches for $149.99\n\nWould you like more details on either of these?",
+                "thought_signature": "CsECAY89a19Xqv21x4DRMvTY5rVD4aSVE7sFwdEVOYUr7mSESAgaElThn4n_bujtx2vh9AnwCFxCbd-J0o5_otacYeIMnXHT_886MrH5ERFeXXTDKw00rpX3maxBl9bDOm2Sv-S92ZvWLBbs9dS060JsHJel-cefh0Tx_2vMgJLDaGeJzQcLAmkuzhhtOSWt2-OTKjJ8apg3rn0YvY3xDrzOhQecx9bbTP1CNi4TMlhm6gDjK-WTo9m2fn5BsuYFajwCz51Bkk3bGDqK_vyNgwNXH1FH8NpaTGMJu6ffl_JkXO6FywHCJ-O382usRNUiREG4XBAHXoB2hBoh103ReidqRSVForiwf_uqlDCUEg45Md3nP4xXH327qP7ouG2UoqLRp7rAzyZxDOcaMf60de8r0HNSqBmmdBQqPq8cbSHa6ZVp"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-e04dd568-57b1-4988-abbf-15d922e0816b",
+                        "args": {
+                          "query": "products under $200"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CuECAY89a18kgSVtzvOS0De0EwalGE4BDSf_JwhfcArPhkPiy1iZL8Az06AKHOtHdQK-xs6leA47clIfA66ZHOTehBY2g5nYZYKUvWCHYTXIIWYDyinJmfgWriHe8yML0u9YaHwH3cTs8YiDmNU5zYR61SnyIjVv-suA512TLtzgPPXCfsR6fCyUZQhgGJV4ORrPcx-1mjpGt0tbnomXdZi6pq8-UwPLS555DScr6sypvpxHAWfpfyggAj9ATnRmc1HZapw0ljd_PGmddkOg1nHVY0xyJYbZwxA78UmymjhbECCsxXTYk9svkTuFrpACmnjQh2KIjgSAi1g5IjDv9EfZ2BJ0P4PlA7oYC1dlUiNhjmzeZ2K-3NKXzCf75PXPGVcOU5TmBJ0BpPNCGZn_bXT7xrWYoa-Rvqy_5Wyn92jxYoovQF5qON-ndpqluiF2Zvl-T3Mw9wLNOF8G9AG7toVDywI="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-e04dd568-57b1-4988-abbf-15d922e0816b",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-002",
+                              "name": "Wireless Headphones Pro",
+                              "price": 199.99,
+                              "category": "Electronics",
+                              "description": "Premium noise-canceling wireless headphones",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-003",
+                              "name": "Mechanical Gaming Keyboard",
+                              "price": 149.99,
+                              "category": "Electronics",
+                              "description": "RGB mechanical keyboard with Cherry MX switches",
+                              "similarity": 1.0
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408843.2479293
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_under_1000",
+      "conversation": [
+        {
+          "invocation_id": "e-0015491d-a6b3-41ae-917b-9a14287d55f0",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Laptops under $1000"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found the **ProBook Laptop 15** for $999.99, which is a high-performance laptop with an Intel i7 processor. It fits your criteria of being under $1000.\n\nWould you like to know more about it?",
+                "thought_signature": "CrsHAY89a18YMGgm6DXy0AtolnbdxNv-hoKvVY3zhxT35sZ8U4x2iI1SYqngIcQBxLQ8jp1p1yygfBYqTPtznTqlXsGU3QjLGfLP4nqqFSpHvmd1edMIAK3hSH0ABML-JzjsIsFDR_ICFRVkkOyWpimhg1cdIA6wuSTlaXcUHlLdXd2-nJmtWpEbhxqb7bmVcK_BlyHAIPRpZCMpc52lb9SWlHXC6fMheZvjqFjmkkz-45jCj2XbJSL52A0NPIs7ed74y7E2a8HK1ZMTk7r3VTwG9sC_nxogy2Ii7aJ4kGs1R0b3SkansGiHkJXj_xRNlBnUutXtlFU2GLjDPlaJjHtl_-2y6DECUtoWTPNtBwGPVEliwKS4bd_NvD28F0ogBnV6t73ejS7rmqGRXOxN9RVviK1pXzfvp9HV8E3Gx-AuYA7y3ARbQQzMqoD3FJZZCTB_VMJEfVqtuOorlOYdlYJI-uSG3itTx4fifC9eDVzW2nqXkQ6CrM4YY60R49iim9ln4i9RHiTJIGRr7rIBtA_qfhO_kWU1O-2NQwZyJjhIXy1cyV7EQaBw_Nb2TFfoRH5Jyx3ZSIsF8eNtvtAtL6bbEvYn3JTb1rfCZzpLXfLg0Qw7qS3mC5_8i09G-jgIWzd1YhBc1pLQIgdwcl_C8_FporR4bbouyANQ47w4znmGDPz6lZFuCzz9fIERe-ET8ts9kKcvAtWwgHfKWvxaF_ptgeQCB5J10rvb6U6VuFaHWPS4_3CnzpKQucVcyzqPwKsLPGTO-QFJjXEjujYxznX-np-rCYxIKhfkN3xRnhG3av-QksPguyMPOsiJBOZd8VhftSPB-dFAVDPPmCR0ykD3aJNRH0s9j7ik5i0UdN6e1qOfi4_Xo81EAiMz1niqwI2VXEH3YOtkJSDIGt2_C42xiHeMl7klZceqN25WkdpH8pHlwzkl8ojR4drshxDFqfz_hHPD4jk3-AYy7j-EMeU39zX-UdyHiPLK2punyi9irKGWcry0dCosL0NwR_3XoZVDDlLZt52xVYnOUBA7Rtw-CBJyo2IwgqS7chc0Qvw3HxjNfHVMe_tHOLols7gxOQC6npqqBbk7iZsPIB70cikh_uJNZ1iasubqlB6PbNj3h6yUWcbIMmOWLv8_BH1RQWoVx2Fz7GQYrXN7qMcKw98Nf1mWBes_7cCd7IcI6sGf9jTM97RMlCzVsQcDyys-sq4YSKlGuKjWo7TsxYEAVlZnwkp-kIoVdJ1t9KwF69ofozLhmDm9IsFWRkt22A=="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-7d180b07-cb85-4660-b122-f6e9afeedbfe",
+                        "args": {
+                          "query": "Laptops under $1000"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CvEBAY89a1_d7ku88FZzmtuzF1-Yc0561izRV3O4b2Y_UM88wpBOGK2_crqugL7Mqff1UNZnl95ew1P7dew7lj3M-t3X12CQwVi0QHlo9fWgoOtzVrDuJ_Gf676RpjRiPgCaRuJEbpAw5QtpU6s1hpoBniMyst_DqtHge1918av4p0QhlZ49QXnBeh0vO9UQd_g7RV2oprtfKOt2XqHj2BkD7ZqTRK-_ml2UnBnfxODormly5C16i_hKmLBdLgvzBwjmPZjN9MPhsW9YHsAIOJPjzwazPA_6BkkkXs5VOqLLIIDXAl24AmwVvKJrw8pYCfLMeA=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-7d180b07-cb85-4660-b122-f6e9afeedbfe",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 1.0
+                            }
+                          ],
+                          "count": 1,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408859.4416354
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "search_no_results",
+      "conversation": [
+        {
+          "invocation_id": "e-f9fd1516-dfd6-43d3-a40d-38070c5dd383",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me products under $100"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I cannot directly search for all \"products\" under a certain price. Please specify what type of product you are looking for (e.g., \"laptops under $100\", \"headphones under $100\"). I can then check for options within your budget.",
+                "thought_signature": "CsMFAY89a19We7UeocMvtYm99oGxr5N73sz9hN_CABorY0GtIlwtCQsLSvIOrEjmDl8JrSxC9H-HKQq9qn_unhjMGCjis5quoXesEqGZwY5KZzur5g3doK0I4s40DdZfX_Hr-IhVaKJ6nnwKQXJ2-tBuSXkUa4p1Az_-uAMSVVjUGgPhe1HvAwhencnrMQRglx01u1px5X485Ih84OBxfHUleu4qZp44OJBjL6z8X72yRfMdJw7w3pQ-6xklJeJMuMiSOoTPx5B4KTHGC4yf82RePVJvwKXoAqNAQB2-GIjwx9Ccm5VpWjZWWYdwPKmLr1pOk5q9AGyvOoE8HDKA6h4SLj2tE7eopEjOGGFnvaEJT2uJd7MCD4-zjSHIpcjh4PeIJc8vcZ-kD7pCYdQkLdrE0Pco715Y6GOWfSeT3YSdqwIEK2HhbXMbH6n08UCiHPPHVULahngHr0n9adBhxU66JqSymnu2S-9RL88w8kI32N1bNZCELsqgyiBp35ku027SuzpLCPFG0Jxo3j_cYSc2ikV0l3nNDFzeL6gHJqGcjfXWjH5fYrSfnGhLJSdo8PZ2cC6cbT7qVLkjaKnLlW86-ZrjRZeDOz4KW8uLuBhDS8H2iArG_9oNrQfEeL2Axa5srDIynX6DIhzBehte5kkHZjSKnpBDjsezsXXXcvnKhhmYmymt215Kw7TjR1XNp2TAD-HXh--NDxUJ0V-TS5SFM_kqmYYVyPriGQe9IB_F1HuBmBvKu74iWsivJlaNy-qd2DSUPM0GMyyzuXSi-ALzRFTkBN9OTBIKKnDtG_3UDHRJpaX-vY_8JAIfJLlnzDDyTwQeZpek_N_jByIQhcfL5Vw8lhgKThg_7Dfk83QWwdyMgr7hBO3IHvkF4L43Xkc8WDviBLXqsxEpvMwPk7gwBhY_SUdQCN4_X4CzUG_HGysDVKI="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-21b3f67a-c032-40ca-bb10-1022bb804640",
+                        "args": {
+                          "query": "products under $100"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CuoEAY89a1_GQBPXhauzOANP8YeS8_rtt3KUTgaEJb_cXxJUXolyniVrQrrQYNY0OQkmAjF5yo3obR4hounfcLRE2_U-rIIpSXUVJyY2_gDkMKFK7MdiP0xthylGRoyaI71EfF3x1Mx9iv-1D2mV8pMIPDuu9oKI5AIAn2Q8QzdtC81rXfD_C4ACesQP7uLso2dDbj3HWKita_oh9My-dJ_X8deCux8gvWEHtHr01_J9I87AdrTTGRI8ymTfXLVxY1BopNUh6pSr91cIm1UMhfdlt0Bz0UDbM_m1hZ8-6ixRN99uqi_MRwXJi5va3KZSn6wh3PSKEFX-0uJC-OhyfJcT5bcVkKw9kFxOErjxAqMIw32bJYwKaEB1FI0huni9ksvzVmTkt6qBVcOecN7agvmyAgFaQOodzqKMfooVlZZZkzviXeaHuaLNGddAP-56kW1Q-ti9McyB7v2A6TpY1tm4Uv9hlaZwxQ7-NRwDRJu1dwKhi6Nl3-AIGq8quVoqrZMToB6LPaFg-aF1S7ztHpMgHk95JG5zWXmYXEi8D-QNvrgJcGxzSiDEwvci8oDFNyinqeWrAAUHu7sNc0Ogg7IFn4Y7wJw4-9HJTa-maj8e4yKcb3H2mU7NS_6WDSseo3VReZqh7TY6gJmYQzeHyQIdq6Aa4mq9LksgWiQ62FgTg6dZIpqxq0E7yEvGDhDklCL29fUmck6flkcMGDfJj2-i_Mwc04psYb94XmN0n4Ojy478zvVazm-c0b0UZV7nSBHXdGCXLJCF56UdEZJ4LzMsxbM0SQl_hxPQbVVVU07mnxkKqQa1jIp1Wzzr"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-21b3f67a-c032-40ca-bb10-1022bb804640",
+                        "name": "search_products",
+                        "response": {
+                          "status": "no_results",
+                          "message": "No products found matching 'products under $100'"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408879.0387526
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "details_prod001",
+      "conversation": [
+        {
+          "invocation_id": "e-acec5b72-dd36-4b3c-9e1c-1ebf61c6a974",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Tell me about product PROD-001"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The ProBook Laptop 15 (PROD-001) is a high-performance electronics product. It features an Intel Core i7-12700H processor, 16GB DDR5 RAM, and a 512GB NVMe SSD. It costs $999.99 and comes with a 2-year warranty.\n\nIt has an average rating of 4.5 stars from 234 reviews. Recent reviews highlight its excellent performance and suitability for coding.\n\nThere are 45 units in stock, with 10 in the EU, 15 in US-East, and 20 in US-West warehouses."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-b06908b9-2a84-42a8-bd4b-a7e9fa28ef36",
+                        "args": {
+                          "product_id": "PROD-001"
+                        },
+                        "name": "get_product_info"
+                      },
+                      "thought_signature": "CukDAY89a1_8EGJmNN5KhAI1Qh_PltmhTk7AlRIsaM5HQYzj-9cYsB0AH33jGoWdPPCznky944bwgfbB1cxO0AVwGkILH0b2x7IJviMLJjYfcy2lQQbaqFYtmaAmjF0yn3vJHzUKMY5Zx742anurnmeCdOH0XrnGxT5OejufayQaA8HI5oLVTlf16wV2-PXsyx1tdkEQyABTQFb_xSp7KX0eEhLOZS1YkMlguY8yOOOoQPiTtkAZ84GWDh4JojzWVVnWfnM8n-LOZrIliHnrtQgTuoUVEJaT5ogSrNurMWJJz92yWga6iUw8kY4aQM5DDDvu01J_0sbQ6gB9tG68juI9YaT7yBKYUMM0bVy7ACJOI4TwJKm4oj7qXMVL25d7vRUqzfGdKcRA8ZvE4IxEd4hfmuaHOG_-KuBorm6TxRU7GSwhJDR_W-G0aQ6lcu0AGEnozmNSIeE5A_t6WUTzhIIDRpJMtQYoJplglt2SDwqD9SepQD6RRU55LuD1cd0PPY8VW-bR_suxIHrNNGNXxWtoFOGOMToB7wat6MGBuPCDA7TmgdmqhE4Rj5UfeRJlqqDx9zUw5_xi-3D4Htx33EMiiqFZ9jKd_1wgk9JMayMj7Wk5vzDIOa4UHPcPsJW6IApAdZPMBuzGnMAq"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-b06908b9-2a84-42a8-bd4b-a7e9fa28ef36",
+                        "name": "get_product_info",
+                        "response": {
+                          "status": "success",
+                          "product_id": "PROD-001",
+                          "data_fetched": [
+                            "details",
+                            "inventory",
+                            "reviews"
+                          ],
+                          "fetch_method": "comprehensive",
+                          "details": {
+                            "id": "PROD-001",
+                            "name": "ProBook Laptop 15",
+                            "price": 999.99,
+                            "category": "Electronics",
+                            "description": "High-performance laptop with Intel i7",
+                            "keywords": [
+                              "laptop",
+                              "computer",
+                              "notebook",
+                              "probook"
+                            ],
+                            "specs": {
+                              "processor": "Intel Core i7-12700H",
+                              "ram": "16GB DDR5",
+                              "storage": "512GB NVMe SSD"
+                            },
+                            "warranty": "2 years",
+                            "rating": 4.5
+                          },
+                          "inventory": {
+                            "product_id": "PROD-001",
+                            "total_stock": 45,
+                            "warehouses": {
+                              "US-West": 20,
+                              "US-East": 15,
+                              "EU": 10
+                            }
+                          },
+                          "reviews": {
+                            "product_id": "PROD-001",
+                            "avg_rating": 4.5,
+                            "total_reviews": 234,
+                            "recent_reviews": [
+                              {
+                                "user": "TechFan",
+                                "rating": 5,
+                                "comment": "Excellent performance!"
+                              },
+                              {
+                                "user": "Student123",
+                                "rating": 4,
+                                "comment": "Great for coding."
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408914.0862017
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "details_prod002",
+      "conversation": [
+        {
+          "invocation_id": "e-4b7cb3c7-1cc5-4739-97fb-7fa18d05753a",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Details for PROD-002"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The Wireless Headphones Pro (PROD-002) are premium noise-canceling wireless headphones. They feature 40mm drivers, 30 hours of battery life, and active noise-canceling. They are priced at $199.99 and have a great rating of 4.7 stars from 512 reviews.\n\nWe have 120 units in stock, with 40 in US-East, 50 in US-West, and 30 in the EU. Customers praise them for their excellent noise-canceling and suitability for travel. They come with a 1-year warranty."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-dc85fea8-8021-4c89-855a-dbb5c4c1952d",
+                        "args": {
+                          "product_id": "PROD-002"
+                        },
+                        "name": "get_product_info"
+                      },
+                      "thought_signature": "CooFAY89a1-CQQKczSxXExpEHYU5OVpmQNbG7bV9TtnrNQEtR4u6X3RHwiJz3ZSqncm2Vztwe7pSHQlNBcRm2spopNbneRr5N6ZfYCglHyEeFCnJYyeNio7iqrtIzkV1kfEkwc1-S9Su4nOxhw7uFmAvHOudjtU73xPVtXVPLRzIaVEbPFsjKZ_SZdwgwsD_VJAoeY6QYbXFiLSubdcvBrFCVhTkmnCG6CVionTwu4nZNgN92xZ5OX_g8uPRuy3udSc2Ssz6NiBKKa-TMD08WZOZhoAE054Ql6SyZ84VPXkuvWUCnlZGrRd9yM-78pSm-rc7nLOtxKRZia3ZDMIimkXg-RTf-bcMtm-L1XrmoSfW7X0NTr9VnOT96fzALSiMSpkiFJU5sk93THSLxw1loobc_UidUoB8a9MqcrUqLPxAXv5pLq7NIytEb6XSD5zCMA0n81RJvRxLzFdL36RqZOD5XBJCnwFWv8niKIJSdiRaWecMnPog8H8I9C2u1DIDFkepY5dgmQhot5d36XQbYt3j2a8UkK4JTWdu0ihP6pe6fEt2yCI2v956fSQC-bFnDefMWXavBoepXPl6h7flh2vNtURYjfyZqnC5Bpqpadh4TxKMlMgqZJjhyq74gtTbbgbV8zd3OarvAzioWx-pol5LtVm1AOUELECFwQMda6Cyt2703S7ePBVQPS5BA8uplvFGmEJwuOozj5_8dGQMNarY1BAYIIC49ClU48bFrY0Lb7mcxOkbF0K8ZXC0A2UirxTbWIZ7BOV_xk39PFrOI34zRJz3_pba3_z6stuh2RlXGTQ7GOloNREFlIgZbMryyV0qxKPxQAMuLo2e3Y2_MY0_uLROqJsKuhhEbPM="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-dc85fea8-8021-4c89-855a-dbb5c4c1952d",
+                        "name": "get_product_info",
+                        "response": {
+                          "status": "success",
+                          "product_id": "PROD-002",
+                          "data_fetched": [
+                            "details",
+                            "inventory",
+                            "reviews"
+                          ],
+                          "fetch_method": "comprehensive",
+                          "details": {
+                            "id": "PROD-002",
+                            "name": "Wireless Headphones Pro",
+                            "price": 199.99,
+                            "category": "Electronics",
+                            "description": "Premium noise-canceling wireless headphones",
+                            "keywords": [
+                              "headphones",
+                              "audio",
+                              "wireless",
+                              "bluetooth"
+                            ],
+                            "specs": {
+                              "driver": "40mm",
+                              "battery": "30 hours",
+                              "noise_canceling": true
+                            },
+                            "warranty": "1 year",
+                            "rating": 4.7
+                          },
+                          "inventory": {
+                            "product_id": "PROD-002",
+                            "total_stock": 120,
+                            "warehouses": {
+                              "US-West": 50,
+                              "US-East": 40,
+                              "EU": 30
+                            }
+                          },
+                          "reviews": {
+                            "product_id": "PROD-002",
+                            "avg_rating": 4.7,
+                            "total_reviews": 512,
+                            "recent_reviews": [
+                              {
+                                "user": "MusicLover",
+                                "rating": 5,
+                                "comment": "Best noise canceling!"
+                              },
+                              {
+                                "user": "Commuter",
+                                "rating": 5,
+                                "comment": "Perfect for travel."
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408955.1263201
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "details_invalid",
+      "conversation": [
+        {
+          "invocation_id": "e-358e9944-2691-48cc-828a-030d162c9b51",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Tell me about product PROD-999"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I couldn't find any information for product PROD-999. It seems that product ID does not exist. Please double-check the ID or try searching for a different product."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-a68e40fa-54c7-4926-be72-879e785794f5",
+                        "args": {
+                          "product_id": "PROD-999"
+                        },
+                        "name": "get_product_info"
+                      },
+                      "thought_signature": "Cs0DAY89a1-1fxJiejEJyk0WS93GFAsACiOhuBi-Nq5uNswrg6vXgX-oF3rnjhAORPbYYKqxBKHb34B8nn2Kr-W0qlqGqWFOy0w0_hptFcVEJmcWc-wpEeGvZC09Vo2HO0jnpCQrLfv7BBK7BygNBV3vbWTVAzaZAkWUqLn-oH0JdMrdq2uOKCzHBBgwUsBoyhAxVfstXOyVaCkradtwNR8_DCIYjdE3R31e58kzxfWmxQ4dLozRHddp3bwXzhGRlxKEhKAD_q5Lzk4w2YS_tu1g5tyG3vEmxrc6q6wwnFc6Zl_chJ6FA3fI9HplFurltwrNAFhjsIr3fJ2w1qsNGyKeSlNdkRK8TUS2I0BLHeeiAjRZqJQhXutfAgzmvLu8CUO2ArDjMtvoQxQjV7DcWG00xyP6Y6iSQcd-glU2d86AkAcmiNC8nsTSRXrqsJJM9srO7HcWL_pMnYk_e0L6trHoNPo7fbSMxEYBwgf7o60i76rIW7RaIBN0sKnh2msZY1HFWI86139d_Q6YKFK_jNLluxgyKr26yIpi5AMPkxOnERue4c_eQAJamK91Nz_gH2EfxT8hzx2SJVneH7b5qClGpe6dQrEdzQcRrv9lF18="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-a68e40fa-54c7-4926-be72-879e785794f5",
+                        "name": "get_product_info",
+                        "response": {
+                          "status": "not_found",
+                          "product_id": "PROD-999",
+                          "data_fetched": [],
+                          "fetch_method": "comprehensive",
+                          "details_error": "Product not found",
+                          "inventory_error": "Inventory not found",
+                          "reviews_error": "Reviews not found",
+                          "message": "No information found for product PROD-999"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770408975.8160667
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "inventory_prod001",
+      "conversation": [
+        {
+          "invocation_id": "e-bf6431e5-b256-4f4f-b519-3b623e5e9689",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Is the ProBook laptop in stock?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Yes, the ProBook Laptop 15 (PROD-001) is in stock. We have a total of 45 units available across our warehouses: 10 in EU, 15 in US-East, and 20 in US-West.",
+                "thought_signature": "CsQBAY89a1-2hMJwQugtUbBlfL-xBTnhehreCVW31rfU4GpDp0TSAIarZPXzd3Z_YuRIB3gaGHR2BKVItwDeEL91_g1bEHuTm6JJJrXwUFmWmSudrt6Nnzn8ruADj8VCuVRQisJ-flGloAxkg5ig6Z2dmoVALUMLZjKAMviwjYAjFC_u7n2HrMVk49BxuGx-PnXmnkILaLaL6pQ69aOS8s-baqhwY3_xTufotO3aQWNgnnrSbuZ62DEHZS_koDJei31fysCnrw=="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-a230ef08-601f-4a46-b496-d62591b73e85",
+                        "args": {
+                          "query": "ProBook laptop"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "Cq0JAY89a1-iq-AVXKT7eHHobOIVMZtYYNd7na7xqLg99mnASzU4ZASkbp4gwuj_LIELyPGlssoH226kbftx-X4nNVH2u-cGtL7Otsu3KvD8X-BTaFxXo4PMovHxJMLW2Td0WRB1opY2sFMPDiIwhR5BY8X6vXu1eDeiYorVhB8n4R_AycbsoyYiquBU3zJEdGDDMgVeZx_DdThHWnXWUAIde7je51qqfmNDy4rbivR4kOrSC6K4DnrjpAMM2owjP2p_NPCPcwjeINrRRZtoJ7VPDrRwHvj7crmkdxSTjOHgCV34WqsoXuA4aGYFg85QF5vZU8Pb45eduBRMW_uv5_T4gVPLSjaTl62u7J3tu4qdLrl5fRQa7JpYCwilYbmCFbOpzL5BC0HTs35eb5idsHiVhsDeXXrWgnAAyfDMKhgh-45OCzyRwibUEIUlPwtAw8UF26QhGUkArOEOvGR3nrBQfsS6QhoUmUj4TbH3S8kw7jvQjwFCeqEXuTUbzNFURGC9fQbFRjkTDFsFm7U7TpSFhPkeZFgBE_TTrtkG1_jmTk20XTTpGSsjmRIt7YRnd-6LPCbHCEPL0jWFG3cgMnPX30x5J4ebQTNPIS_5aSjSSIp5EVib4GhZOg-9HN8ihmtpacqw4SetvTZiKT45nltPbFSdCn2KF_DRd2fYwjJcpGYYz2BGhCSuaoL-VaJCYCyWGgWPs755KiiSifr9y4dVv0kwnWmDeXglNeNlGsGe4jR3xjlRFwg_zdNPGocCDS8Y1yIUEnG4MJo0WuscU4ITjPcV348VLYvCpIZtB-j9EmkwTL8KN6HtULXYXdwj7r1etwpms4miMSzcVYOUDM-czy5G5BNXmK3QRS98VRUiEpyJiEOaK3-cZukrysUwFMezhnmdUmM4U-mSSGg80euVK97JeLwxt8yv11S-GaWqZl5zyq85OHpSu-nVnBeNBAjBpwyx_SBM2SpF9L9XQz11JyNjsZ6v07PgsBo-fFQ2EERFeVikDsmbisB0fHVw2oCxgQEc3mTamqGdXQWJvsszT2gCEJdT2zzwQnrtEA9toXUP_tplhi1MDP1TYIrf2xnN5XpVcH5v2iNPxEL4ajngMnbSqaxV76LUU6rnmVgAm431aB1Da_Hg-z3Dhrig0uAkwT1OYS20QJLu_-TqtdyBMQ7OcvHnT4oFWMU4Z8ZKguv86bwg8ZXqcKeXhiEXGW_cITrozNNkhQqGpYMv2hsalpYmAG77mtAzHYCXBpxD21y-hQAAWOob12y2Dgevo8uo4FLwcTwbaBqBJ8we43b-91lrajvqDUyh2MkjuVvYdQNwMY9nQoer9pcEf_d3b5ZAkUxlr1iTShW-p8p0Rhur5vGVPQElyNI75rfGuQbyEUhoKozs7GvSgz5fY6bdoMUMwHYSr1zFgffGT7kZ2XLjbwOb_fgKVEXxcAdha2o4C4dBiREXKIJIKJSSgz0j8V6w8AreGPDjd54CqTTanQZ5BPdmXla1c7LvopFqmcD61siAz94mUJelrcCnTXbOCgmqc6U06unArLvHRzVryUoHf_ygiMMu_NeYhLuQnAJ9Mv1SZYosqcvGwEYI97oh"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-a230ef08-601f-4a46-b496-d62591b73e85",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-a6906672-2845-4278-8cfd-9e3f78dbbda5",
+                        "args": {
+                          "product_id": "PROD-001"
+                        },
+                        "name": "check_inventory"
+                      },
+                      "thought_signature": "CuoBAY89a1-x85-h6-ScBk-1ZLOi8i5nAsIUdyKf8A9Zs9O3uVaVmwJeCMaibY87Mk1ADS_viTzQw5R7t12EzMR7YOgi4BvOhz1DdlnwuvdgI0TavphBipMffwFvdBAtZmMCLXYatRAhr-SHH3SBoOyrQ-88xa7Mx5Z2VV8hoEQZjcGQDtpnV-Ig2TDJ5Lf7_jFGL4eXW_-VJxsmnfaWsSUbKlvx-Lym6sLmBewho4TeUXM0JMLPSvicLyLm1JXxmHLJf0PkcmC1j9A_7fdwphzAjLcs5646qE1fGo2iZ9TvrnVKzCLDBjbLfOF1"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-a6906672-2845-4278-8cfd-9e3f78dbbda5",
+                        "name": "check_inventory",
+                        "response": {
+                          "status": "success",
+                          "inventory": {
+                            "product_id": "PROD-001",
+                            "total_stock": 45,
+                            "warehouses": {
+                              "US-West": 20,
+                              "US-East": 15,
+                              "EU": 10
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770409020.5442326
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "inventory_prod003",
+      "conversation": [
+        {
+          "invocation_id": "e-34a101f7-28d6-4c93-b344-16d583729821",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How many gaming keyboards are available?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found 1 gaming keyboard: the Mechanical Gaming Keyboard (PROD-003).",
+                "thought_signature": "CsQGAY89a18_J2bDyCh-sY_A8OlrkWVvF4pMNAxsurjEtsGQbHD3O5gt4Nkg_eON1emFpGe23ZiB3xnjYH8nmna6ZGdhULZavhCXDtXhDSE1DN-RJoWlkq3FfAajUhco_bcw9i7O3t9HAQzAFd7_j3dWNpRGrMBvHSaSWwrUX4VJaAvcG0Fmv_bEokSYVTr784jDyozUkt5Swvxh6Vfb19enkcI7m3iOAyonBU60s_1a3Z7jSWnNR5GL0-NZRZKY4me0stNBt81OqG_x4tQImHG7pTBv3G771JTZDEOtlqG_eDFeSHsMsiSPwL12RDg3TGBS7G6FbuXr-DBWx29tbDlKDWy3rRAfUhbwe5bFlZRqq4951Lx70YRCMbBfOAqYbWATf9mc764fNfy05wztyx71SRae3KMKcdD1PCZQJ1QpA0BGpbZUnEDvo2gqGS_vNPZC5gaSQ_Qil9wg4sAJTZvom2AfNauDuDfEAJoVHKI6ycvRtbsvhEkOvRexLQDuXbtiFXDAz9E0N1eMVqbfJy36wFbI_3ZvwtkqpVGbxPaCJCm87EVSGowaz2ZQbQJ86t_N4JEkzUoRpVMWtRL0228ZkhuMySVyti_L5T-B1Yx5xZD7bnS_LZRp4e2TdfZDwhsb68xGDe5THWjtWhE-MahFx2ur9qbk7Aer7EIKxvwryLI3OlHfwCpbW-Ck2UiMm6bdtO6cWEbQaewfKScy25D776zWg9SzhZiJ_gNvTPmIDRutX2nseFVl7ZnBIg1Ih_rU2sAElVXZeJvAoM9jgtvWCYNG9dHr_VsqbnCmm4Krw2OI1BZ3qzu2c-Vq_v1h6yL5h-DO90c78h2E9fDEurunhR8xoBlqlBairB4jGdBbb0W2pxEhwpBGrAQExoBo3T-E3ZCE5NYme9D80Iz5ZAeVcqe6izA0IROzJ5eZmk54zXMjtS58r2bfpDCdkS2nbfcDtdWhQ794HYtnk-Cz3vie-HSc-SB3dJn0nvcP8Qp9_ivNisVf-46YuDYuNstR1zABbtRmf5lwYOYxuUlQKbayJRFwOGpC5Dwi5RMH18Pdo0mKMackOX8rin0HIx5pMzuoUykCyd7Xyk4_sTptmoGPtD5ttYo="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-4a286da9-0daa-4772-a014-8e11401a541c",
+                        "args": {
+                          "query": "gaming keyboards"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CqIFAY89a187MM5D_naXvfLEjMABeC9BioZkA5KqSM8Pfi9pxAKqOiS_tv-10oVb7haIgw1S3nfst5VvBZ8Wze1MdsbuxX0XcbxRAWXFks-WDfdDbkdCjl4RBIN5Vhu9Ix8GgBETlI_p2GoGzUVytFw8a-Lppl9Cp42T91bEoH-Ycl8q5Y1IR-smVhoRGP3iLaImk1iTjEB9E7sUIrHHiWdKb84IkUXWUndVjMXMahYjUrU4Qtdf2hB4_FVgBWIN_e5b3qdnhbw-rtwAEoSrlUpz1Rxl2PBXIPkhN_0hV8WJQd3ARavtQEb2jaekWMKCQVSQo2t4C-clN9UxkksYhOnpLef78INRBFbi_xH9G2gTFyKI5Ty3LySbX3t4XwM_2nZot8K2b3x5bbSsps-7dwnJfPLUSK3kiC4Hf9vEHskcXbB_QjzuYrvqPzp2vtS_T7ikQRRUmix2e-u5OqYLHOCNi5T2KTzzy16z6HIvRYawuiS1Lr5a8Hm0uWFLd5Z82GT0EYIcI2OjFGE4aobGsIFxcB0dw49g70q9bx2EwyWvFRuBWs0Yrza63AabezJveyrI5_VQPFH5JMJBaC350NlGtx8cZ0YFOUo8CXGUtaC212fg-5EkauDMvQk5edjwuUPEdgbVhOmu1Cv-rGTHoJpksFHli39bM8xu8Qt5iJ04dlgx5XMOGGF1GQc4yVRFWnEfKe3QqaRD8AKcRwOSGZzXD1iKGEYZB60pDJ3i8OOAJRfIcRxXnk015Q_E1YAYmSE8cP_-ZPg_tgQgnmrBqjJiCIPZibwupdYd9ppcj0nfy8da72MgXhKfDBd1pMcX-qjYkfTIVlBw-2xT16p-_m2SjtuOhvdDeLUet3UtoIOQGFkRk3PUT9SkKLQ_29qKoyBvbHo="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-4a286da9-0daa-4772-a014-8e11401a541c",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-003",
+                              "name": "Mechanical Gaming Keyboard",
+                              "price": 149.99,
+                              "category": "Electronics",
+                              "description": "RGB mechanical keyboard with Cherry MX switches",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770409061.6297765
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "reviews_prod001",
+      "conversation": [
+        {
+          "invocation_id": "e-b90c525c-3d23-43e9-860a-155818cea097",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me reviews for the ProBook laptop"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here are the reviews for the ProBook Laptop 15 (PROD-001):\n\n*   **Average Rating:** 4.5/5 based on 234 reviews.\n*   **Recent Reviews:**\n    *   \"Excellent performance!\" by TechFan (5/5 stars)\n    *   \"Great for coding.\" by Student123 (4/5 stars)",
+                "thought_signature": "CokDAY89a19FOcFSutPIlImQtJDOqCp2iWpklrvVMIN6BCEL_jJwTQrzjadDiStb9qmnJ13eUnzcIZGBegVFmOE9AYtBWVqo0-Bh1a5dkUUBQEmY7Rx_yguhC3bq9oPXW2D0j9FFUBRUg-dbEezxWwzYkcp3T1ZJHvZOOXtkYos_McyQPTIsZaJRw3-dixEBIHopLqUDGoMfvowLqSJBd98gPR_wil5oO5EqCpzlyGcc66n3GwX2Fo3HWuVwrlwLmTsIAWagOVUfM7zDq23i-fJ003ZArbqb156Jus_gTZteBmkd2ROJw5EIg54BKto2io3AsEmV2rdbcyjDclByho248iiLa0329bPppvwgmohjqyX_z31brW320Wd5kZmC9Gw3pf-cWNXqST7EjS_6tiZwZt--1Zwjp5RT66WZxv49EEvT68tVjAgN0xaaNBbP2sxHYJv0JVzIDMFp6VnG8oAg9qayDbPAGgNAz_oRc2ht6mdG_srdgw7FZVA7cPujU910OmX_g7eDCedx"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-e214d81c-9e34-48a6-83f6-d5a77df87c23",
+                        "args": {
+                          "query": "ProBook laptop"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CpEDAY89a18fAIBqlh8KcOpjIAKo_lktcJ1SvbyDEnpVrE_CMXBeosUUCetmBEJnSyc0hi1HFoi_ScffeBljQKIsv7P1lQTYJ7Qxgm2fFpp8O-6NmwBiQAvduFl4WRxXcKgnKHGchuuodTMELRsQHipwhcwuXUrI2_t-fgoKLSvbgNV9CSSgmIiEUPKBSgjeq9XQpmYJj5zZJiRl_Gvgbbq1rs4l52IeeHqGRbOwTUgM-FcbKrIPnziYp09FhEZLQPrZTZ-5hLYVxQ7G7hPx_6pmx5pC6y1JDC_V-XrWtSzbyNPOwPakPLijAUcSBP1k3BGbm-a6yiJccc6O90-argzWfIqs5pXCdtDJfE0_rCCXsGaRSXABmxD1pR8TwLcILGKRY4rt0JqASXNzXCWkZ85As8s9YfhCJjSfJHW0iy4J99nDXEJdMEWwyr4dzxb5jP34yh3PzviKGFwMJhThwU9Mwad_RIXnOPxlKrsM3DXFCOWWKXU2OXdRm9c8FWIFLXY2T3JOSPGZyRqLT_qk-HNoHXU="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-e214d81c-9e34-48a6-83f6-d5a77df87c23",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 0.5
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-e1fb62a1-978a-40f7-991e-e2b0495364c8",
+                        "args": {
+                          "product_id": "PROD-001"
+                        },
+                        "name": "get_product_reviews"
+                      },
+                      "thought_signature": "Cp0EAY89a1-oYy04cPOjKjdP4XF8X2jOLMgo7F-HdIPO3b5LE6vHQSDs194qkFukN3EnCL0g8hTnYvan0ABJBBR00JgdLyw0b4S_ME5A6NVIJygc-AQ1vH5lp1QseOoThcFi5EX6EbPVHG0IIidNumv_k4YTZIE1WwaWgR82XG1vr52lDs7UQl1LuFgIAaJh5w5TGAQYpEMSu9t6XMM3Tg6j1zmZoAhygGX-z2zYDrbjZgE9xeKt0OdegEx1yGCuiajYrOB3PCSSel07uvYEMp4V4s5La9tzSsIcB00KXkzRd3FTO_gQ4F6NnmZmXztcEGeHIH2jNwEspVuvfILtkqoRH5oiCJn9jrfuxzD5jOpI_LOsVrdDDerZysSCuY8L2OjF35idcytpppiWf4fMZvgPGG7Cqr3CFG5cHdomofNWp38cDvVLWLoZSLb-zAZ9yaoK3srtTuSQyzpUf5IxT_AC5eZxKj4XUQf172lGlCQX8On_mvZwEUlHP9UYB_PHJ_GnJTmnOd4wqcxT14rKrHfNgqnKAsKoFChDSZEuHikJNm_adTAr7dIGypREP9kyMVOVdhM9hnLYJfBBre37In96HCirzWYi9vxvJyZ8F6La8KN-rhBWFtpi2fr1PDC7ALlYOyCkMbP6sva5c0FnwRFjM09N7XFSPfrN8nr8hI6A4I_rcxk8E3onNU7DBpW4_jUhRVUEfu_HNpommYXXrA=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-e1fb62a1-978a-40f7-991e-e2b0495364c8",
+                        "name": "get_product_reviews",
+                        "response": {
+                          "status": "success",
+                          "reviews": {
+                            "product_id": "PROD-001",
+                            "avg_rating": 4.5,
+                            "total_reviews": 234,
+                            "recent_reviews": [
+                              {
+                                "user": "TechFan",
+                                "rating": 5,
+                                "comment": "Excellent performance!"
+                              },
+                              {
+                                "user": "Student123",
+                                "rating": 4,
+                                "comment": "Great for coding."
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770409097.9879751
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "reviews_prod002",
+      "conversation": [
+        {
+          "invocation_id": "e-a8ea0030-27cc-4497-aee8-341dfa30dbe4",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What do people say about the Wireless Headphones Pro?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "People love the Wireless Headphones Pro! They have an excellent average rating of 4.7 out of 5 stars from 512 reviews. Customers say \"Best noise canceling!\" and \"Perfect for travel.\""
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-reviews",
+                        "args": {
+                          "product_id": "PROD-002"
+                        },
+                        "name": "get_product_reviews"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770409110.9197083
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 1770409110.9197571
+}

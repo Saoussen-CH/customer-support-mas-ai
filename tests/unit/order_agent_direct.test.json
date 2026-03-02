@@ -1,0 +1,902 @@
+{
+  "eval_set_id": "order_agent_direct_tests",
+  "eval_cases": [
+    {
+      "eval_id": "track_in_transit",
+      "conversation": [
+        {
+          "invocation_id": "e-a9c28c82-a7e1-4451-8da5-07d38e04c54b",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Where is my order ORD-12345?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your order ORD-12345 is currently \"In Transit\" with FastShip, tracking number FS789456123. It was shipped on 2025-01-17 and is estimated to be delivered by 2025-01-20."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-e4a2daa0-9991-4716-a1e3-d624d596913a",
+                        "args": {
+                          "order_id": "ORD-12345"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "CvgCAY89a1_1U3YIvZ2VL0C_fWdGCvr98D2CatXmxTOaw1cjTPyfvU1fr5FE_9blm9OVs4N3Uyo8oNDwgUv620vLPBRoJo_P_xa5nweymgzr5oK4mBtS9ZgBaXBncw1IogsjHGHKuBjG-C99c_qcAwZpEnP7Ba-R7A2KgPqiDQ-gaFNOji-wPchoivUSR3NCs4SRhmYDgvogcciaarmZvR8Na1fLogsFcyHz1BF9KEeQiXc5JNy6A4Y9YNqT9oEP6ZbpFxAAQQYuFoUBFjReKxLvl7VigTKFy7FoPN2MBK6EIICWikRwQcl1ww78Adu275LIyJJcIxCJW2nsrHkpmxn4-esAteKgZMIWY8yvvEpjOgsrtsAUHm2fdpYixJxZRfimJVKB5lQ2jGbJQgwjqoy7BEysVNmZRFku14KixB9TullhkDAvJQWROcB5nau-EYfK9sMzOkExEfmHSz6AlOrsxUkNBHr6n5qwQNYBxH7yIKbzrgz3mCKoLw=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-e4a2daa0-9991-4716-a1e3-d624d596913a",
+                        "name": "track_order",
+                        "response": {
+                          "status": "success",
+                          "order": {
+                            "order_id": "ORD-12345",
+                            "status": "In Transit",
+                            "carrier": "FastShip",
+                            "tracking_number": "FS789456123",
+                            "estimated_delivery": "2025-01-20",
+                            "timeline": [
+                              {
+                                "date": "2025-01-15",
+                                "event": "Order placed"
+                              },
+                              {
+                                "date": "2025-01-16",
+                                "event": "Processing complete"
+                              },
+                              {
+                                "date": "2025-01-17",
+                                "event": "Shipped"
+                              },
+                              {
+                                "date": "2025-01-18",
+                                "event": "In transit"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410728.962308
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_delivered",
+      "conversation": [
+        {
+          "invocation_id": "e-4794b549-b45b-4fe0-be7d-d38ed6fbf469",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What's the status of order ORD-67890?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your order ORD-67890 was delivered on 2026-02-01 by QuickPost. The tracking number is QP456789012."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-a7406d3a-f432-4653-a221-e1083849a925",
+                        "args": {
+                          "order_id": "ORD-67890"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "CpQCAY89a1-NjATkcgakYRtzIcsEB7jOI37AcASd18xigTQ7tDOYr6I8lmv65Hw-gFr_ao2mbTW1QtQiLhUPL7H7LuPYp7yGOSP-EZo0As71-nPxUqOoT_UBII2Ul6F-3sdKr_yQkY_dnV9jPeVBe-B9xF7n9sw8OLOnAfEhtjP9Pp37fxJimT2tShrIn4hFefzKIWObPo-pQXOtyGfKV7NVSzR5O_PufH8Br4dYm1xVDeBEXXlX1Wa1oVSX-ktsXP5Av02ppLDntZBaDuBLCKlWC-huKOWsxO4jyG4FNwOGnTLTvB4dTYU-nP4qST9YEwID2OQsWsIG7U88jWi3lXAVCM4VBHtcnUsgHodtaUYGI3eT0vDV"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-a7406d3a-f432-4653-a221-e1083849a925",
+                        "name": "track_order",
+                        "response": {
+                          "status": "success",
+                          "order": {
+                            "order_id": "ORD-67890",
+                            "status": "Delivered",
+                            "carrier": "QuickPost",
+                            "tracking_number": "QP456789012",
+                            "estimated_delivery": null,
+                            "timeline": [
+                              {
+                                "date": "2026-01-27",
+                                "event": "Order placed"
+                              },
+                              {
+                                "date": "2026-01-29",
+                                "event": "Shipped"
+                              },
+                              {
+                                "date": "2026-02-01",
+                                "event": "Delivered"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410750.6295302
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_old_order",
+      "conversation": [
+        {
+          "invocation_id": "e-ad8402ad-f460-4a40-9f23-07656d31e122",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-11111"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your order ORD-11111 was delivered on 2025-12-23 by FastShip."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-9d9dffde-3976-44d7-b914-7de6915d65fc",
+                        "args": {
+                          "order_id": "ORD-11111"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "Cv8BAY89a1-y342T3ec6EK30LG1ZWRjJBUn1rYpp7jwiB-iUBiEQL5lKvDryJ5lqgwKXL-cowNCeJ61o6-JatlVtWhostUYzJAdOISk4k4Wi5lSVbBzxM5GWnfxCBsuB2dJ8EhrLh3vOr0t07W9vWnbb8pNHyUr-NmRUMwtfrM34HuwUKv0lisF-_ifSU-FD2qaaeKQTnJP6ljb8tu9afOMUEwRYoXpdE4vXAh4bemirpIGB9p_5KtcJG2U8TCkMpLO-12-IznL1DmEY3Bo57O-0ccVmYjiC4ZGdI-LVJ0nVFCKh2DIIGfIssPX2nnzCSdxt7d-sQ-ELGuKj4C2AgLHU"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-9d9dffde-3976-44d7-b914-7de6915d65fc",
+                        "name": "track_order",
+                        "response": {
+                          "status": "success",
+                          "order": {
+                            "order_id": "ORD-11111",
+                            "status": "Delivered",
+                            "carrier": "FastShip",
+                            "tracking_number": null,
+                            "estimated_delivery": null,
+                            "timeline": [
+                              {
+                                "date": "2025-12-18",
+                                "event": "Order placed"
+                              },
+                              {
+                                "date": "2025-12-23",
+                                "event": "Delivered"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410768.5960624
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_processing",
+      "conversation": [
+        {
+          "invocation_id": "e-4457a760-3fad-448c-b452-9f14819d6a1f",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-22222"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your order ORD-22222 is currently processing. It was placed on 2025-01-12 and processing started on 2025-01-13. There is no tracking number or estimated delivery date available yet.",
+                "thought_signature": "CooEAY89a18jso-y5XsecjGfQTgPKuccEb-IJqPa1kU65gmkmYEeGOqUXFhCdp7u2bceSRCSDlRZ3_-SeXI5bRorequoj2v6VS57o96ZpWbW_BAXtVeiLKFY1-43NSWUyDwL5ER1eywR3NuBR7FcEtxef1XCuNUrd-3K3jacdi6JKk72gPkuXY1xR3NdQLlq1LKgXGTKO_x3ZyQ_vCQ59QSWo4Pjx35SdK3onUdtTf9pdy2eBgruOcOhsJaYHfpWGtF6_cB7m4yoLvxc-radxaMwwqQ9GqfLzs9dSGOjzDeqoOSe7tJl_Ldf77fduMkF6vSt3gYd-UnNML-T6Y2Ha6lTOHGTEQdozb-JxNMM9Obk-m8kqN-2Q5y0xcHiK8aMAaofcvpqlALd7JuuEo-HoJKICBWtpwsGM4tn89yfgDe3XRlLa6JD8iziTmhn9lcbRQKBPLE1_ew0yvbl_m2JYoAZJV03jmUM0kjsi3AYjf4boOUmlD-ptSVLhkcp4yJ7tc1101HNh5qG748Q3c91syDcPt2qXHV7rrUBaNKNhReUUb_1eR4DrRHLdLMjBzVJOAiNQOY34jroA8YETe__tRwfxxq7Q53Lgxjtx6Kd1ssHRb1SAQtsFCLSUniS3j98RwbUf6xYAGSi2JXjLlP2hk_n3pmfXj3FChrqvouPlRoegPJOaCrw-W1Auhj3"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-cbd43dde-52ac-488d-a76b-ce730dd52a6e",
+                        "args": {
+                          "order_id": "ORD-22222"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "CvoBAY89a18p3FSTdexLPGyXg4P-aIdtgVg3IkiERPtatBysNb5zCQ6vr1hxMoC8NxIEM8RMqOHgKy9z10il2IXN-eKU_5vPRVavaRwgn20xOe6DR1Q-awTNeIhYQDVLz1VdhtGjxw2tCbo0ZYMh3WmCpR3rgRPLYXkIzMEHsusxvI8lyPr5auTqWZ1WPhCdIV65u-h07BqHPvwK1U1LQ_agP9xviOUwBkuCjDGLzA3qJvPrJ4d_Ttq1pfWei6MBT9BfrqvWNFJ0MPGvesYzl9m98fH9XZbeGQEzH-BHmy3FA799pLET4-kFRl77MVNZO8LFkKPQNqQ8zz5n0A=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-cbd43dde-52ac-488d-a76b-ce730dd52a6e",
+                        "name": "track_order",
+                        "response": {
+                          "status": "success",
+                          "order": {
+                            "order_id": "ORD-22222",
+                            "status": "Processing",
+                            "carrier": null,
+                            "tracking_number": null,
+                            "estimated_delivery": null,
+                            "timeline": [
+                              {
+                                "date": "2025-01-12",
+                                "event": "Order placed"
+                              },
+                              {
+                                "date": "2025-01-13",
+                                "event": "Processing"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410804.218526
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-002",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_not_found",
+      "conversation": [
+        {
+          "invocation_id": "e-d5a2036a-8f93-4914-a0c5-ad24ac772143",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-99999"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I'm sorry, I couldn't find any information for order ORD-99999. Please double-check the order ID and try again."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-1904114b-2a16-42e3-916a-655d8c9f1325",
+                        "args": {
+                          "order_id": "ORD-99999"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "Cv4BAY89a18r9lSm2xvSu5O8dvaq0gjgYiDVaMYFTalvgSl5D_IwwW0aHR7VOXD7SBliN5Qcxzu_wPNwjTTAVGqpAs4w6IT27TAQCmkWViNs-ueRmo-PesI5O31jeiOILeTqavCSK0qujEQoIVHGjRRt2T2nz0H3sdthne-tHay38bwPXSCY3bXlL8uGYA7Av9XSKIW1eGXnnQx_CxBQywKsNp9Jp5TxljiYljnomrdx8ru_dtEbDEqaHNVPPylO5enUzEScfavfKB70MIfzNs6SheleY3Q9p8FXNAI-ZK5uDntWPDoH088Gj8TFfO9pOyjTDxqutlYj-csQISow28g="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-1904114b-2a16-42e3-916a-655d8c9f1325",
+                        "name": "track_order",
+                        "response": {
+                          "status": "error",
+                          "message": "Order ORD-99999 not found"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410819.2679255
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_unauthorized",
+      "conversation": [
+        {
+          "invocation_id": "e-57fcb70e-49fe-4e7b-8ab3-4cfd4702c2f6",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-22222"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I'm sorry, I am unable to track order ORD-22222 as you do not have permission to access it.",
+                "thought_signature": "CusCAY89a19zlqr3EAeePWwcVP8EnaBP_blZdSjQ9P6mGF3wAZav6vfUxZ4oDnuOWFJMdTTTIs-FTWAdgrCU3Ruapliuwwn-9w_ENOpNFDRlXmpdC_98ScMPud6kAkgI0QripGwlfUhcBrYigL1L3KBSJ733M2MuUr1sTjbzwY-wJCp-F-uPkBPABuszWHaJHVBAWABYesMl-ItQfAmMoywRMTqdjOGfSi5TA6WbPonmzadG-OZ0DAEgDc0qlX0gHvKJgDBBq3HGbiG-qm1SvUFlGMdT5RqPamiB1pTm3mSHQTSLv2rmp4tQbbppWR9aIbIgDUjzKgaldYSVg_xYskX2aE6ByvVljBk6CDUVSbgxmXNeqf0fvg-bV92TDLD5bHo0RdUyiEeuPiqPLsjZujH-6s8vcXj_qVZbkc_es42Lh0eyqmv9v2FcwHxrh6pQ0L6suD3Vtc_0O0C3LmQGmHnCDL9laTfovXwXcaqa"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-44b85b02-6285-4252-a0f8-845f61ce0790",
+                        "args": {
+                          "order_id": "ORD-22222"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "CvkBAY89a18nao0PzES9p3lxVUKMBsuPoHJ-eQuQTwrFwnl-U6CNZxtvNZPQsIe3KKiJ1coP08GsglWI2GkjxpHhaF45ZE1u3hLZVNsd16zhVrYjqTWjSAD8yLWjhU-psZATADJ76ri_fnrR4OjO2phlI-Nacdfz704ETA0Ldc_9whuzKx3HWOqMag-rTN--ANYPDzFErMNxZXnvZ6fbAbOIpH9KXu74pcBuCdeXkC5kfSOCRSnrz9oyWjd9PchcUU0aoVRGnVtGaoMhiP7k2yMROwXNTJH-T7tZkfi06WDeg60ZDhANOSxQ3TI9PUyZ9MpcBUvTFwXIi7sY"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-44b85b02-6285-4252-a0f8-845f61ce0790",
+                        "name": "track_order",
+                        "response": {
+                          "status": "error",
+                          "message": "You don't have permission to access order ORD-22222"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410839.8452034
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "track_unauthorized_user2",
+      "conversation": [
+        {
+          "invocation_id": "e-f6affbdc-8c9e-4430-b82d-064db2fdb1a4",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-12345"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I am sorry, but it seems that I cannot access the details for order ORD-12345. It's possible that this order ID does not belong to your account. Please double-check the order ID and try again."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-a2d96f2a-ff1d-4afb-827b-906ddd744945",
+                        "args": {
+                          "order_id": "ORD-12345"
+                        },
+                        "name": "track_order"
+                      },
+                      "thought_signature": "CvYBAY89a1_Gs1kmCIrvAJNliZki7Ka2dtIn7AFugWgr_0piBgJNz44OJJuJnGCYvFw0kXFhVqhKz9rCrmgN-69mSZiG2phlnO4-_VPvTC5-JKWRzF2vwx7V7WBJOORMhCYtZ3i2uZf4Lc5fB1LP5cRdiUbF2jeIZoqBxYaBi2zkYqaSgafJz4l-Rc-_IWz-QjKEdFYIkTQWGHvDm1tQ88yfSubWbmzZEyMEfc1QTIqoOMDZGOEoW1IC4U7dQzL8Mg6rga6U0qr3q_qUmHd7XOexV83Mpo4Esl8C0JpvKXgtay1Ck_pc5McTuqqBlbrjJ4KfVpTDRV7O"
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-a2d96f2a-ff1d-4afb-827b-906ddd744945",
+                        "name": "track_order",
+                        "response": {
+                          "status": "error",
+                          "message": "You don't have permission to access order ORD-12345"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410854.3940554
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-002",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "order_history",
+      "conversation": [
+        {
+          "invocation_id": "e-61d43168-d1ef-4b4c-af04-4f86559ee438",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me my recent orders"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here are your recent orders:\n\n* **Order ID:** ORD-12345\n    * **Date:** 2025-01-15\n    * **Total:** $1295.98\n    * **Status:** In Transit\n\n* **Order ID:** ORD-67890\n    * **Date:** 2026-01-27\n    * **Total:** $215.99\n    * **Status:** Delivered\n\n* **Order ID:** ORD-11111\n    * **Date:** 2025-12-18\n    * **Total:** $485.99\n    * **Status:** Delivered\n\nDo you want to track any of these orders or see more details?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-d7c9c855-3d8a-427e-9755-e0e8b5c4b448",
+                        "args": {},
+                        "name": "get_my_order_history"
+                      },
+                      "thought_signature": "CpACAY89a18TBIj39IKBkBXdPkifFMbZsI4H4T7TvGmLDdLpsahNAaHXgmS1cFYMtpAXN8MsVdn-lROj3eP3SbIUwwnpN3LRFbnRGt0FbHgfROqyet05_AEE-BFPQ9_xV_09AEdX_SUfGccKsEi5ey3uuyNWKVh4SB5Vt5R44Ao3aqk0_KSJTyu_cElejn9nw_IstdA2VGBLvP9lGnFlJO-cL14JybfLBaapt3ijb-mhkRR9qM79GcSlY0NUJMkGIJazwPYu7HB20ZzkJXEWq2hOpfwkNRiX2qIAW16vH46dVm2bwkfcEYhwTiEJeKK_le5cRMm6CvUeCcfKmp2VFi1KLjDv0AFC-ktbJtHdGh2GNMM="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-d7c9c855-3d8a-427e-9755-e0e8b5c4b448",
+                        "name": "get_my_order_history",
+                        "response": {
+                          "status": "success",
+                          "orders": [
+                            {
+                              "order_id": "ORD-12345",
+                              "date": "2025-01-15",
+                              "total": 1295.98,
+                              "status": "In Transit"
+                            },
+                            {
+                              "order_id": "ORD-67890",
+                              "date": "2026-01-27",
+                              "total": 215.99,
+                              "status": "Delivered"
+                            },
+                            {
+                              "order_id": "ORD-11111",
+                              "date": "2025-12-18",
+                              "total": 485.99,
+                              "status": "Delivered"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410870.6187248
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "order_history_alt",
+      "conversation": [
+        {
+          "invocation_id": "e-fe691f02-370a-463b-a7ec-c833aaeef64c",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What have I ordered?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here is your order history:\n\n**Order ID: ORD-12345**\n*   **Date:** 2025-01-15\n*   **Items:**\n    *   ProBook Laptop 15 (Quantity: 1, Price: $999.99)\n    *   Wireless Headphones Pro (Quantity: 1, Price: $199.99)\n*   **Total:** $1295.98\n*   **Status:** In Transit\n*   **Carrier:** FastShip\n*   **Tracking Number:** FS789456123\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\n**Order ID: ORD-67890**\n*   **Date:** 2026-01-27\n*   **Items:**\n    *   Wireless Headphones Pro (Quantity: 1, Price: $199.99)\n*   **Total:** $215.99\n*   **Status:** Delivered\n*   **Carrier:** QuickPost\n*   **Tracking Number:** QP456789012\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\n**Order ID: ORD-11111**\n*   **Date:** 2025-12-18\n*   **Items:**\n    *   Ergonomic Office Chair (Quantity: 1, Price: $449.99)\n*   **Total:** $485.99\n*   **Status:** Delivered\n*   **Carrier:** FastShip\n*   **Tracking Number:** None\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\nIs there anything else I can help you with regarding your orders?"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-4f443150-fbef-4573-a2c2-f933be7fc71e",
+                        "args": {},
+                        "name": "get_order_history"
+                      },
+                      "thought_signature": "CpsEAY89a1_z00ak3EM4qiCL8TiBukUUSM5ug5Z_5DsL7CA5f3bp0o-sY8Cz7puhKyXKiFp5v-oZGWoPZqowb9hnCnlBYW_uJK34EkuvrBTImomIfDs1rwmPxs-SJQoZO2zctHFeAyKuohJpGCu8Qdhii9NBdoIiKGZxxp2rmdV7yD8i39oKIOg_Vh_rghpgF9vGCpr-ObhGZ7ufBuoHAJQpEvbVZVKLCkMfug7C0bbd5cj4zmAZEq8UuN_KjmJzorTghJo44wuHMTfAbfxXfkDIuAZm8i3AclRzeNvfmnrYUB5Xr9UFFyLYdl7_x9zKSW-7YfTa4XHW1XwQ8xk4q7cejwmDOPvIhpRLDDdOsQc-e6D2PnvjKOQb50zWfmulJdsAd4Rhl1RXk_Qgn045M9sqQS6PGAFpRtEvpQbbcq6iTW4WSCEHjD3oviKhqeHNbTJ_cbfs9vsI9TsAzDBtbgFOtW3YL7-8Ed4w7acFUPa65TDfppMMxf7-vYHf5xJVmChWHtR_y5-UFQfi7bxZGYRMkvTzdl5-lAEamhL6vkMn3jJ3g0TZn1l105ST9PDJ0Qo6c-3QVwnVj2MkfGhFdpYMIpj4tE0mefinxlyxrjgfNSAHPyHM61zZCel4l0fybSRcDNXh30lnVF4lq7uIZgGaaiSbewJAfmqc7kDBEbSDGR8OC5BS9V4EWvsCwwmDpDhi--B7Y5cUlbKiVC0="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-4f443150-fbef-4573-a2c2-f933be7fc71e",
+                        "name": "get_order_history",
+                        "response": {
+                          "status": "success",
+                          "orders": [
+                            {
+                              "order_id": "ORD-12345",
+                              "date": "2025-01-15",
+                              "status": "In Transit",
+                              "total": 1295.98,
+                              "items": [
+                                {
+                                  "product_id": "PROD-001",
+                                  "name": "ProBook Laptop 15",
+                                  "qty": 1,
+                                  "price": 999.99
+                                },
+                                {
+                                  "product_id": "PROD-002",
+                                  "name": "Wireless Headphones Pro",
+                                  "qty": 1,
+                                  "price": 199.99
+                                }
+                              ],
+                              "carrier": "FastShip",
+                              "tracking_number": "FS789456123",
+                              "shipping_address": {
+                                "street": "123 Main St",
+                                "city": "San Francisco",
+                                "state": "CA",
+                                "zip": "94102",
+                                "country": "USA"
+                              }
+                            },
+                            {
+                              "order_id": "ORD-67890",
+                              "date": "2026-01-27",
+                              "status": "Delivered",
+                              "total": 215.99,
+                              "items": [
+                                {
+                                  "product_id": "PROD-002",
+                                  "name": "Wireless Headphones Pro",
+                                  "qty": 1,
+                                  "price": 199.99
+                                }
+                              ],
+                              "carrier": "QuickPost",
+                              "tracking_number": "QP456789012",
+                              "shipping_address": {
+                                "street": "123 Main St",
+                                "city": "San Francisco",
+                                "state": "CA",
+                                "zip": "94102",
+                                "country": "USA"
+                              }
+                            },
+                            {
+                              "order_id": "ORD-11111",
+                              "date": "2025-12-18",
+                              "status": "Delivered",
+                              "total": 485.99,
+                              "items": [
+                                {
+                                  "product_id": "PROD-004",
+                                  "name": "Ergonomic Office Chair",
+                                  "qty": 1,
+                                  "price": 449.99
+                                }
+                              ],
+                              "carrier": "FastShip",
+                              "tracking_number": null,
+                              "shipping_address": {
+                                "street": "123 Main St",
+                                "city": "San Francisco",
+                                "state": "CA",
+                                "zip": "94102",
+                                "country": "USA"
+                              }
+                            }
+                          ],
+                          "total_orders": 3
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410887.8629067
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-001",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "order_history_user2",
+      "conversation": [
+        {
+          "invocation_id": "e-703c0dc0-79a6-4284-b80b-4a1043ce9f98",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me my orders"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here's a summary of your orders:\n\n**Order ID:** ORD-22222\n**Date:** 2025-01-12\n**Total:** $647.99\n**Status:** Processing",
+                "thought_signature": "Cu4BAY89a18YBs0ZA8V_rLm01lv88R5Fj_-QARUO1fz4el_pY907EQos09k7vnFHV4lQB-YEwyVvSVSrJnoi3o1Fgv3cOECgRzEtgNpfs46aIpl4xAdRZMNEHEvx5RWbetVFX4kQ5pOrSz0uQQu1zsSaOBcQxLisxg6OqSXYBzXbqRTKaj4fxiucprr9A-Uj55_v2J8QBSn6M5k0BR3WDDxlBl9WZ3TWCjMZzF7sQAMbsXfDhQyN6bVFqolbB1FMKVrcdfQLY9CYeocPoYoGTyJaYPDPzRz8pooP7WKzPhG4h7UR2LSez9NfwAHnwJVloA=="
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-14d14b41-285b-437d-9387-2094c1b6492f",
+                        "args": {},
+                        "name": "get_my_order_history"
+                      },
+                      "thought_signature": "CrkBAY89a19gaNZH-z3vL6wygkBvIMz4zMCdGoIxkBqXU5MK2apLWT5DBC35tjyUIEQV2WlZ6lEXjZdlwKElRhSjAWgvPfciTdL3hSapii3D6l936MbvJz5rWTuMcBaSRTiIR5Ftr2ofD1eu9Txah5gIpeYP-xQhLaXA0pvUKWMQvgVghhaPiBo6kWPDkfx7bvPSL4Ee0EaxmM-UVh5YY48x0EXRsoHGMcTuZkr6BGL2H_gmqhd6yLxvwGE="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "order_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-14d14b41-285b-437d-9387-2094c1b6492f",
+                        "name": "get_my_order_history",
+                        "response": {
+                          "status": "success",
+                          "orders": [
+                            {
+                              "order_id": "ORD-22222",
+                              "date": "2025-01-12",
+                              "total": 647.99,
+                              "status": "Processing"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1770410903.1362557
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_order",
+        "user_id": "demo-user-002",
+        "state": {}
+      },
+      "creation_timestamp": 0.0,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 1770410903.1363237
+}

@@ -1,0 +1,186 @@
+{
+  "eval_set_id": "demo_user_002_tests",
+  "eval_cases": [
+    {
+      "eval_id": "user2_track_own_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-22222"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Order ORD-22222 is currently Processing"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "track_order",
+                "args": {
+                  "order_id": "ORD-22222"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "user_id": "demo-user-002",
+        "app_name": "customer_support"
+      }
+    },
+    {
+      "eval_id": "user2_get_order_history",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me my orders"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here are your orders"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_my_order_history",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "user_id": "demo-user-002",
+        "app_name": "customer_support"
+      }
+    },
+    {
+      "eval_id": "user2_get_invoice_for_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "What's the invoice for order ORD-22222?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Invoice INV-2025-004 for order ORD-22222"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_invoice_by_order_id",
+                "args": {
+                  "order_id": "ORD-22222"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "user_id": "demo-user-002",
+        "app_name": "customer_support"
+      }
+    },
+    {
+      "eval_id": "user2_unauthorized_other_user_order",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Track order ORD-12345"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "You don't have permission to access order ORD-12345"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "track_order",
+                "args": {
+                  "order_id": "ORD-12345"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "user_id": "demo-user-002",
+        "app_name": "customer_support"
+      }
+    },
+    {
+      "eval_id": "user2_get_my_invoices",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [
+              {
+                "text": "Show me all my invoices"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Here is your invoice history: Invoice ID: INV-2025-004 Order ID: ORD-22222 Date: 2025-01-12 Due Date: 2025-02-12 Status: Paid Items: Standing Desk Pro (x1) $599.99 Subtotal: $599.99 Tax: $48.00 Total: $647.99"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_my_invoices",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "user_id": "demo-user-002",
+        "app_name": "customer_support"
+      }
+    }
+  ]
+}
