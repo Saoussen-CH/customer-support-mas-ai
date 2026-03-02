@@ -23,13 +23,7 @@ from customer_support_agent.agents.root_agent import root_agent
 from customer_support_agent.agents.workflow_agents import (
     eligibility_agent,
     refund_processor,
-    # product_details_fetcher,  # DISABLED - used by LoopAgent
-    # parallel_product_lookup,  # DISABLED - not used anymore
     sequential_refund_workflow,
-    # multi_product_details_loop,  # DISABLED - not used anymore
-    # details_agent,  # DISABLED - used by ParallelAgent
-    # inventory_agent,  # DISABLED - used by ParallelAgent
-    # reviews_agent,  # DISABLED - used by ParallelAgent
     validation_agent,
 )
 
@@ -40,18 +34,10 @@ __all__ = [
     "product_agent",
     "order_agent",
     "billing_agent",
-    # Workflow agents
-    # "parallel_product_lookup",  # DISABLED - not used anymore
     "sequential_refund_workflow",
-    # "multi_product_details_loop",  # DISABLED - not used anymore
-    # Sub-agents (for testing/debugging)
-    # "details_agent",  # DISABLED - used by ParallelAgent
-    # "inventory_agent",  # DISABLED - used by ParallelAgent
-    # "reviews_agent",  # DISABLED - used by ParallelAgent
     "validation_agent",
     "eligibility_agent",
     "refund_processor",
-    # "product_details_fetcher",  # DISABLED - used by LoopAgent
     # Callbacks
     "auto_save_to_memory",
     "track_agent_start",

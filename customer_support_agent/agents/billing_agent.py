@@ -7,7 +7,6 @@ This module contains the billing specialist agent that handles invoices, payment
 from google.adk.agents import Agent
 from google.adk.tools import preload_memory_tool
 
-# process_refund,  # REMOVED - use refund_workflow for proper validation
 # Import callbacks
 from customer_support_agent.agents.callbacks import (
     auto_save_to_memory,
@@ -27,9 +26,6 @@ from customer_support_agent.tools import (
     get_my_payments,
     get_refundable_items,  # Informational - check what can be refunded
 )
-
-# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
-
 
 # =============================================================================
 # BILLING AGENT
@@ -89,8 +85,6 @@ Be clear about payment amounts and due dates.""",
         get_acceptable_refund_reasons,  # List valid refund reasons (informational)
         preload_memory_tool.PreloadMemoryTool(),
     ],
-    # before_agent_callback=track_agent_start,  # Track when agent starts
     before_model_callback=log_system_instructions,  # DEBUG: Log system instruction with preloaded memories
     after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context) ✅ Active
-    # after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
 )

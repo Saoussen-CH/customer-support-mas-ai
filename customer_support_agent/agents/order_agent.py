@@ -24,9 +24,6 @@ from customer_support_agent.tools import (
     track_order,
 )
 
-# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
-
-
 # =============================================================================
 # ORDER AGENT
 # =============================================================================
@@ -76,8 +73,6 @@ Be helpful and proactive - if you see delays, mention them.""",
         get_order_details,  # Specific order details (verifies ownership)
         preload_memory_tool.PreloadMemoryTool(),
     ],
-    # before_agent_callback=track_agent_start,  # Track when agent starts
     before_model_callback=log_system_instructions,  # DEBUG: Log system instruction with preloaded memories
     after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context) ✅ Active
-    # after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
 )

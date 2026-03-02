@@ -101,10 +101,5 @@ EXAMPLES:
         check_if_refundable,  # Pre-check refund eligibility before asking for reason
         AgentTool(sequential_refund_workflow),  # Refund workflow (after eligibility + reason confirmed)
     ],
-    # before_agent_callback=track_agent_start,  # Track when agent starts
-    # Memory Bank callback - Two options:
-    # Option 1 (IMPLICIT): Uses memory service from invocation context
     after_agent_callback=auto_save_to_memory,
-    # Option 2 (SDK): Uses Vertex AI Client SDK (official approach from docs)
-    # after_agent_callback=auto_save_to_memory_sdk,  # ✅ Official SDK approach
 )

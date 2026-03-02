@@ -7,11 +7,6 @@ This module contains the product specialist agent that handles all product-relat
 from google.adk.agents import Agent
 from google.adk.tools import preload_memory_tool
 
-# Import workflow agents - DISABLED (not used anymore)
-# from customer_support_agent.agents.workflow_agents import (
-#     multi_product_details_loop,
-# )
-# Import callbacks
 from customer_support_agent.agents.callbacks import (
     auto_save_to_memory,
     log_system_instructions,
@@ -30,9 +25,6 @@ from customer_support_agent.tools import (
     get_product_reviews,  # For "only reviews" requests
     search_products,
 )
-
-# from customer_support_agent.agents.callbacks_sdk import auto_save_to_memory_sdk
-
 
 # =============================================================================
 # PRODUCT AGENT
@@ -150,8 +142,6 @@ WRONG:
         get_product_reviews,
         # AgentTool(multi_product_details_loop)  # DISABLED: Too slow, causes timeouts
     ],
-    # before_agent_callback=track_agent_start,  # Track when agent starts
     before_model_callback=log_system_instructions,  # DEBUG: Log system instruction with preloaded memories
     after_agent_callback=auto_save_to_memory,  # IMPLICIT (invocation context) ✅ Active
-    # after_agent_callback=auto_save_to_memory_sdk,  # SDK (official approach)
 )
