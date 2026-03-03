@@ -1,11 +1,12 @@
 {
   "eval_set_id": "error_handling_tests",
+  "name": "error_handling_tests",
   "eval_cases": [
     {
       "eval_id": "out_of_scope_weather",
       "conversation": [
         {
-          "invocation_id": "e-a27464d2-997d-43d0-8a65-1c433fcbea01",
+          "invocation_id": "e-0771eb31-af4a-4ff2-b6b1-c3bdcb40c4f1",
           "user_content": {
             "parts": [
               {
@@ -18,7 +19,7 @@
             "parts": [
               {
                 "text": "I'm sorry, I can't help with that. I can assist with products, orders, and billing.",
-                "thought_signature": "CrkEAY89a1-QcxJbYG2EAjhw0Xj7MlG8CPeAuZsgNC4afbQjUWWQe639iLbnUqinP_s5yxSDmF7rr4ibZ-kasEexZRvRaiijudwQFpe1At2pxaLtRB4bSZtlLJizV54SMSqGht-0zvvCK6Op-gGDiCmwP3teVNqKgW0B6-kqnkCuzGApP6FEIvTb5WovZOwI4UU368XTTQDApdxO9c5iGj8uQi4ETO6Jjw76iWY18dun3JJZk7oUC8oOKrrevhfPmKOgYqrG5_jXBa2uUiyEvyZoVIh39f3jVnS2Sixrxk9qV3ynvPx3t8MpEFbw1Mh5zQBx5gY4dyj0fDDs8NlsB1_Zb7aFVkud7dMTXOpMUfmQaT-zTOfNy_EUNCy917cu1Ium4OQmBKWr5N-4Rxp3jlwbakl7Tdub4dqZvmeG_r9bZqpL50vEovXf2M9AMGiQCdYdIo6_IlgKEtO5jI9M3LCp4qaaODxTZyf9cTiGyAiBPQWny9GpMRIY2p_2vWy8AhjeHIRXeSnN5gaZUH99RvSvxZo4E5vBqzLp08ZPkQtOio7n44Ph1bQnZ6Ea8rIxawOZiBrkOpehmULnkSihIyVPkRQc-2iYwUwtrpJFT5VmSvsvjJx-kP-Hk9AbjSVj7LuiaQSHlJfVcfI0g-FvqfkrDPJlIwUDI-Pleto4NPo7byKiA29zQ8_7FX5CqGoLgaKyH4WGGmg4IH3IWRRsa3rqHlbDDoiSJnH9Ue-8AJh_LnqaCyM5e0QNX2Y="
+                "thought_signature": "CsUEAY89a1_ZK8Wdhdfs3fKen7kbY-_oNAUiH_d5EVg1LB1iM0kImHLxdRNeg_T9xxvucjNCJ7Ssq2yGGgMayhqbjDfOL5-xuovvZsDOAHxfmeSRbg4xS0Af9LZUfwUWgLGpMi2lekOwpqf7pP6jdIuJoz2jogddcI_dK55lS967-Z-mG3cfcS_hWx58NlurcbZS3LyU8wAFLxaHZ7qFzj4tqTXf6BpGPP0pOhEfXCNGIs80dwyaMYXw6xsKI3V88sXkfpD68WFXuwJn0AbFPyCXjuOOIa2Tol6YrxKu7lWN2QApBre1AYKCkmT-10HLL4t9XJeWKqRS0NmzwT1ajMid_YCCmn-SQi3NHjlBlUwk5HuVSUCqwbXjBPt26DZYHUFqhODKKPm3c_aaF87RjyfdhxTs0SG1UMiH6StIQELDsd_-2V2NuQqZQs3k4prid8WGPHLfFvtzxWkwDhf3LnGw8gEk-bp9AlBJBQaElYc83NJplEQUJT1DIcXTS6PFRGjK8Oxd-F5bgFsEjcZyFTg_Nm09rSgpBgCVYcR_bsUt_Wvhnm7PkRAt22XeLDky5qyn8g9HR7jvX-AvwJPCC4QW0GVsPPhzEabSLfwzRa-7gJ4b4sa7SqqDNCAaFqVgyFkcycc7yYN01REP4G5AjcgvzcT2BgjhY3odLE6GvM_JsRPP9b8ADgb8tsNHC0VtTouTSlsQClobyPa9jblmPG05vzzcO7h3PrN_znFz39HpUvnHtAb4krHBeDqL7z2YrayR_nY987E="
               }
             ],
             "role": "model"
@@ -26,22 +27,20 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413013.211159
+          "creation_timestamp": 1772499382.5654633
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "out_of_scope_joke",
       "conversation": [
         {
-          "invocation_id": "e-e4ebdb78-8ef4-4e96-8dd9-8c739a431dee",
+          "invocation_id": "e-bf1fdec4-87b9-4f52-8ee0-bca75fcb59dd",
           "user_content": {
             "parts": [
               {
@@ -54,7 +53,7 @@
             "parts": [
               {
                 "text": "I'm sorry, I can't help with that. I can assist with products, orders, and billing.",
-                "thought_signature": "Cv4EAY89a1_CnZVGhfuBAgW8b5HrQ032dACReEGJp4lcRdfcu8708gSJWNuPaw6NOjYk_Epy-zDIfuOBaty-QTQd6gRCa0uXciaTBMExrg-zbETghbICNnS3wcxm5nyRaPTxMHaRRCjyJREPRvhxhA4FXHva-NLd96CXfkzi8EUgtuqEHYFUHwwA_5yk8JeSKqK2StiTV_nyiXUVZWHCsKaKB_dz77p55Ux0qfVQ0EBX_Oi1NPCdzm4GiQ3-K57Mv2BrEoWynrXLpaSP61E6ZpncSfY5iFPAW_AaGm6cj9Grve__7bo904r0t5ScD2dS7psaD0yglRzvi8dIx2OoIIhPWxbQ365zbBJ_6kyk9Fj8lBmup90Oc6PQb4Zhw0XBPCR19JECwzTu7BMlcesflt9oxEianoAJa00mNrEniGXdoWeoz2Ehr06S9xHJpLj8vDGmJwSD1AIExUURlx1StV4K3KS1Je1rC5A5PyE_eYi8YMHr1p6oVurpm-2arsshnDwdpjOfFyIjuNaxG83-v_LHFHVlOnAuK3VW8SfNL0PxolgDuE6bcPnYv7ZfrWHdOaenSDtJjKLgb3QKCp6lpovw5ADNExZzOKEwklgsbGLa7pzwnZOSHl2E3VpReYqNSg9qVmQDrcEmqKAAQsn8_SAPtFKhOjQC2srVBQbjhago_RAsckZ0SczFDgx8KPJJM9kCEFINb4wdPOR4caVIHaRu7eXVP9tJBYqm_jb9CInt3e_-7MOARbCelW8-09bWgBBwhF7A1Gcs_omEvfVaDYCeWpNfZ4-KDR9mUK2Gx9zV-04LNU6WPVdqwWxNzljs48FxMKJhEw7DoxM1fXvP6nk="
+                "thought_signature": "CpkFAY89a18vjOFk7QASR9gboqJdUGaIgfwPgyNuvTaqvpUpXmjyfMUbGVBG79NUiVTHfuaTazzkGs-dysGVI6AxwX7z1L3-EVvmJy_N1OAiaZfdQDzYLRsgnuOhVt4rJsEWsWwujETGwvrz8B7_pOerOaiNTGqYxxYVdWBqfg-DTyyVhCfKVXb7xoOeKhQDyX-Ifu-Iy27ymHJjGKYcXHpACrZIuapS07iHmObiM3YZye4x5AAN1_FUJzVt4MtDrlRoE820whw9Yq1flo_T0SncTPcIPSM8t0gwKCpshyh5YEhEUUDxRR7fro7-2zYPo48vEkfq6S8-FImgwrOfX0IC9_LTrCgfRsHmjK7eV5s1AtJwSeXIrtWfOA2cHAMKGtA-WIm426h2lCQoVqK6AVqRFtgX3hoxE8VvOLJ7ULjn1ujNpxbHaNzvPfkle2ZKzSKT7yasr5SsoD1FcLKw3sx4Uv59HySJ1iODl8HXL9R3kexrEfvMA1h0QwkSc_AMt6C_Xou1qd1lHDB6pty6z4l1y5_2VqePr3hLmRMvGCwt0-xEfCadHFFLMotrMi3QnM9t3GGZuq_dSE-f2gAHOT5EpL05pm60wKsPrtrzDVkmVGaswWoxZ5Yp9KY8xcnhskMTIpx6_HWmMXCxagnP-TxYC5vRSeBKHpyNjT7t7rasdd34Mg3xt1OpawTMokFqSfnia3PQAJlJS8FtXn5P_FKHobKuGS6EvxqHzni3KrahSHTzDQvO3S3a7loU9CeLXDu1tmtvg8P8a24zFgYH22P6zz4qfzW1QglGsyEtVm-Q1HWDlsv5GiydPivXaroYtM03WifZoLo2iRoHSCh8Tf9Hf2x2LwVUNPZRGXeQ_eOLQRTTPBOPVBU6jDY="
               }
             ],
             "role": "model"
@@ -62,22 +61,20 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413027.7283936
+          "creation_timestamp": 1772499389.2477345
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "out_of_scope_general",
       "conversation": [
         {
-          "invocation_id": "e-e059b459-72ae-4566-9f89-ebf5fe9d8ec9",
+          "invocation_id": "e-0854708b-b3a1-42a9-81c9-5ed46a834844",
           "user_content": {
             "parts": [
               {
@@ -90,7 +87,7 @@
             "parts": [
               {
                 "text": "I'm sorry, I can't help with that. I can assist with products, orders, and billing.",
-                "thought_signature": "CpEGAY89a19YyxySHSKjEOyOpPSdZZATlfnIdaSndRVGuCu62UaBWt-8VoxLmHddBXqcbKQapw_iZIaKFFgNpLkUvZnTGaIpiqRThM-fSfZAXtRHDUvQbKocbhdE1oXbLykJGDhEOm-5sEL-R7ymF2srOpw_H-Rn8CcQbm44dOBedGbR_ydIkdhoz_mt2sVYndgrz1BgGjDgCvra1lGzKMu4q9ZYu6ex8tpZG4K7hhYnu_g8rrbnrox8CQZxOsxjWV7VKamuZsflIYgbOOyI2YM9ZCWq6hrhWkhf_o_V_VQGjCU4AU5PiMBY_HE1sw-FhvRJKnI6clnhDoA62DBFpKmTwkCKJOqdONB8RTaew0RoQBcEoKQcFk5XRb3P2nRpToMmyZYhNMgd88c4sRVH3gzo4KXwcxDoSEj7DHY2JXIjpW0GE6xzMd6QG4tqppcvFpRWi06DDTq43YTor8t12XKa83y-Buzoa82iwOJbPbDbZ0W-p7EGBQs44BElMBWHOUFnESFa9LqHdx27CWpToN_TojGl-UpJ8F4eRf31BoZfpRwRw46mdsGQ-36PBxOUBrQSb4FSxej1qNUEF3z8jH9yJeZeMlgOaJhYEQSPxz0kKpaAWzgYqVC8Ct-6gFMTAKfYuglOfHPEtXptoD0DBZysl81htyfLPBiLbYvjMgMvSaXZa5jrgyV-GeUmhEE3JTcfQmnKsFlXsbIwDCH_u9DindXIbDibl39LRpZ2ZP_pXYAg4s14BYwTJkGMULZc1UiRpkmJvrj3XngKUPrIkJ7SO3L2K-87gbMy5xxzLXwYAdmp7oBKUqbfhMEbZ9xK9UZBRBhTqyCAn6-qCgUW1HcpIOCZ6rHWKGRZv2faQoNzPZB1KV3EHIa2dULg5-h04FTRRSDgNc3p9xA3quvBwvvGVBcPHmdhAk7-e-vFikTz0eu06n7FRlxaetCkuzPd8GLwrGgxSowyGuMxLJPOSohAoFo_Ea_j6hp3CXLMLY4M1lbXaFXjTiwyOwecQ4M2ixZaAAygVoMSVP5xP8-V_OC7LI0="
+                "thought_signature": "CpEGAY89a18wyxPvd0ZfSO_85GhZRWkq4vBXQvv9Sae0y1V6LLhLgZ2FoiSKMN3MMtej_xUlEfUkUWecpHtoRFkDa5s2R_MA-Wb73GG_ZLjADsGU4pUny5oLgWWEWOGhDR87ZrD_F6fb9bvqcdZRbQ40VMHh1O4nXI1fphOaZLvmUyGtOI13UM4I9A-gGUGEfLEETyxQsrxKohC14_8kA15jMrPKHcpxztleM58s8VBTXIz2WJjAHCHLtwGJ7bX0mUiFhI5wDd7XBQ9IVCGMxH97CT_I9kEWvav0fINmd13jzNRQbNVrFf0evSg2U6bN0wfA8pqUHonjnELOJH6dmwzHAIvB5_zW303oXrBm3wAci0YC9bv7JUqSYqhk3jsCDq8N8DfQqlnG1Pruj_YHh0ikC4KfUFIRBrN4H6oWAmEPVOK1nPF8-U5igJPYVYj9Yn6a1qFI5Ebz-farE_CshmCMWdJTiEpwpiOFBYULc4zw0ZqTMqSo1rhaYyWt3gg0TRqNBpvxBs6xsKHWmLG_tPH5huZCLjVftL7h_qofQ1ROJCiZOx9TaBFIImx79w9cOKWvO3iBAZD9QX_jQJ-Rk-ArZIg8pxTAOGkxjK4H-ZluvOYdmwqKWe7yVFt7sCZKOTi4jbrDq7ygjznVi0gwW8Eg09L88Ac5qYtN1s36OPftFG0vk-JFdpy-0UyMwavwBuQVjC_sKJbi_sfFlIBeuPBQMzOslKnaOO9let39d2JC6b-cLsRsmMsVoR1OS1yUp6bEk5JffY4NnLlDovSqLFjuAlNzC_A84t_JzH1bGcdUDFNa0jM2RCIHeE-4z5L0YSmrJzzjvEFaVM-lwT3Rg-Pjqhe2AVob55T8-upyjIx3H6dP0UbvxyXa4EmA5nekXr3x4lxMEIP4-e4gEWEY0bKWMoGaJiis_Qap43vMHeEWYW3KJe7E3BU7zHLkEOH-poSb3APvdGnU7bmSxPDycSKhu5MaGXFHzWpCBbiXbGFJ-u7tsebguA3ueAA1jsB5nd5phWhEqgbRzcNFn9M_OD-Ymrs="
               }
             ],
             "role": "model"
@@ -98,22 +95,20 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413041.8480873
+          "creation_timestamp": 1772499396.442726
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "ambiguous_details",
       "conversation": [
         {
-          "invocation_id": "e-acd4d8df-dee8-4511-b288-6009ac541ab5",
+          "invocation_id": "e-d87982a2-68be-4541-a45b-f5b6ca416f07",
           "user_content": {
             "parts": [
               {
@@ -125,8 +120,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "Of course, I can help with that. What would you like details about? For example, you can ask about a product, an order, or billing information.",
-                "thought_signature": "CtIFAY89a1-lF4JcaHq0uRQf9usxIP4pYccTDAe9Rku3hfCnxppSkYYvsDlEn0hhRvDbQIkzJFBYZjumWmcyuDYBbsgFVwxBkU34Zk0XOQUxtLgz03xyK6kk9rs83xYLhB0Mn75aN3h9ZLeZvMJzbN-w4iT9pq9VoA-k0jiq20L0_VSIW6JRKSM04Gmiu2-EJCJRwWD5mQudWIkTk6FDKIUWEdjh6d8NZobc6JOXDRgQU_5DDIOYy31-y1tr1cXr6rtsX8W_siNIjbKieiw2QI_-zcR0AJz1IPPO7UCWQMpj-EsccZfqselpKXJpLIsCFCttRNsdMXHUZktd2m1eDcUE2j8aZolGq2n6Uc6AjPlSiVAPv0ZVGusyflINz0x4S9-B5SiUTxiRB23pqxIA3cCKCiHVlEcJdeCVCy2nrJsaqBZDL4F3mb3mW7GAWAoP0lwjleNRU74Pi-2k0cGKYZOTSKYyFl6S3pCFUo9cGnZniHq4_4Dka6IYkLnizFnro7-x4mpiLb6OdQXfwT4U4_ZtOhtWMbTo7cIIfQDnfuN3cGVxb_3pJgoBpGuEy0kycMOrCfx-OnulsOc1kD5K1c-kABqrBi0SeSh3s4go9rGjJzHteXjD487vbksA2FAMizV0wuNccCG6X4DIa78KzCXjkRr_8Nbwz--IRKmjkz5OxqZYs326-yw0Aldzt2psEh20sGXEewZV-w7appXVT5LL7VzzpUpAB32jxqE0ZF_9qebDidnX4Hy8YcR2p119nZYeXJsi4UErh9KylmiyoyfBgo9eRRgm60TFRbKC2r_nNry0X9rbK4Cz14iDMZlwgjHB7t_nlzYw8JjLjWD1IWempHy1tGQMfr1TRZB8Oy3yowRSBsf6i3CPB5iAi_AQZJVY26ItIVoOvBZK79fj0gfcIHexgUtI5SxqFVfu7URiVfMPVNw7lNfiB19YMh30wK0jaM0="
+                "text": "Of course! I can help with that. What would you like details on? For example, are you interested in a specific product, an order, or billing information?",
+                "thought_signature": "CpcGAY89a18HTf4DYlmirpwuGIGgVOieq14PE89TrwuUG7JReO5Ii09NebITm7mzleLq28K3mKzyPsFVl4FrEz_h9UpRCxCFyKfcEKcW2ZD1DiUAFSip-_kTbqe6dz6HjdpBUcwcoPNkIJxLobPiBvN20QKY4o9IAP8krmS_tqcUFLjALrfFJ3XPA-rBzrriLi216QOGzFXQV2v0PJnExgIG25XRQhfZ0UVZPmvSp7BBvZxkmmTZJLIzKdFQwyqRo_Y5ZBfMfX8e6BgdnEeC5gGOBp09Vuqv6j4IyAewdfiyGvGDY3KHQb85XkrON9OyjDax8F6q1vEr5go4HYTLuam9A1fOhk-MGU36bZY7U5oniR5pufP1-SST4mp1PKysUw5Ab9oGapOF9HaxPAN0iEju4TmVL9nyBlfr76v3GKhOyGPrR68AAgydOBSokg9_zuL8T74n6pTO1vn13DkQfW42yUDNOxx9BT3uQEyJC-UXerem_EMygHoB52pg0Wi3_0cNj9oTkg6ySbjFxAyNMQ6n5RQD8WTD_CGZAR_Ot2GUq3rSAkfwLHcRavmzjXJlDyq8dT-DPl2vc1SuhbJaspn9jGmIXbGrQxX4oN1mYsz3ikjGyLSUJ--fMyCvr2sczIm_FFgR29YHNuZ9sJdjPoZUVND1G22HTCagZWPfK-xpwD2CebVu3MVcsfIRx8yVF_a8IEW9E7XqSsf2pCJVFDS3Foil6VZOfdBJfdMnKzO3T9tRu7RMDDGT4k7c17hG2wJfnaoN5YNOsrQarGJUsLW_JDkdgL2vSCPI9ATwS_U-QXIduryNPmjb-hoX5sG2as_zhjbIosmSFYzbXSBNfriHa-H577A-Zn_8D5AKj9Sd2l6qhrYt3Zwc7r5-S7BpasUd0HIbFsHrFxjhTVTLfjYI03nRpoRd-yeTgWU3j7mzYmzdVPXcqZb1S_4uaes3yfQq29iuO37jH3K86tWoC6y3xJw45ZX6cEPd-QpPfnffWSvfFiNfYzMdfEQEnvtVKm2PqYMzC5hfdbZqQ3VsLVEES6tC7bxGjv0="
               }
             ],
             "role": "model"
@@ -134,22 +129,20 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413056.2452805
+          "creation_timestamp": 1772499403.4505768
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "ambiguous_refund",
       "conversation": [
         {
-          "invocation_id": "e-67d0f8a1-2398-4579-9d2c-3d9bbe5d5723",
+          "invocation_id": "e-20a33247-a497-4b1c-b860-5bdf8872b336",
           "user_content": {
             "parts": [
               {
@@ -161,7 +154,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I can help with that. Do you have an order number?\n"
+                "text": "What is the order ID?",
+                "thought_signature": "CuQBAY89a1_8d-hwBOSI7xBbXX2rock7wZ7BrAI717jZ8DLfZSzWRhO_foJKhxIm21yw5JZP48pyYF0sdDEKava-ECUAQRISD36jUUBgc9r_0cGl3_vbt0BmOZg0Y4VRfQ0huTu8gFD_JwUtz77fDX_syfgmAG6lmpqsnpMVctfcIu9DG8HfOP7QTkEjJ2P6vrCU-gtrWjFZDSRxfZZmmRc3xF9EZfYDBo6PF_4IHIq5dhMF71fctDcygic3zFo8haObjUCHsR5K7whGSTDL4p1XjcEhoOxVecpWGefI_Eom2DxnM_yU"
               }
             ],
             "role": "model"
@@ -169,22 +163,20 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413069.7642732
+          "creation_timestamp": 1772499409.1628525
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "ambiguous_track",
       "conversation": [
         {
-          "invocation_id": "e-b24e12c9-c3b4-4d6a-b427-cdf10707ef93",
+          "invocation_id": "e-b8ec4ad5-fb34-4b2a-a782-e23398721883",
           "user_content": {
             "parts": [
               {
@@ -197,7 +189,7 @@
             "parts": [
               {
                 "text": "I can help with that. What is your order number?",
-                "thought_signature": "CpIFAY89a19hrKDLEW4TSeBjOLtdC58qP9fo4Q6nzBbKFeNvobgMcLld2z9uDUe5TmIx0te7zPThw_hwLIygyi62gQ3o8r57DWorLk5Kn2RzfJZ3iI_kUTqIlu4-WlArnGC6TrNERoz4sFCUGXdYjXhJ39mEBdhqf8TDZOlAFULyS62OjT23xVWgsnh3RfvS2ll31Yrxq0xyeSoXkAiOxcopA6dyndDj3f7dQIhFc_KPuSwEnoiyCBV_463JRPZl-xDgPUUFHH89NHGPPh6aUpgIsLHj6WwXiiZi33FDXfNbqOYJpS1TfjW_QdtT9EoozlgjR41nD3i_TGYYzie0-TnmPPpQY_tOKeA6o-OEI3iE_KWOIZ7O1AKFhOUPnoIE_m9OkiBzDmC2DdJo5zie4S4xkFZPhIfpXmiPh5kQmkHjcgkUDgPw68tEMGhI07ihxwYX80QGP8lY6ezkwA2HGgsk525_MYfN76m3PUe9z205y5X7O0ou44TAzlUWBGY8wMVSUN_fKWfBHOdskTnTPh3esuL8BMPkpDkx20w-r0DnN6qmLWv8mVWnMx0KJSrqDs8j4t6uwGUvlHs1HbI1K8yn9xo4SNkL59xDg_VUK-6O84RNxtg3EvR6XR_exRgQJsfnJFko2SlTePekRfU534pYk6VScU4pjPp88CK6EZR9j5mSEdlXlVYPdfpLCoML2FZBIfF56wDiVKxYfi4UCVdBvaRJ8NuC-Uf1fFY3S2OdbXrhf_S5LBtS5rQWXcxCJ4eI2ca_BOj9e5InLdOYzJePGuXGo5Kb8-h3gUOqwNsT5CLAgcqAa4tfSGnFW0GyFCeiwSioy_1NIyqSZhLaMpvRxo6gEZSzHIUIkDJQAPQ8rEmHqA=="
+                "thought_signature": "CqUDAY89a19IclusUwNNDLcLabYQ7Quy3ue1C25a-vw0Lu6gu1xY3MwS9iLyELQqbVmBinuoMHrqp0HBKjT_QPEBM92dx75HwregryrMSKDHsYL_m5O5qb6Yp5_GglYTUa-3vk5mRQOIhNIfcJOdMulyf0quqUwnhehFhD6iDGyY1GF6BrxOUUVlMtuvjauKTeEqSyRoFMMlOQnj-vqgjuY8WB1avIeZh9Rvq7c8IO9CPHjH8QzJ6GjjBKEgKersjVKrBwvhfqdfF--T86harf3B8j5zcKAe3MWFqdf7HbyMCwxCwcnA756GsgE0PTSkbi2pum5IZYuC9TtIy2TjiP2Dh3miOZqYIBL7dw61uU5xH_lEoBGZ7iIG6QorGpUcQUaze3hP1H4Oasqv7kNvz4xBXsGro2r2DtcJBWZKKhUQ0LxstZxyhe_2vpC67kSOooowGv_Qmj-zUuYkbiR5dupHBa7AsPyXXG-bv3UmIfoEllJsiGQqd5TS4DTWb49OTm39m4XIKyc8wuiUKg4bl8QQ0pC-gstgU2G8naKoKOjSHBLAlRGXaw=="
               }
             ],
             "role": "model"
@@ -205,17 +197,15 @@
           "intermediate_data": {
             "invocation_events": []
           },
-          "creation_timestamp": 1770413084.656078
+          "creation_timestamp": 1772499415.318082
         }
       ],
       "session_input": {
         "app_name": "eval_error",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     }
   ],
-  "creation_timestamp": 1770413084.6561413
+  "creation_timestamp": 1772499415.3181508
 }
