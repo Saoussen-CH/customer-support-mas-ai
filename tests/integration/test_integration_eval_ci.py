@@ -49,7 +49,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/product_agent_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
     @pytest.mark.asyncio
@@ -60,7 +60,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/order_tracking_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
     @pytest.mark.asyncio
@@ -71,7 +71,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/billing_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
     @pytest.mark.asyncio
@@ -82,7 +82,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/refund_agent_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
     @pytest.mark.asyncio
@@ -93,7 +93,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/error_handling.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
     @pytest.mark.asyncio
@@ -104,7 +104,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/multi_agent_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
 
@@ -124,7 +124,7 @@ class TestEndToEnd:
             eval_set=load_eval_set("tests/integration/e2e_customer_journey.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
 
 
@@ -148,34 +148,8 @@ class TestSessionPersistence:
             eval_set=load_eval_set("tests/integration/session_persistence.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=True,
+            print_detailed_results=False,
         )
-
-
-# =============================================================================
-# FULL INTEGRATION SUITE
-# =============================================================================
-
-
-class TestIntegrationSuite:
-    """Run all integration tests at once."""
-
-    @pytest.mark.asyncio
-    async def test_all_integration(self):
-        """Run all integration evaluation sets."""
-        import glob
-
-        for evalset_path in sorted(glob.glob("tests/integration/*.evalset.json")):
-            if ".bad." in evalset_path:
-                continue  # .bad.evalset.json are negative examples, not CI tests
-            eval_set = load_eval_set(evalset_path)
-            await AgentEvaluator.evaluate_eval_set(
-                agent_module=AGENT_MODULE,
-                eval_set=eval_set,
-                eval_config=load_eval_config("integration"),
-                num_runs=2,
-                print_detailed_results=False,
-            )
 
 
 if __name__ == "__main__":

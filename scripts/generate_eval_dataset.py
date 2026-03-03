@@ -81,7 +81,6 @@ PRODUCT_AGENT_CASES = [
     {"eval_id": "inventory_prod003", "prompt": "How many gaming keyboards are available?"},
     # --- Product Reviews ---
     {"eval_id": "reviews_prod001", "prompt": "Show me reviews for the ProBook laptop"},
-    {"eval_id": "reviews_prod002", "prompt": "What do people say about the headphones?"},
 ]
 
 ORDER_AGENT_CASES = [

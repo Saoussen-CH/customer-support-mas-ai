@@ -31,10 +31,11 @@ class MockRAGProductSearch:
         clean_query = re.sub(r"(under|below|less than)\s*\$?\d+", "", query_lower).strip()
         tokens = clean_query.split()
 
-        # Generic tokens that should match all products (e.g. "products under $500")
+        # Generic tokens that should match all products (e.g. "products", "products under $500")
+        # Real RAG returns results for generic queries — mock should too.
         generic_words = {"product", "products", "item", "items", "all", "everything", "anything", "show", "me"}
         meaningful_tokens = [t for t in tokens if t not in generic_words]
-        match_all = len(meaningful_tokens) == 0 and max_price is not None
+        match_all = len(meaningful_tokens) == 0
 
         results = []
         for pid, p in self._products.items():

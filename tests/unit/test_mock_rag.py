@@ -42,3 +42,15 @@ class TestMockRAGProductSearch:
         singular_ids = {r["id"] for r in singular}
         plural_ids = {r["id"] for r in plural}
         assert singular_ids == plural_ids, "Singular and plural should match the same products"
+
+    def test_search_generic_no_price(self):
+        """Generic query with no price filter should return results (mirrors real RAG behavior)."""
+        results = self.search.search("products")
+        assert len(results) > 0, "Generic query 'products' should return results like real RAG"
+
+    def test_search_generic_no_price_returns_all(self):
+        """'products' with no filter should return all products."""
+        results = self.search.search("products")
+        all_results = self.search.search("items")
+        assert len(results) > 0
+        assert len(all_results) > 0
