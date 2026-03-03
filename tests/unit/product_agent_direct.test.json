@@ -1,15 +1,16 @@
 {
   "eval_set_id": "product_agent_direct_tests",
+  "name": "product_agent_direct_tests",
   "eval_cases": [
     {
-      "eval_id": "search_keyboards",
+      "eval_id": "search_laptops",
       "conversation": [
         {
-          "invocation_id": "e-03e53ce6-9ded-41e3-a47d-d9ee187c8857",
+          "invocation_id": "e-ba6bdc83-b425-46fc-b1d6-1016137c897f",
           "user_content": {
             "parts": [
               {
-                "text": "What gaming keyboards do you have?"
+                "text": "Show me laptops"
               }
             ],
             "role": "user"
@@ -17,7 +18,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found the following gaming keyboards:\n\n*   **Mechanical Gaming Keyboard** (PROD-003) - RGB mechanical keyboard with Cherry MX switches, priced at $149.99.\n\nI also found the ROG Gaming Laptop (PROD-006), but it seems to be a laptop, not a keyboard.\n\nWould you like more details on the Mechanical Gaming Keyboard?"
+                "text": "I found two laptops for you:\n1. **ProBook Laptop 15** (PROD-001) - $999.99: High-performance laptop with Intel i7.\n2. **ROG Gaming Laptop** (PROD-006) - $1499.99: High-performance gaming laptop with RTX 4060 graphics card.\n\nWould you like to know more about any of these?"
               }
             ],
             "role": "model"
@@ -30,13 +31,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-b3caa1c9-fedf-4241-9edf-34e7ffb6c35b",
+                        "id": "adk-aa8008c5-b5b1-43ed-b5b7-778e6ed1625a",
                         "args": {
-                          "query": "gaming keyboards"
+                          "query": "laptops"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CusBAY89a19Sg3dhy8WuaBko3PPfewBIXXL5nDFK304MPav4GLqZDmmw8zBpBj1Cad7kOm8fHhN-WkAKHZxR73MbP-yS3TIIV4PyQ4yxdgcluTUk7MTwUQh5aW-JJXW4bqL6Mnm4n8T6gk8tMG1yHMzt-6rwcAr6EzWNuwFDu16hqG4g7TTQHllKLnvChc7N2nF9Pk2aX6atwtdebckt3FO8ZemwVSs_9lyILrYPxexH9qYr_TsWvFZ_Yb8PoY2lMvBI4UdYKTArwcrIi4GIEnaF3Ks5JTWBpZ5qwxZoV0aTEu5kGS3ETpJQAp5KTQ=="
+                      "thought_signature": "CsgBAY89a18XlZVTRHgIk-vPNNb5x49c3bMgnymuw6vDbJ59wZfaUVXQcIasNYjp-DbtSO7Q5f7dosl-JO6FJ49RukbNueKAAB6TxeYf5rAYXT6RNgt5spcr9A4vhudOauiuPdhL6pHFUe7WtSLWbn0Zwn0j2Un1163YbJgLhBGI11d4q2ZiuRZ4sbXphMYkjryO_IlizpXS_oKCgtt2QfzkB1SWqaAx0EA9TOt8ZpqSaF5peKc2lmsbMeVoRYU6hwaUPUbbT_qquaM="
                     }
                   ],
                   "role": "model"
@@ -48,7 +49,97 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-b3caa1c9-fedf-4241-9edf-34e7ffb6c35b",
+                        "id": "adk-aa8008c5-b5b1-43ed-b5b7-778e6ed1625a",
+                        "name": "search_products",
+                        "response": {
+                          "status": "success",
+                          "products": [
+                            {
+                              "id": "PROD-001",
+                              "name": "ProBook Laptop 15",
+                              "price": 999.99,
+                              "category": "Electronics",
+                              "description": "High-performance laptop with Intel i7",
+                              "similarity": 1.0
+                            },
+                            {
+                              "id": "PROD-006",
+                              "name": "ROG Gaming Laptop",
+                              "price": 1499.99,
+                              "category": "Electronics",
+                              "description": "High-performance gaming laptop with RTX 4060 graphics card",
+                              "similarity": 1.0
+                            }
+                          ],
+                          "count": 2,
+                          "method": "RAG"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1772497844.6642003
+        }
+      ],
+      "session_input": {
+        "app_name": "eval_product",
+        "user_id": "demo-user-001"
+      },
+      "creation_timestamp": 0.0
+    },
+    {
+      "eval_id": "search_keyboards",
+      "conversation": [
+        {
+          "invocation_id": "e-603f2318-9c13-4dea-8f04-460c6242132b",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What gaming keyboards do you have?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "I found a Mechanical Gaming Keyboard (PROD-003) for $149.99.\n\nI also found an ROG Gaming Laptop (PROD-006) for $1499.99, but that is not a keyboard.\n\nWould you like more details on the Mechanical Gaming Keyboard?",
+                "thought_signature": "CtYCAY89a19ld7gNcgoAMx9Nb585mmeER4E0jM1IhP4gGl6TlHt4j0q_gBtK1uJ7jTWXWRvzrUVmnL0Wg5OwSGpz1CQz0pzSgZkVN0-sClPk666iwkwbWIQDpnU8H-CbqPwba5uLpL8GbkDuegMWTQCmRVbkThK4iSUorOLKQ-0N6Dj0En1N1GSGrKq4BdGJR0qIjvYhzI4cHWKO2IZsESk55XBfO7m5BiN7PqzQQOvFsR7Iu8pCi_UJRaAYPT6FbMNHwrmCKLdsa0tKC4Yk0ytx9vdo8J8LyrYR0gF_7trXk5p5_nkPlZkJ7zj9idPws323AcQqVcoxUNtyq2nCsESLpV1VU5cuEJpUptYfiiBKNYYgeEDZQCeuXj6h9JcZMHXWhf9Dl7eOHbhu8B4nld2LvmqsxBGrA8H9o7jbeUuf6dTekjZ2himgy6qjwUfemjDKb_17vamh"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-ae2eb253-23d0-4461-b203-dab81e8cffff",
+                        "args": {
+                          "query": "gaming keyboards"
+                        },
+                        "name": "search_products"
+                      },
+                      "thought_signature": "CokCAY89a1_qJdGKE_Cz37mRHYgzFKENRQXVT6phRlcFK6Wsm9Zm32OxsRniFTbmD4EyqEmvvPgpNodnXwo5_bRZTZigu01u9L1DDnG39rz45uClH-eS47y3mIlGQ4jSh76flfLLucMrUi38-9pwe-_yGGW1UoftlEWWH2IX8p36f6D6scON1_qxuVTOuFLJJrnGlICI4Ww1ISjZX6O4RpFb_ZC6fx61mTiw7S0yszOdauAO4AUDxljL5ASqrsCdCNoiqPRTVWDzaZoTjPKMISNaQs0Ih5u_Z-C0y2aWrFtVqLAZmPIjB25DcDSbDy2za_4r9_K7zimJnHJ_lXKqHx1wFuRbnN-EWbh9AA=="
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "product_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-ae2eb253-23d0-4461-b203-dab81e8cffff",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -81,22 +172,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408642.791515
+          "creation_timestamp": 1772497853.1385226
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_chairs",
       "conversation": [
         {
-          "invocation_id": "e-aa1722c8-7c56-42ee-9aab-d17c1ae7cbed",
+          "invocation_id": "e-2d552bdf-7192-4a03-9ca4-cea0f9186b23",
           "user_content": {
             "parts": [
               {
@@ -108,8 +197,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found two products:\n\n*   **Ergonomic Office Chair** (PROD-004) - A premium ergonomic chair with lumbar support for $449.99.\n*   **Standing Desk Pro** (PROD-005) - An electric sit-stand desk with memory presets for $599.99.\n\nWould you like more details on the Ergonomic Office Chair, or perhaps both?",
-                "thought_signature": "CoADAY89a1_cftoElYPAJEpa1yjnk4HstxHxLtpUBXJ1wdh4i7pJS95JlTFkikeqhqV6Fw0iqLetib3b-hoPb8C2xgoHyTzm76zoGLHteHNyx-kIEQ2-uWSGJ19PXvL9oTdPXcAMPbWmgB23S6hflX-leMWlonU3r4JhQ8RbZJWFdXCr0ezCqrV5gt0p-62EA7GLRi95407xxdsmeMY_GA5UTIhcn21SFqY7b5THyhwynAoNgsBsKuTRNo8vAlf-yqnY2-NZwg4tscVsi4Ii_wmwPP9_5tRE30JbWu0nsBKIU4PGWHGBvqq-aQLBUpNu9LW5Byo2y6wOlH2exIHQH6gyGAAfv7K6pbeElLl39mE8Gk-4h4hGkt4Bo-AmBcWfW52nEtA4VGCaI5yodoTOCtfL-HH9xUxAf-kdWeAr5OJEToJd1_bECy70f5vN512LMmyg-DPsvWVC9Vp_XkkW5ScHkXAlI_HQZyBb4VpfyqS2VWW_1x9vCsELvo7buqliplbr"
+                "text": "Here are a couple of options for office chairs:\n\n*   **Ergonomic Office Chair (PROD-004)**: Premium ergonomic chair with lumbar support - $449.99\n*   **Standing Desk Pro (PROD-005)**: Electric sit-stand desk with memory presets - $599.99\n\nWould you like more details on any of these?"
               }
             ],
             "role": "model"
@@ -122,13 +210,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-ba51a6e1-86b1-498b-b7fd-ea106e030f40",
+                        "id": "adk-da3a7261-e7ca-4783-ad73-7eeadb03b10e",
                         "args": {
                           "query": "office chairs"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CscBAY89a18XcpEbNh0RF3hKJHj2DK6TdFdvCv0HqCX8yuInnsnllyaNYqOLyW5HT6yUAmWwDyJ7mlTfA34N1LgqsBzVnUkO-B-_uihCsLUrb9dmsV3vdV97In6kgg5iMVOwAwDZYtYb5wwdGNLPW2Zl7nrcriflQB2usMMA4X9ZC9qEMUwTSw0lqbYjX0VolkzRo9wGz5WnRsbjHEPgjzQazcbHDx9n-ddviackDOZSYB7hQGJYwlKasu5pxsDQ5laYhX_GxEw4Rg=="
+                      "thought_signature": "CrgBAY89a18fNz_Queky4NBYnJa74JB25Ozzf2Fs7h2m-dnFXtAh0-e3EahhdlaqWDF7RojQX_EiQjiVb8iZ4nqiHeC6IFKmjTNr94rOhvufHYSdkER05VVGLRAoju2SHYwFhBi5ZkjCn5n8QdLG3nEhovIXh1NIqvhn0xjSoLumrs62YiSB773SBpQ8zoXgXs0jLFY9tYxNtIKEjTygmuxlgErEsk_UuFO2YfT4TUf0gYV06dlb8-EUMQ=="
                     }
                   ],
                   "role": "model"
@@ -140,7 +228,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-ba51a6e1-86b1-498b-b7fd-ea106e030f40",
+                        "id": "adk-da3a7261-e7ca-4783-ad73-7eeadb03b10e",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -173,22 +261,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408679.532399
+          "creation_timestamp": 1772497861.3345256
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_headphones",
       "conversation": [
         {
-          "invocation_id": "e-7f7a065b-5471-4fff-a0d7-d5174c1563ac",
+          "invocation_id": "e-a21b30de-7235-4ada-9e99-4b9f0087ca2f",
           "user_content": {
             "parts": [
               {
@@ -200,8 +286,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found the **Wireless Headphones Pro** for $199.99. They are premium noise-canceling wireless headphones.\n\nWould you like to know more about them?",
-                "thought_signature": "CoQCAY89a19NML0uhr-otT17hZgfW9nHZfKI2T_JG12MN67Z4wplYj4zHvs-HjbEBu1wyKtjmQXb6B3ckesPpb9_VpiT-LRQ1nYC1xU92HTdVl7MUC06oTEy2jRftKypw-BVFA3_Z6dYhfitGzno6ehmdbPYJqBtA46YyBQp2SDnrXyzpmc0Iq5ncluJhR6uhS0X-fcuxLb8GuvkEpPbnrxqsqfxCmWaAf0w4cFmNAdjqS-X2PDSigaAJns4hWJSMLMHCbhwaTlfj9hQAhaLN1EzZaLH8oyJfg4aZ-q2WaKDuX8ThJgrXP5ZOqOgyh61rxOibB3uqTuVzFb0IrLdN7cWyGRY0UY="
+                "text": "I found the Wireless Headphones Pro (PROD-002) for $199.99. These are premium noise-canceling wireless headphones. Would you like to know more about them?"
               }
             ],
             "role": "model"
@@ -214,13 +299,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-673c2fde-8674-4488-942e-73eab6b64ac3",
+                        "id": "adk-cbc90437-1386-4767-b38c-5fb5026b76c7",
                         "args": {
                           "query": "wireless headphones"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CtABAY89a19iE8ON73__Vk6TkEPOwc7zCHdnSsR6Q5Ox7UAUOQb9iPHCEFEjlQYfO09XAqkuUkvAWD8-p1d4XvXgSwHxGi0IJ1RmhAP7st7Qg1lSjW-CQ3uF2JywoKitHr5EbvOrt9tLD88o7LEvDL1qEQQUGO4WyEGctGLI7kY6Sfn5mPZIuXvS6rCAODJCT8kmxKrXh_aq9Xg5KUui1yRrH7ybA9-H7vgGpjfDk1F6ei-y4W5997qAFlYB_SFeN-EiiTqKAIv4oRzDVFUfvclvRw=="
+                      "thought_signature": "CtABAY89a1_QfB-70U2iT3H3FOM6LxtAQJ-R9N2piD-dqkHvedj1KCex_mDQfpyXNBeWjrW4XmMPbISEXLihUO7KAJ6X7XqoOHtiDa46Y6r2QN7VJunJIdiZA-ZlmsTtthrM5yHPWpDxT-ZLruh3--iGjZcXd26ZTXbJD-4m1nPmHqKD6FpFtQTVaWeWXSUnuXom2RqM5ABIXC8lLIFWDxhfK5W0CmsiutKWyvd9g5aCbXlw3eFQ4-PIjMUR3LBvk6SpSH8cNIK9_VMtzrX1Hloesw=="
                     }
                   ],
                   "role": "model"
@@ -232,7 +317,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-673c2fde-8674-4488-942e-73eab6b64ac3",
+                        "id": "adk-cbc90437-1386-4767-b38c-5fb5026b76c7",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -257,22 +342,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408696.5698578
+          "creation_timestamp": 1772497870.1633933
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_under_500",
       "conversation": [
         {
-          "invocation_id": "e-23bee0c5-ae4e-4a0b-9a29-3ea07bcdd91c",
+          "invocation_id": "e-e188f5df-ddb5-4768-af18-36b0178786c2",
           "user_content": {
             "parts": [
               {
@@ -284,7 +367,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here are some products under $500:\n\n*   **Wireless Headphones Pro (PROD-002)**: Premium noise-canceling wireless headphones for $199.99.\n*   **Mechanical Gaming Keyboard (PROD-003)**: RGB mechanical keyboard with Cherry MX switches for $149.99.\n*   **Ergonomic Office Chair (PROD-004)**: Premium ergonomic chair with lumbar support for $449.99.\n\nWould you like more details on any of these?"
+                "text": "I found 3 products under $500:\n\n*   **Wireless Headphones Pro (PROD-002)**: Premium noise-canceling wireless headphones - $199.99\n*   **Mechanical Gaming Keyboard (PROD-003)**: RGB mechanical keyboard with Cherry MX switches - $149.99\n*   **Ergonomic Office Chair (PROD-004)**: Premium ergonomic chair with lumbar support - $449.99\n\nWould you like more details on any of these?"
               }
             ],
             "role": "model"
@@ -297,13 +380,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-0fc85217-be42-48ef-a8a7-057552cdecd4",
+                        "id": "adk-ffb2e0f6-01e0-4172-bdba-bf8ef4e008ea",
                         "args": {
                           "query": "products under $500"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CoMCAY89a18-GxqHy98UXKNAyuJLLrwhOBExnvXVTO9dS-cZZgRaeIgb59yPAouyJnjKDnE7y8zKo1OzKl_nBB9M9fBzmLKTy1JfjstdlY2Po25esE8k1utsoRaMNtMrqO_WW4uHC3PGUHK5LlZz38SlSvahl8BP_KOEqmqYmgs5Yn_5pje6X9K0Pnqp61NfuqHNh2kq4sBcvdOndbAXCahNKp6YAMBstrQLaTuWlduHXA5gZl7ukclgzOMqdTA2zWMQYT9JfBwlgkkld7FNPbDmbe47NYF12ISwyF33QBGUChO4UCNToXWxQZviUOJnWcAMKQ9uwoBiXni-_tn_WGUTmF3g0g=="
+                      "thought_signature": "CoMCAY89a18vtDGq3ot2LoFF4eN4_J2aBKAEqxotGfoxDRtV4RoGqy4wnUWJIVuAAUS75NMAnJFcpKiKsl8przJXDy17TWNm6UcYnwB4T7HKFbcmuU-pNphREy8Ft5Bw8IHQsIsvGQKaQEBsrLawMnD6jli5AiW6vHxnUHKpkLXKJU_E2m7eXCqg08z5lT7RSou43-SU3kcmZjcmQBQI6xpw2wM0SH3SPz8HE1Ld58XQr-RfzqJYaXbh7kh8B6on_OOxkWoE6I7wkM47M6YDz7ffQqDpH2MQbYeU1Tf2JGKplT9gcrAZJacFyeXFKFn4eC9K91kl3SvVGQBXvq9uAHpazX3KeA=="
                     }
                   ],
                   "role": "model"
@@ -315,7 +398,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-0fc85217-be42-48ef-a8a7-057552cdecd4",
+                        "id": "adk-ffb2e0f6-01e0-4172-bdba-bf8ef4e008ea",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -356,22 +439,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408827.8836164
+          "creation_timestamp": 1772497884.962907
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_under_200",
       "conversation": [
         {
-          "invocation_id": "e-980a47db-2771-43f7-9d01-3e580705cec1",
+          "invocation_id": "e-2fa636d1-c192-42c9-bf80-8bf53b0a3195",
           "user_content": {
             "parts": [
               {
@@ -383,8 +464,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found a couple of options for you under $200:\n\n*   **Wireless Headphones Pro** - Premium noise-canceling wireless headphones for $199.99\n*   **Mechanical Gaming Keyboard** - RGB mechanical keyboard with Cherry MX switches for $149.99\n\nWould you like more details on either of these?",
-                "thought_signature": "CsECAY89a19Xqv21x4DRMvTY5rVD4aSVE7sFwdEVOYUr7mSESAgaElThn4n_bujtx2vh9AnwCFxCbd-J0o5_otacYeIMnXHT_886MrH5ERFeXXTDKw00rpX3maxBl9bDOm2Sv-S92ZvWLBbs9dS060JsHJel-cefh0Tx_2vMgJLDaGeJzQcLAmkuzhhtOSWt2-OTKjJ8apg3rn0YvY3xDrzOhQecx9bbTP1CNi4TMlhm6gDjK-WTo9m2fn5BsuYFajwCz51Bkk3bGDqK_vyNgwNXH1FH8NpaTGMJu6ffl_JkXO6FywHCJ-O382usRNUiREG4XBAHXoB2hBoh103ReidqRSVForiwf_uqlDCUEg45Md3nP4xXH327qP7ouG2UoqLRp7rAzyZxDOcaMf60de8r0HNSqBmmdBQqPq8cbSHa6ZVp"
+                "text": "Here are a couple of options under $200:\n\n*   **Wireless Headphones Pro** - Premium noise-canceling wireless headphones for $199.99\n*   **Mechanical Gaming Keyboard** - RGB mechanical keyboard with Cherry MX switches for $149.99",
+                "thought_signature": "CpwCAY89a19nrA-VZpFxHPviZD4TiMfDGCh5AHM_3UfblgwOYd_Nhc-H6BwFAMBUyK2B30V3Akh7WX2o2UyJTpmxfY0K4JlM-BVlmP3y0-mfwvT5kvef2Z9OB5_EPUVlH3-kkxxoEzqgst-Cgp5cfu21QSXt5eaRVe9BzO_4OtCad4Ay5caoNP9krWe6ExbTwlfC9CXxrCdXvO-jTawnjiNLuUbYMdgBA14cW1T0i4UzjaWLSOMswG2LKBBPEfuVLAuFMa5pQOhRtz5c8HvuuUAS-N5JzOxF-hgRxjaAv9f3OdDv3YV-v3UN_n4UFZi2IyciHxuyMJuJXR9lhTPN0_hz5B0NedYNF4NAjtri0_BevzaFpZ7A_jjl72KaGzs="
               }
             ],
             "role": "model"
@@ -397,13 +478,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-e04dd568-57b1-4988-abbf-15d922e0816b",
+                        "id": "adk-be88f3f9-e736-4826-8288-7d09dd4f8b5c",
                         "args": {
                           "query": "products under $200"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CuECAY89a18kgSVtzvOS0De0EwalGE4BDSf_JwhfcArPhkPiy1iZL8Az06AKHOtHdQK-xs6leA47clIfA66ZHOTehBY2g5nYZYKUvWCHYTXIIWYDyinJmfgWriHe8yML0u9YaHwH3cTs8YiDmNU5zYR61SnyIjVv-suA512TLtzgPPXCfsR6fCyUZQhgGJV4ORrPcx-1mjpGt0tbnomXdZi6pq8-UwPLS555DScr6sypvpxHAWfpfyggAj9ATnRmc1HZapw0ljd_PGmddkOg1nHVY0xyJYbZwxA78UmymjhbECCsxXTYk9svkTuFrpACmnjQh2KIjgSAi1g5IjDv9EfZ2BJ0P4PlA7oYC1dlUiNhjmzeZ2K-3NKXzCf75PXPGVcOU5TmBJ0BpPNCGZn_bXT7xrWYoa-Rvqy_5Wyn92jxYoovQF5qON-ndpqluiF2Zvl-T3Mw9wLNOF8G9AG7toVDywI="
+                      "thought_signature": "CtADAY89a195B9Ob5Q_X27Z8pSHeSatRvYRfiWsM8MZFqSDsODJj4Ch84aR6bknR9QNjQJ0xYFWdPSovVFHyOi6kbr-JnT7_vF7GDke8xcS5ofHZnXVtWCsEFCCnEACKf8kJrmO2IKfUM8TF-5uex50dN1mWiDs_RI_zwdfT5h412rSSdYou4pFDSMoHtjZfp1KkXhkhknHCTxTsOmYrfNMg4WJxVqR2yz-c-0PkJCzXXcz0uvNxvOGHZxDa-0wNbnR_mCcQ3xjXzdpKaxy0KjgwpRQFdBWHz6rYWjyqql1ahvol79ujQ4Cp61fQ-Fe9m6ED-nwmXNkfhmm-a321NzvOtXFPYrpzyQcx4jlbWLrbuLkp4dxBsJqV80u340caFVMEr8Q4JJBZiCINQrwVE_yMxJYM8KYDWTJicjvbmYFYRZT3oibs7E-D1IlGU394YHyPnKtq9w9sLUwJRQbrLnBe23Mssu1q6fsFSJKwe59i57684RFvV4OGG3C1-YSHIgLahqUVHZb56wznvi2rTKFwoMQWEHjojeX_T6LnI4PxDCXoJRwkRkyBm_fg8Tm1S0cPTeW-mpwJmyvXiC8Bb8VrS08Nfd6YeEMZyIeZVJIJzKQ="
                     }
                   ],
                   "role": "model"
@@ -415,7 +496,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-e04dd568-57b1-4988-abbf-15d922e0816b",
+                        "id": "adk-be88f3f9-e736-4826-8288-7d09dd4f8b5c",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -448,22 +529,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408843.2479293
+          "creation_timestamp": 1772497894.6466887
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_under_1000",
       "conversation": [
         {
-          "invocation_id": "e-0015491d-a6b3-41ae-917b-9a14287d55f0",
+          "invocation_id": "e-03ada22d-0387-4e8f-928d-129f5021623a",
           "user_content": {
             "parts": [
               {
@@ -475,8 +554,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found the **ProBook Laptop 15** for $999.99, which is a high-performance laptop with an Intel i7 processor. It fits your criteria of being under $1000.\n\nWould you like to know more about it?",
-                "thought_signature": "CrsHAY89a18YMGgm6DXy0AtolnbdxNv-hoKvVY3zhxT35sZ8U4x2iI1SYqngIcQBxLQ8jp1p1yygfBYqTPtznTqlXsGU3QjLGfLP4nqqFSpHvmd1edMIAK3hSH0ABML-JzjsIsFDR_ICFRVkkOyWpimhg1cdIA6wuSTlaXcUHlLdXd2-nJmtWpEbhxqb7bmVcK_BlyHAIPRpZCMpc52lb9SWlHXC6fMheZvjqFjmkkz-45jCj2XbJSL52A0NPIs7ed74y7E2a8HK1ZMTk7r3VTwG9sC_nxogy2Ii7aJ4kGs1R0b3SkansGiHkJXj_xRNlBnUutXtlFU2GLjDPlaJjHtl_-2y6DECUtoWTPNtBwGPVEliwKS4bd_NvD28F0ogBnV6t73ejS7rmqGRXOxN9RVviK1pXzfvp9HV8E3Gx-AuYA7y3ARbQQzMqoD3FJZZCTB_VMJEfVqtuOorlOYdlYJI-uSG3itTx4fifC9eDVzW2nqXkQ6CrM4YY60R49iim9ln4i9RHiTJIGRr7rIBtA_qfhO_kWU1O-2NQwZyJjhIXy1cyV7EQaBw_Nb2TFfoRH5Jyx3ZSIsF8eNtvtAtL6bbEvYn3JTb1rfCZzpLXfLg0Qw7qS3mC5_8i09G-jgIWzd1YhBc1pLQIgdwcl_C8_FporR4bbouyANQ47w4znmGDPz6lZFuCzz9fIERe-ET8ts9kKcvAtWwgHfKWvxaF_ptgeQCB5J10rvb6U6VuFaHWPS4_3CnzpKQucVcyzqPwKsLPGTO-QFJjXEjujYxznX-np-rCYxIKhfkN3xRnhG3av-QksPguyMPOsiJBOZd8VhftSPB-dFAVDPPmCR0ykD3aJNRH0s9j7ik5i0UdN6e1qOfi4_Xo81EAiMz1niqwI2VXEH3YOtkJSDIGt2_C42xiHeMl7klZceqN25WkdpH8pHlwzkl8ojR4drshxDFqfz_hHPD4jk3-AYy7j-EMeU39zX-UdyHiPLK2punyi9irKGWcry0dCosL0NwR_3XoZVDDlLZt52xVYnOUBA7Rtw-CBJyo2IwgqS7chc0Qvw3HxjNfHVMe_tHOLols7gxOQC6npqqBbk7iZsPIB70cikh_uJNZ1iasubqlB6PbNj3h6yUWcbIMmOWLv8_BH1RQWoVx2Fz7GQYrXN7qMcKw98Nf1mWBes_7cCd7IcI6sGf9jTM97RMlCzVsQcDyys-sq4YSKlGuKjWo7TsxYEAVlZnwkp-kIoVdJ1t9KwF69ofozLhmDm9IsFWRkt22A=="
+                "text": "I found one laptop under $1000 for you:\n\n**ProBook Laptop 15** (PROD-001) - $999.99\nDescription: High-performance laptop with Intel i7\n\nThis laptop matches your budget!",
+                "thought_signature": "CtYCAY89a1-wS1aVU00BA_KHJ0vTBDks9GTkC-2m_CsevLIW7FEvuIwiYX9wNowywCzEfQ3QKklbCal8eqmGJewfGwckejSZKa4_zjxZsL5IVQubshbAfmkw0TCA5_p5hNScvfaz_uZuhZ_uhtk5ybawNrlJFp4hhhwtMq_LKwxCrVzkBzVheMTOy3T_lBODPP8Ad4lFf1ohIdAf3lZdUrA87oJObbq0fkjS38La22UZC2cbY8X_VUPiGm-IrCrh2rIfs0qWd6IqKophs6X6rC7mMCzxNSG5CvxKQDqE2rN5j3UypImzY5N9_Z5y-1vLWUHX4jKjJVMtLIKShySGzwDaiCyAUpObZcFOt3Isilwogxe9rG7LSDrknOBH4SExym2xEbEFjYgA4MVMQ-pM__kh8Ehi8nvUlRx3sbIFHKpBQ2sdA2V_aUbXkM834vAD9AVf788--sVe"
               }
             ],
             "role": "model"
@@ -489,13 +568,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-7d180b07-cb85-4660-b122-f6e9afeedbfe",
+                        "id": "adk-ad7ffec6-86c1-483c-97f9-9ea090fc8bc8",
                         "args": {
                           "query": "Laptops under $1000"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CvEBAY89a1_d7ku88FZzmtuzF1-Yc0561izRV3O4b2Y_UM88wpBOGK2_crqugL7Mqff1UNZnl95ew1P7dew7lj3M-t3X12CQwVi0QHlo9fWgoOtzVrDuJ_Gf676RpjRiPgCaRuJEbpAw5QtpU6s1hpoBniMyst_DqtHge1918av4p0QhlZ49QXnBeh0vO9UQd_g7RV2oprtfKOt2XqHj2BkD7ZqTRK-_ml2UnBnfxODormly5C16i_hKmLBdLgvzBwjmPZjN9MPhsW9YHsAIOJPjzwazPA_6BkkkXs5VOqLLIIDXAl24AmwVvKJrw8pYCfLMeA=="
+                      "thought_signature": "Ct4BAY89a1_FqvHcdUO333BN5kb-8cfX6gX81My00sSI_JtcBoN1QUevBFDbNwmd_bLBKurv9moagaJ7H5qBeprPLg4lzzvElJh9p413XFlxeLrUOO8phiyhEbG2H9-rjvzXLCVDrQzq2_2PW0z74E-0S1-B2JAxxy1SpQHV_GBnjpqifW5oXEq8N-vkUlsDaCrlFUVQbae6xYyXMSGHT1AmtL5Mfkg5jqJ35aEtjBbLJjke1j-CPwMvJtaxxLkeFAJ6EBtstlP9GF70yeqq4xOEd6TI4flCx23ocS_dQa2J"
                     }
                   ],
                   "role": "model"
@@ -507,7 +586,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-7d180b07-cb85-4660-b122-f6e9afeedbfe",
+                        "id": "adk-ad7ffec6-86c1-483c-97f9-9ea090fc8bc8",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -532,22 +611,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408859.4416354
+          "creation_timestamp": 1772497906.1668272
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "search_no_results",
       "conversation": [
         {
-          "invocation_id": "e-f9fd1516-dfd6-43d3-a40d-38070c5dd383",
+          "invocation_id": "e-786dce50-d543-45d3-b2f8-8e4f38344d65",
           "user_content": {
             "parts": [
               {
@@ -559,8 +636,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I cannot directly search for all \"products\" under a certain price. Please specify what type of product you are looking for (e.g., \"laptops under $100\", \"headphones under $100\"). I can then check for options within your budget.",
-                "thought_signature": "CsMFAY89a19We7UeocMvtYm99oGxr5N73sz9hN_CABorY0GtIlwtCQsLSvIOrEjmDl8JrSxC9H-HKQq9qn_unhjMGCjis5quoXesEqGZwY5KZzur5g3doK0I4s40DdZfX_Hr-IhVaKJ6nnwKQXJ2-tBuSXkUa4p1Az_-uAMSVVjUGgPhe1HvAwhencnrMQRglx01u1px5X485Ih84OBxfHUleu4qZp44OJBjL6z8X72yRfMdJw7w3pQ-6xklJeJMuMiSOoTPx5B4KTHGC4yf82RePVJvwKXoAqNAQB2-GIjwx9Ccm5VpWjZWWYdwPKmLr1pOk5q9AGyvOoE8HDKA6h4SLj2tE7eopEjOGGFnvaEJT2uJd7MCD4-zjSHIpcjh4PeIJc8vcZ-kD7pCYdQkLdrE0Pco715Y6GOWfSeT3YSdqwIEK2HhbXMbH6n08UCiHPPHVULahngHr0n9adBhxU66JqSymnu2S-9RL88w8kI32N1bNZCELsqgyiBp35ku027SuzpLCPFG0Jxo3j_cYSc2ikV0l3nNDFzeL6gHJqGcjfXWjH5fYrSfnGhLJSdo8PZ2cC6cbT7qVLkjaKnLlW86-ZrjRZeDOz4KW8uLuBhDS8H2iArG_9oNrQfEeL2Axa5srDIynX6DIhzBehte5kkHZjSKnpBDjsezsXXXcvnKhhmYmymt215Kw7TjR1XNp2TAD-HXh--NDxUJ0V-TS5SFM_kqmYYVyPriGQe9IB_F1HuBmBvKu74iWsivJlaNy-qd2DSUPM0GMyyzuXSi-ALzRFTkBN9OTBIKKnDtG_3UDHRJpaX-vY_8JAIfJLlnzDDyTwQeZpek_N_jByIQhcfL5Vw8lhgKThg_7Dfk83QWwdyMgr7hBO3IHvkF4L43Xkc8WDviBLXqsxEpvMwPk7gwBhY_SUdQCN4_X4CzUG_HGysDVKI="
+                "text": "I couldn't find any products under $100. Would you like to search for products with a different budget or a specific category?",
+                "thought_signature": "CvkDAY89a19khWqaRmN8SHnzxPL90pzUZChafG5gPUHzNuMJ2r5XNOd-IcQ-aEouzw5vtIQASH_EDEAKpvs51kw06DHqAuc-z3owxPo-X7kTcsKR1xkuqt-DM-I5dvXlu2_o0YWMet9_pzhfXzH1NBfi-14_gHKO5OO4b2_dsvzWxTyjkkaBfpATIhsnFXEHtj18xS7x4oP-Lepx709XsJ-FkEVJkGVhDIB5t3Uyyn8M1CE3ZjdoTaNpoj4uMjebsDO9gQJbMAGg9zQN-25veU3JBBHuFQtgQlNBGG5WggDF_yDg4zfUhYJ7Xm_wevGb18Mi6liVbb37XRk5KEWkHsNc0R7cvQxbWAQE93QKjoityXycBEzQ19Z_UAqSu8NyvoyLrg_2w0q5l9LFnhM3pQkRArIrNGmXgBn2yCe0cX5PW5Z6bZCZZKXd3GsVFiFcA5PnSGdlYIMLo4ovojBPqyheK0BSTX8iIxFFH7KL5NINeffpNTSrVeXjo5DbbzOnpvtxxrAw5cz7z_BxafUQaSsAIeI9FSSN-fTY6c7Td0EkFdrxde_krzUJf9C6all3_J7GbZP1i4cxj6Mje_N0j36P_YymGIZjRKBBNsycV1oRi5h_7asTQVraL23Q0rOudYhFLWvIaFi2FHE-pC-fF5M7R5w0DUaU_hemzA=="
               }
             ],
             "role": "model"
@@ -573,13 +650,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-21b3f67a-c032-40ca-bb10-1022bb804640",
+                        "id": "adk-b2cdce0d-3f9d-4124-9153-a438d159c911",
                         "args": {
                           "query": "products under $100"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CuoEAY89a1_GQBPXhauzOANP8YeS8_rtt3KUTgaEJb_cXxJUXolyniVrQrrQYNY0OQkmAjF5yo3obR4hounfcLRE2_U-rIIpSXUVJyY2_gDkMKFK7MdiP0xthylGRoyaI71EfF3x1Mx9iv-1D2mV8pMIPDuu9oKI5AIAn2Q8QzdtC81rXfD_C4ACesQP7uLso2dDbj3HWKita_oh9My-dJ_X8deCux8gvWEHtHr01_J9I87AdrTTGRI8ymTfXLVxY1BopNUh6pSr91cIm1UMhfdlt0Bz0UDbM_m1hZ8-6ixRN99uqi_MRwXJi5va3KZSn6wh3PSKEFX-0uJC-OhyfJcT5bcVkKw9kFxOErjxAqMIw32bJYwKaEB1FI0huni9ksvzVmTkt6qBVcOecN7agvmyAgFaQOodzqKMfooVlZZZkzviXeaHuaLNGddAP-56kW1Q-ti9McyB7v2A6TpY1tm4Uv9hlaZwxQ7-NRwDRJu1dwKhi6Nl3-AIGq8quVoqrZMToB6LPaFg-aF1S7ztHpMgHk95JG5zWXmYXEi8D-QNvrgJcGxzSiDEwvci8oDFNyinqeWrAAUHu7sNc0Ogg7IFn4Y7wJw4-9HJTa-maj8e4yKcb3H2mU7NS_6WDSseo3VReZqh7TY6gJmYQzeHyQIdq6Aa4mq9LksgWiQ62FgTg6dZIpqxq0E7yEvGDhDklCL29fUmck6flkcMGDfJj2-i_Mwc04psYb94XmN0n4Ojy478zvVazm-c0b0UZV7nSBHXdGCXLJCF56UdEZJ4LzMsxbM0SQl_hxPQbVVVU07mnxkKqQa1jIp1Wzzr"
+                      "thought_signature": "Cu0BAY89a1-T1Sxi_L4F4-phKq18OAP3MQSlI4hSsrmeWSpT-XtnpmDnSSyNZUB7L5wzoGe31qbfMaCidBts9FeEFMBMypFdyuNJ2N93VG6PzBoZ-rgY5F9SIGf90QBaJiFc7XNvQs2YKvl6gxfmw608ycOcfA2wPsk83IIUBgqbB-gD6uFMb4LGxrVUKpEsVEteuflGcopYI81fujWv5bdcjFAIb4xGZb7ZZzlG_kPwiq-T9qJE94e2z_NGVHa-Rpxx0MGUfO3ZUMSChzvjDJTpKOIj-c9PyaO22U9DLN0gz4daq4KCiyhDU3A9MwVj"
                     }
                   ],
                   "role": "model"
@@ -591,7 +668,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-21b3f67a-c032-40ca-bb10-1022bb804640",
+                        "id": "adk-b2cdce0d-3f9d-4124-9153-a438d159c911",
                         "name": "search_products",
                         "response": {
                           "status": "no_results",
@@ -605,22 +682,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408879.0387526
+          "creation_timestamp": 1772497914.256196
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "details_prod001",
       "conversation": [
         {
-          "invocation_id": "e-acec5b72-dd36-4b3c-9e1c-1ebf61c6a974",
+          "invocation_id": "e-707965c2-0179-408d-97f8-684cdd896e63",
           "user_content": {
             "parts": [
               {
@@ -632,7 +707,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "The ProBook Laptop 15 (PROD-001) is a high-performance electronics product. It features an Intel Core i7-12700H processor, 16GB DDR5 RAM, and a 512GB NVMe SSD. It costs $999.99 and comes with a 2-year warranty.\n\nIt has an average rating of 4.5 stars from 234 reviews. Recent reviews highlight its excellent performance and suitability for coding.\n\nThere are 45 units in stock, with 10 in the EU, 15 in US-East, and 20 in US-West warehouses."
+                "text": "The ProBook Laptop 15 (PROD-001) is a high-performance laptop in the Electronics category. It features an Intel Core i7-12700H processor, 16GB DDR5 RAM, and a 512GB NVMe SSD. It is priced at $999.99 and comes with a 2-year warranty.\n\nIt has an average rating of 4.5 stars from 234 reviews. Recent reviews highlight \"Excellent performance!\" and \"Great for coding.\"\n\nThere are 45 units in stock, with 10 in the EU, 15 in US-East, and 20 in US-West."
               }
             ],
             "role": "model"
@@ -645,13 +720,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-b06908b9-2a84-42a8-bd4b-a7e9fa28ef36",
+                        "id": "adk-b86af938-39af-45e5-993e-179902e61a67",
                         "args": {
                           "product_id": "PROD-001"
                         },
                         "name": "get_product_info"
                       },
-                      "thought_signature": "CukDAY89a1_8EGJmNN5KhAI1Qh_PltmhTk7AlRIsaM5HQYzj-9cYsB0AH33jGoWdPPCznky944bwgfbB1cxO0AVwGkILH0b2x7IJviMLJjYfcy2lQQbaqFYtmaAmjF0yn3vJHzUKMY5Zx742anurnmeCdOH0XrnGxT5OejufayQaA8HI5oLVTlf16wV2-PXsyx1tdkEQyABTQFb_xSp7KX0eEhLOZS1YkMlguY8yOOOoQPiTtkAZ84GWDh4JojzWVVnWfnM8n-LOZrIliHnrtQgTuoUVEJaT5ogSrNurMWJJz92yWga6iUw8kY4aQM5DDDvu01J_0sbQ6gB9tG68juI9YaT7yBKYUMM0bVy7ACJOI4TwJKm4oj7qXMVL25d7vRUqzfGdKcRA8ZvE4IxEd4hfmuaHOG_-KuBorm6TxRU7GSwhJDR_W-G0aQ6lcu0AGEnozmNSIeE5A_t6WUTzhIIDRpJMtQYoJplglt2SDwqD9SepQD6RRU55LuD1cd0PPY8VW-bR_suxIHrNNGNXxWtoFOGOMToB7wat6MGBuPCDA7TmgdmqhE4Rj5UfeRJlqqDx9zUw5_xi-3D4Htx33EMiiqFZ9jKd_1wgk9JMayMj7Wk5vzDIOa4UHPcPsJW6IApAdZPMBuzGnMAq"
+                      "thought_signature": "CroDAY89a1_2gix6NNGJDb3kgCd8_FDAG7zMXH0emc8tUPx0T0CddRTitcFd9IZ_NWdrgS8PVpRMEgxO_SMtqr3pv3owIaCIIaWkTCajSDU-Gu-XZKTVoV13yAyLZ6EIjn1fxDyqP0pSfLpP23cx4EYf3mxIaixn_lh4X0hujqoc2_WljVIxwWIqh8rwmHQUv4fifPHA6Da7I9SvdfMriuLhm3L3zfBoLtwXfgHHIt6d3hSp_HdMoavC-HTxlbY2vyuKm69cDzpGjGqwwNp4FokvKwije1oozlv5gyI9XesYqixqpF1sjROkFdSfp2o3XlcvyuCp7XRMIr01sp_DCUasGEmOT57AVt8DAUsvjMVgWYUhMSHhU-iXNwkfC9sXEJozSoIdIC2wAlcMWLkZ5fxgRFG2VWqs-TqJbzFOSSDr555F_qB1ZqxvH02nnRlESNgI_E6T170j4uDaHv_i3OPsgnc-NhlPLDL5lFAQHVJnUMVYMa_1mqCf9SzVdB4NJ51av0HBDD55UePC5LhJ3nhEPKGaMQa68ScjB0heyFnN4dWpEVrEOO4x44DdGIKEU7XRXBB2ysz84qnHJw=="
                     }
                   ],
                   "role": "model"
@@ -663,7 +738,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-b06908b9-2a84-42a8-bd4b-a7e9fa28ef36",
+                        "id": "adk-b86af938-39af-45e5-993e-179902e61a67",
                         "name": "get_product_info",
                         "response": {
                           "status": "success",
@@ -729,22 +804,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408914.0862017
+          "creation_timestamp": 1772497923.0096955
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "details_prod002",
       "conversation": [
         {
-          "invocation_id": "e-4b7cb3c7-1cc5-4739-97fb-7fa18d05753a",
+          "invocation_id": "e-1aefea96-73c4-4599-9584-2f98b8d4b22c",
           "user_content": {
             "parts": [
               {
@@ -756,7 +829,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "The Wireless Headphones Pro (PROD-002) are premium noise-canceling wireless headphones. They feature 40mm drivers, 30 hours of battery life, and active noise-canceling. They are priced at $199.99 and have a great rating of 4.7 stars from 512 reviews.\n\nWe have 120 units in stock, with 40 in US-East, 50 in US-West, and 30 in the EU. Customers praise them for their excellent noise-canceling and suitability for travel. They come with a 1-year warranty."
+                "text": "The Wireless Headphones Pro (PROD-002) are premium noise-canceling wireless headphones. They feature 40mm drivers, 30 hours of battery life, and active noise canceling. They are priced at $199.99 and have a rating of 4.7 stars from 512 reviews. Customers praise their excellent noise canceling and suitability for travel.\n\nThere are 120 units in stock, with 30 in the EU warehouse, 40 in US-East, and 50 in US-West. They come with a 1-year warranty."
               }
             ],
             "role": "model"
@@ -769,13 +842,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-dc85fea8-8021-4c89-855a-dbb5c4c1952d",
+                        "id": "adk-e00dd833-94e1-42b6-8943-b30b25cd73f5",
                         "args": {
                           "product_id": "PROD-002"
                         },
                         "name": "get_product_info"
                       },
-                      "thought_signature": "CooFAY89a1-CQQKczSxXExpEHYU5OVpmQNbG7bV9TtnrNQEtR4u6X3RHwiJz3ZSqncm2Vztwe7pSHQlNBcRm2spopNbneRr5N6ZfYCglHyEeFCnJYyeNio7iqrtIzkV1kfEkwc1-S9Su4nOxhw7uFmAvHOudjtU73xPVtXVPLRzIaVEbPFsjKZ_SZdwgwsD_VJAoeY6QYbXFiLSubdcvBrFCVhTkmnCG6CVionTwu4nZNgN92xZ5OX_g8uPRuy3udSc2Ssz6NiBKKa-TMD08WZOZhoAE054Ql6SyZ84VPXkuvWUCnlZGrRd9yM-78pSm-rc7nLOtxKRZia3ZDMIimkXg-RTf-bcMtm-L1XrmoSfW7X0NTr9VnOT96fzALSiMSpkiFJU5sk93THSLxw1loobc_UidUoB8a9MqcrUqLPxAXv5pLq7NIytEb6XSD5zCMA0n81RJvRxLzFdL36RqZOD5XBJCnwFWv8niKIJSdiRaWecMnPog8H8I9C2u1DIDFkepY5dgmQhot5d36XQbYt3j2a8UkK4JTWdu0ihP6pe6fEt2yCI2v956fSQC-bFnDefMWXavBoepXPl6h7flh2vNtURYjfyZqnC5Bpqpadh4TxKMlMgqZJjhyq74gtTbbgbV8zd3OarvAzioWx-pol5LtVm1AOUELECFwQMda6Cyt2703S7ePBVQPS5BA8uplvFGmEJwuOozj5_8dGQMNarY1BAYIIC49ClU48bFrY0Lb7mcxOkbF0K8ZXC0A2UirxTbWIZ7BOV_xk39PFrOI34zRJz3_pba3_z6stuh2RlXGTQ7GOloNREFlIgZbMryyV0qxKPxQAMuLo2e3Y2_MY0_uLROqJsKuhhEbPM="
+                      "thought_signature": "CvoEAY89a19x4n68LHLjk7VWcU2VTuOtaokkNYHVtuxdJzLnGFiEXMcFogMW2io1o6hsABodobYyDNd3XgCW7ILy6K_Bkges2Qmk3lMXqnu7u1dlwDkk7XeOcR5dIXlc3HC-hBF7HQiY9iJ9VnS_Mx4S7NSWcbxaInVBkLm22lkBdrgF5WLTQXZ1UYnJGoraBTflxlx1h58HFMppwUlwYrzTQLkhiYyk-C4YzZvGT_iVAYa66khF3ZiCllHWqbUuEVDYTMcjnSc4P5c40Dp0i06YSPN26b14jYqgkGySYYuzpC-rXuNFgE3EfEPx9sQmaCgNSm8gfFvLZdp10YCcheN1x7GFj_Tb8C2Y_4jY5UnlekXNING3BawR5LpBpGnP8ZDMG34LQyHni1vslloXbvite2P9FRZv4eyUr7UHEXXw-51M96nc9sCwXcsk4pZ0GxXaM_5wDbIh__z-HlicxykrEJ2IMHcZUI2iPH-Xgv2XAnRbQ4pgL9UgcFgJBfwshSdh6hGoh1h_kxIeHbdh9JCDaZ-_dsrsWTb76g9WV5IpWkomqOfc7odhmSO6lL0sEkgKgWwdbYv9zR0vGY3M472ODdOO6KEE6qvKkLwguMkjvAgq2CQno25i63H1bJCPFPIYkrG9VwIhHTBDWDHYraZUJVHmdGjeJHiXUlPUxOxwHhoB1cmHPmYlvrWGIqgo02BTN86nuzOcPo2I1lWKVYoUnsx4lwhS8s0NT-zrcXGowmuDR733MLKG0Z5uK9mx_Mkope4vVq_e0k996gBxb20MX0MloGo-e_m7XIIhSrk96QH9H_CrXuVYg-mTzZ0qMWX9-GsnVUkaOOybbg=="
                     }
                   ],
                   "role": "model"
@@ -787,7 +860,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-dc85fea8-8021-4c89-855a-dbb5c4c1952d",
+                        "id": "adk-e00dd833-94e1-42b6-8943-b30b25cd73f5",
                         "name": "get_product_info",
                         "response": {
                           "status": "success",
@@ -853,22 +926,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408955.1263201
+          "creation_timestamp": 1772497931.4036987
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "details_invalid",
       "conversation": [
         {
-          "invocation_id": "e-358e9944-2691-48cc-828a-030d162c9b51",
+          "invocation_id": "e-bf7e2fce-6de0-4c66-9d3f-3df98892df16",
           "user_content": {
             "parts": [
               {
@@ -880,7 +951,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I couldn't find any information for product PROD-999. It seems that product ID does not exist. Please double-check the ID or try searching for a different product."
+                "text": "I couldn't find any information for product PROD-999. It seems that product ID does not exist. Please double-check the ID and try again."
               }
             ],
             "role": "model"
@@ -893,13 +964,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-a68e40fa-54c7-4926-be72-879e785794f5",
+                        "id": "adk-08b86072-0484-498c-97a8-558c6f332f69",
                         "args": {
                           "product_id": "PROD-999"
                         },
                         "name": "get_product_info"
                       },
-                      "thought_signature": "Cs0DAY89a1-1fxJiejEJyk0WS93GFAsACiOhuBi-Nq5uNswrg6vXgX-oF3rnjhAORPbYYKqxBKHb34B8nn2Kr-W0qlqGqWFOy0w0_hptFcVEJmcWc-wpEeGvZC09Vo2HO0jnpCQrLfv7BBK7BygNBV3vbWTVAzaZAkWUqLn-oH0JdMrdq2uOKCzHBBgwUsBoyhAxVfstXOyVaCkradtwNR8_DCIYjdE3R31e58kzxfWmxQ4dLozRHddp3bwXzhGRlxKEhKAD_q5Lzk4w2YS_tu1g5tyG3vEmxrc6q6wwnFc6Zl_chJ6FA3fI9HplFurltwrNAFhjsIr3fJ2w1qsNGyKeSlNdkRK8TUS2I0BLHeeiAjRZqJQhXutfAgzmvLu8CUO2ArDjMtvoQxQjV7DcWG00xyP6Y6iSQcd-glU2d86AkAcmiNC8nsTSRXrqsJJM9srO7HcWL_pMnYk_e0L6trHoNPo7fbSMxEYBwgf7o60i76rIW7RaIBN0sKnh2msZY1HFWI86139d_Q6YKFK_jNLluxgyKr26yIpi5AMPkxOnERue4c_eQAJamK91Nz_gH2EfxT8hzx2SJVneH7b5qClGpe6dQrEdzQcRrv9lF18="
+                      "thought_signature": "Cq8EAY89a1-t7Ro5-PPz28nGgvCmqmgV75X9hOBFuWJKkhJTqR3K8Eya37X9fwyDgqWTC-yqnRgcaE6fwIHGHicvSHruoaIm3yZweKwPXf5QyGIRNSGUid1dAGj5RXnvzEqF-8cRpXakjD_arxhkhmZgTay2FtkvUegkoTzIQC2q9uRuOb5h-9lJHpM49nHjYRb7P89V9VQr_rkRbq9MET0Yz0xRbVFGOKInrnUZhEgDl_AVpswN23C5x4nudmbvigpdJLA89rPuwFSwY1JF-tfbfHbEX7iXjojzRPmSkOb5mouCiNT6syEMs8lgazENs-0V7LQWAdTM33bgQDHkIEU1GdiD13MHCA70gSijlhQV9ByfbcdmErNdZFr82C_mpkC7jEI5giW2K4mO5d1EHE7mpWZjoWfgK1iEugLlzJQC6Tpvhtp2X1VTiP7Hqf58v5ooae1fiQy2i2NwSdeyV1gX7x7pot_NGctLzdnqXYnEZkGjS9z96zmebTGw3PUC6OC1bwbTQcST0VAvHhv6_g9-HaLcJkUmGMHGogIW5aqWbZszrGneRQI84EwJyNX9GAB2kYQFNZI3U-UmpFQPRK4nsc82JERqxE8CrVS0LlntvYNJzsq2fCtEYlRUUN_ZSy2u1LBn4rUs0RiM-am0BHyyP8C6Nk9w8G4z0sLWLnLKLeBglRGVYTsxWgeDupLHFRHGKe1d6WgLsB9B2WXIVqPnjcxsYu3tzAJctLMHSJgscA=="
                     }
                   ],
                   "role": "model"
@@ -911,7 +982,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-a68e40fa-54c7-4926-be72-879e785794f5",
+                        "id": "adk-08b86072-0484-498c-97a8-558c6f332f69",
                         "name": "get_product_info",
                         "response": {
                           "status": "not_found",
@@ -931,22 +1002,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770408975.8160667
+          "creation_timestamp": 1772497940.136568
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "inventory_prod001",
       "conversation": [
         {
-          "invocation_id": "e-bf6431e5-b256-4f4f-b519-3b623e5e9689",
+          "invocation_id": "e-83863f68-5dfd-4a64-8a16-c87a982c0777",
           "user_content": {
             "parts": [
               {
@@ -958,8 +1027,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "Yes, the ProBook Laptop 15 (PROD-001) is in stock. We have a total of 45 units available across our warehouses: 10 in EU, 15 in US-East, and 20 in US-West.",
-                "thought_signature": "CsQBAY89a1-2hMJwQugtUbBlfL-xBTnhehreCVW31rfU4GpDp0TSAIarZPXzd3Z_YuRIB3gaGHR2BKVItwDeEL91_g1bEHuTm6JJJrXwUFmWmSudrt6Nnzn8ruADj8VCuVRQisJ-flGloAxkg5ig6Z2dmoVALUMLZjKAMviwjYAjFC_u7n2HrMVk49BxuGx-PnXmnkILaLaL6pQ69aOS8s-baqhwY3_xTufotO3aQWNgnnrSbuZ62DEHZS_koDJei31fysCnrw=="
+                "text": "Yes, the ProBook Laptop 15 (PROD-001) is in stock with 45 units available. There are 10 units in the EU warehouse, 15 in US-East, and 20 in US-West.",
+                "thought_signature": "CoEDAY89a1_3-SPCCiQqRSzDnyHwnN4pvbFJbG4EHD2OvKMbC_ZuyEyIxMp2z1d69DgPfmxLqEMYsJ2BRSr43AR-tWufF97LP44AxWjU1BPXXTD8LudwCrlux0CWfSUh6MlvkYoDPBUAeNqsKblvFPZkhBxu6KCaA1SdnAEzKNmGQldLV5kYdmC0P2AvBaaclzAfrsryYWG-jKvsCUbj8kT3IgME4aAEW-4l8IFpIf5WhJw2bLiY410muZAM4_k62dPMHj_DCwunh5D1a8OuMUqEw-pCL0rRRfY9L-zgCTHEPM7KVbulnIVtjoG6r7mCnG15V9DS3AaHuLTwrrJhM4_IWyJ5ga8pPc9K43vyPHRrEyptjMfngLqWwjmdzu7FAuWHL0Kt1Rd5xTAkV_AGtIIWuHiugkpxSuJbjJ0OflpiuJc9dJVk-bHNClZly2Ctf33j_DnAnd6fPqRmOKL3GLCwXJnUDj7IrBh6I9-4p6x7TYwBC8vUwp5udcplbD4a6voCjg=="
               }
             ],
             "role": "model"
@@ -972,13 +1041,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-a230ef08-601f-4a46-b496-d62591b73e85",
+                        "id": "adk-78b64d85-d16d-419f-a4c0-7da0997c4a10",
                         "args": {
                           "query": "ProBook laptop"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "Cq0JAY89a1-iq-AVXKT7eHHobOIVMZtYYNd7na7xqLg99mnASzU4ZASkbp4gwuj_LIELyPGlssoH226kbftx-X4nNVH2u-cGtL7Otsu3KvD8X-BTaFxXo4PMovHxJMLW2Td0WRB1opY2sFMPDiIwhR5BY8X6vXu1eDeiYorVhB8n4R_AycbsoyYiquBU3zJEdGDDMgVeZx_DdThHWnXWUAIde7je51qqfmNDy4rbivR4kOrSC6K4DnrjpAMM2owjP2p_NPCPcwjeINrRRZtoJ7VPDrRwHvj7crmkdxSTjOHgCV34WqsoXuA4aGYFg85QF5vZU8Pb45eduBRMW_uv5_T4gVPLSjaTl62u7J3tu4qdLrl5fRQa7JpYCwilYbmCFbOpzL5BC0HTs35eb5idsHiVhsDeXXrWgnAAyfDMKhgh-45OCzyRwibUEIUlPwtAw8UF26QhGUkArOEOvGR3nrBQfsS6QhoUmUj4TbH3S8kw7jvQjwFCeqEXuTUbzNFURGC9fQbFRjkTDFsFm7U7TpSFhPkeZFgBE_TTrtkG1_jmTk20XTTpGSsjmRIt7YRnd-6LPCbHCEPL0jWFG3cgMnPX30x5J4ebQTNPIS_5aSjSSIp5EVib4GhZOg-9HN8ihmtpacqw4SetvTZiKT45nltPbFSdCn2KF_DRd2fYwjJcpGYYz2BGhCSuaoL-VaJCYCyWGgWPs755KiiSifr9y4dVv0kwnWmDeXglNeNlGsGe4jR3xjlRFwg_zdNPGocCDS8Y1yIUEnG4MJo0WuscU4ITjPcV348VLYvCpIZtB-j9EmkwTL8KN6HtULXYXdwj7r1etwpms4miMSzcVYOUDM-czy5G5BNXmK3QRS98VRUiEpyJiEOaK3-cZukrysUwFMezhnmdUmM4U-mSSGg80euVK97JeLwxt8yv11S-GaWqZl5zyq85OHpSu-nVnBeNBAjBpwyx_SBM2SpF9L9XQz11JyNjsZ6v07PgsBo-fFQ2EERFeVikDsmbisB0fHVw2oCxgQEc3mTamqGdXQWJvsszT2gCEJdT2zzwQnrtEA9toXUP_tplhi1MDP1TYIrf2xnN5XpVcH5v2iNPxEL4ajngMnbSqaxV76LUU6rnmVgAm431aB1Da_Hg-z3Dhrig0uAkwT1OYS20QJLu_-TqtdyBMQ7OcvHnT4oFWMU4Z8ZKguv86bwg8ZXqcKeXhiEXGW_cITrozNNkhQqGpYMv2hsalpYmAG77mtAzHYCXBpxD21y-hQAAWOob12y2Dgevo8uo4FLwcTwbaBqBJ8we43b-91lrajvqDUyh2MkjuVvYdQNwMY9nQoer9pcEf_d3b5ZAkUxlr1iTShW-p8p0Rhur5vGVPQElyNI75rfGuQbyEUhoKozs7GvSgz5fY6bdoMUMwHYSr1zFgffGT7kZ2XLjbwOb_fgKVEXxcAdha2o4C4dBiREXKIJIKJSSgz0j8V6w8AreGPDjd54CqTTanQZ5BPdmXla1c7LvopFqmcD61siAz94mUJelrcCnTXbOCgmqc6U06unArLvHRzVryUoHf_ygiMMu_NeYhLuQnAJ9Mv1SZYosqcvGwEYI97oh"
+                      "thought_signature": "CssFAY89a19Qxt7NMQXptZ6eq_xbjYHIp5icy82Sa_0omt9SUzyIBgv60t1GXBBkswfymM8TsgapOmidrZf3sg5AZBrd2qC2KTG1FUiXI7rXDlU5o3uP8kIhF9R1I__qE1JKwIjNLjt01fxeUJ2cctvOtXpaEJ6u0e8nE8VsxT9HSnsK01HiYQePsvSVCfB-9Knee3oob7fMVHyHbrn4j7t1TAI3y1mJd6JSaXJQuUpPeV0mEhxcgZAbCmOCHbHGlw9oSetco1f83eFjKS7t6S_Dvt0Mngbe-nc7a06warHAGTUGp-ZCQKTcrMUJ1A3FmCjgajYoVca2d3m1kaCwTnqATuUWJC_A2Gz2jTD5MTA4wVWIN4WRdwO4UY0Mnn-syptJppoL0Q_snZkJ1HSUtx-2G5jP0VZxn3XjLZa41YS3x3eQ_GFZR9c7zIjIOeDAsfzxaw5wMOUEk5G13joMSOS6l3xEYV3aSI0zjMDSXXFv7w8qpcPKS_jW8xZL8qXQcCdFsUv2a53FAZ_qzNusqg2jnSSryIJYZTU6EfLgLTN7RYjeucY7dhlZtPHaZ3QvVy0CX4tWnf4-TNBxI00NSGiicCWl4STkky0E35cKIGt7xPVvOjqqHp0dy2Gagir86jjtKarb1atnR3IYvpitdwtakdycp9QmPq_oWrx5i3cU96n5fGPSmMhoa4uBdMvuATQ-7OTtIhdR3OBgFh9eYlE8D8nQekzOIWGeI_32gyxlgIO8p4fiWbMHxv5FfOSPAmwne0mOPZfAmfu3IxRNOl1RL4OZNUygGfhn6-WFH_iClNgJnfHX-XjLSriWcIr0i8R_9e2oWA8pMyg35FtMrLCwTxgh3IVJt7ZKw1g7tRJZmcnoa90aV2BD4VfDzjRdCCdSRalR1-eq0oIVt4-k7K5LcSV9DB6A11jtt7FXP_X2enSkvkRgyI-fUlTWTA=="
                     }
                   ],
                   "role": "model"
@@ -990,7 +1059,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-a230ef08-601f-4a46-b496-d62591b73e85",
+                        "id": "adk-78b64d85-d16d-419f-a4c0-7da0997c4a10",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -1027,13 +1096,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-a6906672-2845-4278-8cfd-9e3f78dbbda5",
+                        "id": "adk-5cc275bf-1ab2-4e4a-9dbb-13d875373424",
                         "args": {
                           "product_id": "PROD-001"
                         },
                         "name": "check_inventory"
                       },
-                      "thought_signature": "CuoBAY89a1-x85-h6-ScBk-1ZLOi8i5nAsIUdyKf8A9Zs9O3uVaVmwJeCMaibY87Mk1ADS_viTzQw5R7t12EzMR7YOgi4BvOhz1DdlnwuvdgI0TavphBipMffwFvdBAtZmMCLXYatRAhr-SHH3SBoOyrQ-88xa7Mx5Z2VV8hoEQZjcGQDtpnV-Ig2TDJ5Lf7_jFGL4eXW_-VJxsmnfaWsSUbKlvx-Lym6sLmBewho4TeUXM0JMLPSvicLyLm1JXxmHLJf0PkcmC1j9A_7fdwphzAjLcs5646qE1fGo2iZ9TvrnVKzCLDBjbLfOF1"
+                      "thought_signature": "CtkCAY89a18dzh7kuSNyR3s-lswvPQc5lBREVm53aqZaSVV_ZjOHdujZksW3o8ofttj8pVEBfQPO9H1uq9pK84YycQVHc5OMP-kquRJI1iPaNTj19I61qh0EYemOSwjSn6QV1bv8l6EBVbkgE3dirTnjgHJ2ZeJ1izSn4ObUqizXXfT7q2-cFAQH206GS3UjE4MxPEZukMXUAU0iHWm7FmBqML5Q8lxVmuzzyYh57tMI5OQ45Y98J1idjF6C7tmSNMSoayaWWnFc6iW01KOZMU1Aozz2Ur4J3Q7WApWNzS0YaJy757BbeqMfm7A1bcpDT7oSYXeNv5Tovs89hQmFdp_HphlaD0bD-7ctF-bWVJi13QCnBVkUKU0kNuRqWrFpqxsn6X2FpVVqJ1J2_Ni93Vu5JE_k5js8YCe-4_C_9e2UIFOnf3HEgZrS9UbnqHnfIs3TlJ1vw2mFu5ep"
                     }
                   ],
                   "role": "model"
@@ -1045,7 +1114,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-a6906672-2845-4278-8cfd-9e3f78dbbda5",
+                        "id": "adk-5cc275bf-1ab2-4e4a-9dbb-13d875373424",
                         "name": "check_inventory",
                         "response": {
                           "status": "success",
@@ -1067,22 +1136,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770409020.5442326
+          "creation_timestamp": 1772497952.093528
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "inventory_prod003",
       "conversation": [
         {
-          "invocation_id": "e-34a101f7-28d6-4c93-b344-16d583729821",
+          "invocation_id": "e-a303f54c-3adf-490b-8dae-e3971d69d144",
           "user_content": {
             "parts": [
               {
@@ -1094,8 +1161,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I found 1 gaming keyboard: the Mechanical Gaming Keyboard (PROD-003).",
-                "thought_signature": "CsQGAY89a18_J2bDyCh-sY_A8OlrkWVvF4pMNAxsurjEtsGQbHD3O5gt4Nkg_eON1emFpGe23ZiB3xnjYH8nmna6ZGdhULZavhCXDtXhDSE1DN-RJoWlkq3FfAajUhco_bcw9i7O3t9HAQzAFd7_j3dWNpRGrMBvHSaSWwrUX4VJaAvcG0Fmv_bEokSYVTr784jDyozUkt5Swvxh6Vfb19enkcI7m3iOAyonBU60s_1a3Z7jSWnNR5GL0-NZRZKY4me0stNBt81OqG_x4tQImHG7pTBv3G771JTZDEOtlqG_eDFeSHsMsiSPwL12RDg3TGBS7G6FbuXr-DBWx29tbDlKDWy3rRAfUhbwe5bFlZRqq4951Lx70YRCMbBfOAqYbWATf9mc764fNfy05wztyx71SRae3KMKcdD1PCZQJ1QpA0BGpbZUnEDvo2gqGS_vNPZC5gaSQ_Qil9wg4sAJTZvom2AfNauDuDfEAJoVHKI6ycvRtbsvhEkOvRexLQDuXbtiFXDAz9E0N1eMVqbfJy36wFbI_3ZvwtkqpVGbxPaCJCm87EVSGowaz2ZQbQJ86t_N4JEkzUoRpVMWtRL0228ZkhuMySVyti_L5T-B1Yx5xZD7bnS_LZRp4e2TdfZDwhsb68xGDe5THWjtWhE-MahFx2ur9qbk7Aer7EIKxvwryLI3OlHfwCpbW-Ck2UiMm6bdtO6cWEbQaewfKScy25D776zWg9SzhZiJ_gNvTPmIDRutX2nseFVl7ZnBIg1Ih_rU2sAElVXZeJvAoM9jgtvWCYNG9dHr_VsqbnCmm4Krw2OI1BZ3qzu2c-Vq_v1h6yL5h-DO90c78h2E9fDEurunhR8xoBlqlBairB4jGdBbb0W2pxEhwpBGrAQExoBo3T-E3ZCE5NYme9D80Iz5ZAeVcqe6izA0IROzJ5eZmk54zXMjtS58r2bfpDCdkS2nbfcDtdWhQ794HYtnk-Cz3vie-HSc-SB3dJn0nvcP8Qp9_ivNisVf-46YuDYuNstR1zABbtRmf5lwYOYxuUlQKbayJRFwOGpC5Dwi5RMH18Pdo0mKMackOX8rin0HIx5pMzuoUykCyd7Xyk4_sTptmoGPtD5ttYo="
+                "text": "There is 1 gaming keyboard available: Mechanical Gaming Keyboard (PROD-003).",
+                "thought_signature": "CrILAY89a19NUX10-g2MqxeEDYhowFa0dxNgTjD4vrqYNnM5uGrabdyR4RgDiWpZe6WQwAP3HXp0iQLiLDvl0lMzTTR_1xR45xNt6fYy04ebGcGGhHOhR00U9rqY6JxaLWrI0tkrBLcb19x4aKmcgHp3TetcYF297awhtvASyoO7JWZL4y9UvghB9mq9NgqV8xuwIOpAmWPWsEoY7uTKbsCIcqN1w3vAiBBIyaIcUm5KWBinIbcbbUfI7503bdDzo0CUXrjv8OJxxys4U49FnhIjWt7xOItvd7Vnpj65dekocsTVXZroYg4JIeid3WQvCnoj4W3jRFvFcoP3wMs9q6XMHhRDFqm5mWN-TP7ncphL8h2WR_O2ykOkc-7VYXk3IF6vOnUiThrTVdgRC-D_hA695LT8PjvwsJFPUichDrtTPRcFeNR2Rd5qbJk9280yji7Uq2S9pDVL2lFDeezDYGxdR5bq6H0u0IvJLRCI33oJskYUO0fXv1_puH2USHWmalVlBkk1pc-3iJEgtbDSCIJF2kYFRGHb3ITKN0l4nekrkCZekfvRDW9NNZLpLdlMGZRcWPwYVKHTwyTQ9MATRV3NJAOrxikUg1MDt-gnDXkdGUBq8uy7PJZXzyVZ8QUmi4BTE4shune3IvcrclU8mg97CuogiDhSfYlSgm2Ooq8MATgHRCgg8tY--VebO21Ual3j61gQF2Q28qIFo8S_LzVXv7ghSCXVfhUUq2M8_iDN7rOB6aLL6l4WKoc4Rw7qjVC4sMhnP07Cqpj3csAyqphkr2WR-zrZoR_1dk-1o2Wd8ncWlecYcs-BSqB6nsIwtt0kiv4O_dW_iSGkAScb7JajgtzgUM7rVTS_SYSezuKq7BCR-OboW9_LlpS75DGSnwGZuE4BHtgHTVUnmHrZDwbw-gBYwbPY0OTX4_AllIW34aA5u2X93CuM7ZB6zpvmC1a3cd4GKcRfSSZYwjKwcQiZYkGNpzhyuMbLuW46w4TF7Ki_tOePpJDBnAnmg1GOPvDZreCsRjcAaxTFVMwHTlZZupulkogbtC6kQxYfh4-8IJV7jQBiOYYXLmUUwu1km0uXBWTyp-2RVIHHuBOW22R1TrMJeQPKLV4F9nHbllafXf8DsLP6HSK5OGK_vRUe4ocNhIPYM2tEbbv_jl2Cfq5xKLkxowZ4jf3hU_Hp5PEp-ccQ_ijXbeMbUK8Iiyyjev-R00C5i7aYuCPf_rmkGkRyfm85ZtapIe8NdFGmpJmgplcWl7AIU27Ye5esO9X1wHjQ_949kGMsEfdUl1gDY_sfOg9Xywb2V39x55Gqgjnw7WBZeyEhZAJ3ycUHM8eZYegAgDbFUDn5vFsK4IFcJyVFoll9aOB2NMb4-IsOWSqzJGU7JY1Bz6kbKh5KosWZathwR6Oj3ZYCdwpexlcfGQROcVUZrf_Y1OVs-xVyVQOiz-Kbcn6FeZluOvxEAfwSndSyAbWGpz7SI_44TOKfx4VL1A6iMmdcfiymBdExMvcIlXTIISp6jQGIPUr4NF7ga8CKuqyTQSbKYqysz7O2_In4P3vp5agBpqFi4KTtxnHlYuCAqCEtMQy24w13guAdfwU5TuiulBer91sgZItTQaTHGTdpUO--tRsw8zRMWoLLk04cC9oNaUmU9_6ZUzpDiAK_0sevHd28oxno2JqmDWykv3doN11YCwS-BbYmI2_Bx2Uw2NioM4xaN2oMEKc4sIGLkyOkM_3Ir7xzjlccrA4aZap1UfJFkE71GN9cv3IYfeD22LDcUaNbFA54mQVOysEmC-qwtflgBSPwly9PPf5C4wpVYWIrsdT02sQcPzbYeqauUSj846ie4ACaus0Jtg9YQto5s5gN5h0ygAiiDwdEFgxss7aoaTkfB8x5W_dwTmGH1qRfwkl1MlQS5e5HT1nFpB4SODzfzjdGu2eBpzyGMEby"
               }
             ],
             "role": "model"
@@ -1108,13 +1175,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-4a286da9-0daa-4772-a014-8e11401a541c",
+                        "id": "adk-3026f72e-1c18-444a-8669-4747350c5ee2",
                         "args": {
                           "query": "gaming keyboards"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CqIFAY89a187MM5D_naXvfLEjMABeC9BioZkA5KqSM8Pfi9pxAKqOiS_tv-10oVb7haIgw1S3nfst5VvBZ8Wze1MdsbuxX0XcbxRAWXFks-WDfdDbkdCjl4RBIN5Vhu9Ix8GgBETlI_p2GoGzUVytFw8a-Lppl9Cp42T91bEoH-Ycl8q5Y1IR-smVhoRGP3iLaImk1iTjEB9E7sUIrHHiWdKb84IkUXWUndVjMXMahYjUrU4Qtdf2hB4_FVgBWIN_e5b3qdnhbw-rtwAEoSrlUpz1Rxl2PBXIPkhN_0hV8WJQd3ARavtQEb2jaekWMKCQVSQo2t4C-clN9UxkksYhOnpLef78INRBFbi_xH9G2gTFyKI5Ty3LySbX3t4XwM_2nZot8K2b3x5bbSsps-7dwnJfPLUSK3kiC4Hf9vEHskcXbB_QjzuYrvqPzp2vtS_T7ikQRRUmix2e-u5OqYLHOCNi5T2KTzzy16z6HIvRYawuiS1Lr5a8Hm0uWFLd5Z82GT0EYIcI2OjFGE4aobGsIFxcB0dw49g70q9bx2EwyWvFRuBWs0Yrza63AabezJveyrI5_VQPFH5JMJBaC350NlGtx8cZ0YFOUo8CXGUtaC212fg-5EkauDMvQk5edjwuUPEdgbVhOmu1Cv-rGTHoJpksFHli39bM8xu8Qt5iJ04dlgx5XMOGGF1GQc4yVRFWnEfKe3QqaRD8AKcRwOSGZzXD1iKGEYZB60pDJ3i8OOAJRfIcRxXnk015Q_E1YAYmSE8cP_-ZPg_tgQgnmrBqjJiCIPZibwupdYd9ppcj0nfy8da72MgXhKfDBd1pMcX-qjYkfTIVlBw-2xT16p-_m2SjtuOhvdDeLUet3UtoIOQGFkRk3PUT9SkKLQ_29qKoyBvbHo="
+                      "thought_signature": "CvUEAY89a185d8g5qNZC9j0ELIR6XzOfXcwVMTr8v7nt2ryXXLoPnV6dFABCwIOdqyi9QW910tD8YO1p3BmQ5c9xqdQfsJd5IohZF3EqrALfw268u-xGZyWT200v3ZZXuYIDkbGWNWsZztsZoJLzEMOfPkXoJh-stYiwrYxIFEuFGHX-Q1WVFQR4Pr06j45J7fPIr0mV56xvCt6n1sbfrEpEWrJy7Hwrte59edqBWeTqO6c7Vxqpb_ptLMyvfieYrBbIyT5jYWhTguNPjK5fAT0hQwpBy_7w1C8xfddS11sFjGHjMgoQKnww0VKM0na3mnF3g7am8fewFEat6nT6Pd1Y7yFdERD7mfcD-LQEEAAAxJ9anKBBpC8eg6DsvfJ0Q1zW7YudxywNl_egTu0s3IpGglI8SzpwgwE37UQfekpenAkszfS4IBEiuhCYbR2r9UaJ98b0GqOmJguofh2IXKDfj_oZ_PtMpqOBtfa2nvJU04SBr8XKFKF343sWFF6R5b-2XLkBa3kIvuC4uyvA9SDD4ZxgS29pvC90XHxxfCu8K8vAIsc5K1x9kSOPJu91pWTc93CtHO5-XbX2UngMa2ns3cR-Fr1JVL1VIs5KddhG0wPtgeFwE54hiJ2mjt7aHfKs7b0HxP55yGDskpEifQ0tjjfVkR1cI_FPVctEeA3BTrFcRwkVSUspD1vI-t_hp-t1lhq9zQX37iieTEvhybnFRU5c56akmakXMbwJFzE7Y1xar8Wm-ThPpBtPXwWIOLP61L0k7l_pU9ANBgy3YjXZm7ALbQaRrOIiC_TW7opvBOxdoXFMTeKB0cnmd5EW7pzmYe_jWf4="
                     }
                   ],
                   "role": "model"
@@ -1126,7 +1193,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-4a286da9-0daa-4772-a014-8e11401a541c",
+                        "id": "adk-3026f72e-1c18-444a-8669-4747350c5ee2",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -1159,22 +1226,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770409061.6297765
+          "creation_timestamp": 1772497961.6578932
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "reviews_prod001",
       "conversation": [
         {
-          "invocation_id": "e-b90c525c-3d23-43e9-860a-155818cea097",
+          "invocation_id": "e-a927aaf4-32c0-4d38-86cd-aa8cf1db6e60",
           "user_content": {
             "parts": [
               {
@@ -1186,8 +1251,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here are the reviews for the ProBook Laptop 15 (PROD-001):\n\n*   **Average Rating:** 4.5/5 based on 234 reviews.\n*   **Recent Reviews:**\n    *   \"Excellent performance!\" by TechFan (5/5 stars)\n    *   \"Great for coding.\" by Student123 (4/5 stars)",
-                "thought_signature": "CokDAY89a19FOcFSutPIlImQtJDOqCp2iWpklrvVMIN6BCEL_jJwTQrzjadDiStb9qmnJ13eUnzcIZGBegVFmOE9AYtBWVqo0-Bh1a5dkUUBQEmY7Rx_yguhC3bq9oPXW2D0j9FFUBRUg-dbEezxWwzYkcp3T1ZJHvZOOXtkYos_McyQPTIsZaJRw3-dixEBIHopLqUDGoMfvowLqSJBd98gPR_wil5oO5EqCpzlyGcc66n3GwX2Fo3HWuVwrlwLmTsIAWagOVUfM7zDq23i-fJ003ZArbqb156Jus_gTZteBmkd2ROJw5EIg54BKto2io3AsEmV2rdbcyjDclByho248iiLa0329bPppvwgmohjqyX_z31brW320Wd5kZmC9Gw3pf-cWNXqST7EjS_6tiZwZt--1Zwjp5RT66WZxv49EEvT68tVjAgN0xaaNBbP2sxHYJv0JVzIDMFp6VnG8oAg9qayDbPAGgNAz_oRc2ht6mdG_srdgw7FZVA7cPujU910OmX_g7eDCedx"
+                "text": "Here are the reviews for the ProBook Laptop 15 (PROD-001):\n\n*   **Average Rating:** 4.5 out of 5 stars\n*   **Total Reviews:** 234\n\n**Recent Reviews:**\n*   \"Excellent performance!\" by TechFan (5 stars)\n*   \"Great for coding.\" by Student123 (4 stars)",
+                "thought_signature": "Co4DAY89a194WvPV_c-ONiY4c1q7Dg6CNEIysb7sbcGuv_IlCbi_DFzSiGY85LHDq1Bn0gXrfr-chzwZV81yeMJcfoLQTb-qcpl46iLhWUkJgkOSJ1PGZt4tfDJX1HRRJrc57yV7Z-N70WyzVWb14OJD-hl1IvfW6KMQ_qF94PCUwfkh0BpWqJJJB2LE8-NEb9roHrLQJ59ZsZH3vVC4HZNmOfm_IYOfx7A42bgEHJbxWq3FqUeaKVyQXDJVD4y8W9TwygDzLO_wSb4FNUd-fsIlshqNUWQV3S7zjSIa3zEAxI-FMyTrpKbwXXhGrqZb2mAvbGHBW2hW1Zkqj-M8j0C76npY4mB9kqfh0yIfF6MpxB-bezpN3Fjyf8xQRxRSOjJ-k7wZ6Y_mvK8qH8pXl4_Ls_ACWju-0Upax_TxG7xc-hGAgjagzU8FJfiJyJa17-VfwLNS_yIqviOEk9c8OXI0zEco-dRfn9G7d3LUS-XXGWKMroL62EDO1eRX1jENIHabsu2ee4rkYlVkGr5FeBo="
               }
             ],
             "role": "model"
@@ -1200,13 +1265,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-e214d81c-9e34-48a6-83f6-d5a77df87c23",
+                        "id": "adk-ab8f3741-cce3-4df4-a6e5-ee0cc0c52dad",
                         "args": {
                           "query": "ProBook laptop"
                         },
                         "name": "search_products"
                       },
-                      "thought_signature": "CpEDAY89a18fAIBqlh8KcOpjIAKo_lktcJ1SvbyDEnpVrE_CMXBeosUUCetmBEJnSyc0hi1HFoi_ScffeBljQKIsv7P1lQTYJ7Qxgm2fFpp8O-6NmwBiQAvduFl4WRxXcKgnKHGchuuodTMELRsQHipwhcwuXUrI2_t-fgoKLSvbgNV9CSSgmIiEUPKBSgjeq9XQpmYJj5zZJiRl_Gvgbbq1rs4l52IeeHqGRbOwTUgM-FcbKrIPnziYp09FhEZLQPrZTZ-5hLYVxQ7G7hPx_6pmx5pC6y1JDC_V-XrWtSzbyNPOwPakPLijAUcSBP1k3BGbm-a6yiJccc6O90-argzWfIqs5pXCdtDJfE0_rCCXsGaRSXABmxD1pR8TwLcILGKRY4rt0JqASXNzXCWkZ85As8s9YfhCJjSfJHW0iy4J99nDXEJdMEWwyr4dzxb5jP34yh3PzviKGFwMJhThwU9Mwad_RIXnOPxlKrsM3DXFCOWWKXU2OXdRm9c8FWIFLXY2T3JOSPGZyRqLT_qk-HNoHXU="
+                      "thought_signature": "CrQDAY89a1_Du_qGYxVEDB39pZEN2Dm1Vrmi_MvbVs9fMM2SzKWfWT8F9ljFGnEjjXdwLRuJnn8zaKBtA8b1TWC4U1nmEaqAXFk4GL2bwAmohdFtOvAYVjqXnb4zLxJoivgImTtZke700ZM4nw_w-4pnSzUOLCGMFxvfcwS--PueQQR5Gsj2sCPB585xua53RRntpT8qgFgGkDOTTFK7eED3C5zIY4GU-fU92bW0oqu03SKyFt_nxpa7vjrzNQ_rkpjSS-tmwjpdYh4PVv-rLr_DJL9qCtgSek__A_JjBfUTaLxQmN1VMaOfEKqd5SS5tT7mqElt1DSJwWnQOvt96aE4QvSEVRdrB0BIZZkQmG9FQQmSELOBplyaTSuC496fp4ttv3VTp9p88oozWBWXpuyheK9Ljxl_RqXyN89jKa1TRDE1uYRf0CZeTOsnkBuGnhwbpkP9rgLd337vPoxU52W-j5ELIr4TpIwOCyqwyK-Vo-kq4MpNdxNBagWZAGGIZWRzh-L_ybasZ6nyzsXhJkzmiTvNP9r3kYRTeES6T4NAkZYPCqSwcQFqyPbS8E1GTCyj2wgEmQ=="
                     }
                   ],
                   "role": "model"
@@ -1218,7 +1283,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-e214d81c-9e34-48a6-83f6-d5a77df87c23",
+                        "id": "adk-ab8f3741-cce3-4df4-a6e5-ee0cc0c52dad",
                         "name": "search_products",
                         "response": {
                           "status": "success",
@@ -1255,13 +1320,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-e1fb62a1-978a-40f7-991e-e2b0495364c8",
+                        "id": "adk-ca889289-1b4f-4a7f-b68f-07ef78a9c956",
                         "args": {
                           "product_id": "PROD-001"
                         },
                         "name": "get_product_reviews"
                       },
-                      "thought_signature": "Cp0EAY89a1-oYy04cPOjKjdP4XF8X2jOLMgo7F-HdIPO3b5LE6vHQSDs194qkFukN3EnCL0g8hTnYvan0ABJBBR00JgdLyw0b4S_ME5A6NVIJygc-AQ1vH5lp1QseOoThcFi5EX6EbPVHG0IIidNumv_k4YTZIE1WwaWgR82XG1vr52lDs7UQl1LuFgIAaJh5w5TGAQYpEMSu9t6XMM3Tg6j1zmZoAhygGX-z2zYDrbjZgE9xeKt0OdegEx1yGCuiajYrOB3PCSSel07uvYEMp4V4s5La9tzSsIcB00KXkzRd3FTO_gQ4F6NnmZmXztcEGeHIH2jNwEspVuvfILtkqoRH5oiCJn9jrfuxzD5jOpI_LOsVrdDDerZysSCuY8L2OjF35idcytpppiWf4fMZvgPGG7Cqr3CFG5cHdomofNWp38cDvVLWLoZSLb-zAZ9yaoK3srtTuSQyzpUf5IxT_AC5eZxKj4XUQf172lGlCQX8On_mvZwEUlHP9UYB_PHJ_GnJTmnOd4wqcxT14rKrHfNgqnKAsKoFChDSZEuHikJNm_adTAr7dIGypREP9kyMVOVdhM9hnLYJfBBre37In96HCirzWYi9vxvJyZ8F6La8KN-rhBWFtpi2fr1PDC7ALlYOyCkMbP6sva5c0FnwRFjM09N7XFSPfrN8nr8hI6A4I_rcxk8E3onNU7DBpW4_jUhRVUEfu_HNpommYXXrA=="
+                      "thought_signature": "Cu0DAY89a1-BhIUbQPKGECWkZsXNrxIhp1Svu05vehQuWF9zkKCiGfG-3vrm-nSmdHFaJiar_1G-HPi5bQ4ELOoo0hxyZ5oC9aBC6hXw1WP0Vs6YInoBdnMkXSZBjqXEDTNPFcTuJU-wwWKU0X-XzayexxrWLPSB9yoUhtjNTiC2wEHzrOZtXFIaJtXDNOVDb_qGUg8T-m7P-CbuOlcOLkNVS7pg0waNrVeKtlA014KgIuLf-hv3urZ_KpoMwFDfU7ANlwGQ43BWT9RQ2SnqD1_kDfHGw57Vurz5ImvkxpUCBskpHw1Vq6fmnzoXtDGXwWyl9j8DytT7CV6ecD1hg6hTzGqG7V2sCWdZdcYni9r9ZbE_Gn0CBNWJydsSel3mS0b5-LWr9qiYLJ8_oqvy-jIeZgJFnTCUTFgz_Uwi1eFD59-ZRCoB7ve36c0YKa4Jr2g40dbIjDQMy6xUmijUi3Ml1Gu7ndDygZPmLghay8oEQhBcLPR09sV1B7C9Y_29F3-9OzHwzgvx6HdC41gx6fszPAHgIkNdSnqctOP55a5DHq9PAdQObUI6Kl4_lP4S1WbRIUrrefFvEu4ZifE-g7fedfsBBaiMutUGJ6RgVB0NMwHcABJ1mXb3ON5qnBRHKF9ZwopWWqim7q9MjgzLqQ=="
                     }
                   ],
                   "role": "model"
@@ -1273,7 +1338,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-e1fb62a1-978a-40f7-991e-e2b0495364c8",
+                        "id": "adk-ca889289-1b4f-4a7f-b68f-07ef78a9c956",
                         "name": "get_product_reviews",
                         "response": {
                           "status": "success",
@@ -1303,26 +1368,24 @@
               }
             ]
           },
-          "creation_timestamp": 1770409097.9879751
+          "creation_timestamp": 1772497973.5988162
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "reviews_prod002",
       "conversation": [
         {
-          "invocation_id": "e-a8ea0030-27cc-4497-aee8-341dfa30dbe4",
+          "invocation_id": "e-a712ed05-4f37-46ea-b51d-449a92a3099f",
           "user_content": {
             "parts": [
               {
-                "text": "What do people say about the Wireless Headphones Pro?"
+                "text": "What do people say about the headphones?"
               }
             ],
             "role": "user"
@@ -1330,43 +1393,24 @@
           "final_response": {
             "parts": [
               {
-                "text": "People love the Wireless Headphones Pro! They have an excellent average rating of 4.7 out of 5 stars from 512 reviews. Customers say \"Best noise canceling!\" and \"Perfect for travel.\""
+                "text": "Which headphones are you referring to? Please provide the product name or ID.",
+                "thought_signature": "CswDAY89a1-Pvhi_CQUGqQyKT9w6oJjxqhmuLxpEtNqjTzP1a0-HAoj_GSOmi3Py_aSGCaATnUAeK7LTJFmyC0Xj9FfBkX-Zf-A2KXqa4xJdUaZMXkWa3KnGPWlDe2Sqk8gKP0aPqXfiWns3ZkFqSIdrARn1jll0LO85j8QwTOyaCM9Zwd_mgUvG3NoWJWXtBUYyzTOIw4AIqc3Gt0MsbJFi8zNmf2aFU0hYIN3bB_d_VmlmxPzyaOpcC_xzhDW0AjCfirUM1_A7jm8o1-C3UjxLOWA1GsH_xUJ22qL8tj2eVk7SXLfsQVVcEgCqUjSTHtqeYZcMwn7TTn1Y2_Yi4mb4-Wa1i5S28QX_uNsSMVp9IynuPJSB7uqNcO-DiXQjy3-cxrj8TrzwtJnC6tF7mScpV8u38agLl1hATlRpDh2QMoSJpo6Fx0b-yPY66cZ9Dlok6eAR7czZCK_kM1nh6GjgY43gz68aCwCoDU4w0qk6FElCy8W1DWHc6TjNpkLPOTJHb5iwIvYFbIXScerslgd4aIHk_mdB0odvpxtDvfUNnRGDIqHiSZfAp3wcLaS7rx0SpVqZ5_zcNvO6djZYrIUrlIpwiK0Wex2aRyz0rA=="
               }
             ],
             "role": "model"
           },
           "intermediate_data": {
-            "invocation_events": [
-              {
-                "author": "product_agent",
-                "content": {
-                  "parts": [
-                    {
-                      "function_call": {
-                        "id": "adk-reviews",
-                        "args": {
-                          "product_id": "PROD-002"
-                        },
-                        "name": "get_product_reviews"
-                      }
-                    }
-                  ],
-                  "role": "model"
-                }
-              }
-            ]
+            "invocation_events": []
           },
-          "creation_timestamp": 1770409110.9197083
+          "creation_timestamp": 1772497980.4770033
         }
       ],
       "session_input": {
         "app_name": "eval_product",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     }
   ],
-  "creation_timestamp": 1770409110.9197571
+  "creation_timestamp": 1772497980.4770324
 }

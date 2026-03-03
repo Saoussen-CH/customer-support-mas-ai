@@ -96,4 +96,4 @@ steps:
       - "EVAL_PROFILE=${_EVAL_PROFILE}"
     waitFor: ["unit-tests"]
 
-timeout: "1800s"
+timeout: "3600s"

@@ -8,11 +8,33 @@ that was used to generate the eval datasets.
 import logging
 import os
 import sys
+from datetime import datetime as real_datetime
 from unittest.mock import patch
 
 import dotenv
 import pytest
 import vertexai
+
+# =============================================================================
+# FROZEN REFERENCE DATE
+# =============================================================================
+# All test code uses this as "today". Chosen so that:
+#   ORD-67890 delivered _days_ago(5)  → 5 days ago  → ELIGIBLE  (within 30-day window)
+#   ORD-11111 delivered _days_ago(45) → 45 days ago → NOT ELIGIBLE (past 30-day window)
+#
+# Real Firestore seeding (seed_firestore.py) still uses actual datetime.now()
+# so the demo always shows a recently delivered order. Tests use the frozen date
+# to keep eval golden responses stable across CI runs.
+_FROZEN_DATE = real_datetime(2026, 1, 15)
+
+
+class _FrozenDatetime(real_datetime):
+    """datetime subclass that returns _FROZEN_DATE from now()."""
+
+    @classmethod
+    def now(cls, tz=None):
+        return _FROZEN_DATE
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +79,15 @@ def mock_backends():
     from tests.mock_firestore import MockFirestoreClient
     from tests.mock_rag_search import MockRAGProductSearch
 
+    # Freeze datetime BEFORE instantiating MockFirestoreClient so that
+    # _days_ago() in seed.py computes from _FROZEN_DATE, not real today.
+    datetime_patches = [
+        patch("customer_support_agent.database.seed.datetime", _FrozenDatetime),
+        patch("customer_support_agent.tools.workflow_tools.datetime", _FrozenDatetime),
+    ]
+    for p in datetime_patches:
+        p.start()
+
     mock_db = MockFirestoreClient()
     mock_rag = MockRAGProductSearch()
 
@@ -82,5 +113,5 @@ def mock_backends():
 
     yield
 
-    for p in patches:
+    for p in patches + datetime_patches:
         p.stop()

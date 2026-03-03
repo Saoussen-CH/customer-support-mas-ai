@@ -1,11 +1,12 @@
 {
   "eval_set_id": "order_agent_direct_tests",
+  "name": "order_agent_direct_tests",
   "eval_cases": [
     {
       "eval_id": "track_in_transit",
       "conversation": [
         {
-          "invocation_id": "e-a9c28c82-a7e1-4451-8da5-07d38e04c54b",
+          "invocation_id": "e-900fe349-fc81-4211-a7ad-db163ec9ca6e",
           "user_content": {
             "parts": [
               {
@@ -17,7 +18,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Your order ORD-12345 is currently \"In Transit\" with FastShip, tracking number FS789456123. It was shipped on 2025-01-17 and is estimated to be delivered by 2025-01-20."
+                "text": "Your order ORD-12345 is currently in transit with FastShip. It was shipped on January 17, 2025, and is estimated to be delivered by January 20, 2025. The tracking number is FS789456123."
               }
             ],
             "role": "model"
@@ -30,13 +31,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-e4a2daa0-9991-4716-a1e3-d624d596913a",
+                        "id": "adk-e285c42c-4207-431c-b830-903c02a0534f",
                         "args": {
                           "order_id": "ORD-12345"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "CvgCAY89a1_1U3YIvZ2VL0C_fWdGCvr98D2CatXmxTOaw1cjTPyfvU1fr5FE_9blm9OVs4N3Uyo8oNDwgUv620vLPBRoJo_P_xa5nweymgzr5oK4mBtS9ZgBaXBncw1IogsjHGHKuBjG-C99c_qcAwZpEnP7Ba-R7A2KgPqiDQ-gaFNOji-wPchoivUSR3NCs4SRhmYDgvogcciaarmZvR8Na1fLogsFcyHz1BF9KEeQiXc5JNy6A4Y9YNqT9oEP6ZbpFxAAQQYuFoUBFjReKxLvl7VigTKFy7FoPN2MBK6EIICWikRwQcl1ww78Adu275LIyJJcIxCJW2nsrHkpmxn4-esAteKgZMIWY8yvvEpjOgsrtsAUHm2fdpYixJxZRfimJVKB5lQ2jGbJQgwjqoy7BEysVNmZRFku14KixB9TullhkDAvJQWROcB5nau-EYfK9sMzOkExEfmHSz6AlOrsxUkNBHr6n5qwQNYBxH7yIKbzrgz3mCKoLw=="
+                      "thought_signature": "Cu4CAY89a1-uMKRXJRy5B5ZnPUFltmXtvBCSb0B-PDkHSlTDn5_ylle8oCsWosAQmyEYxWuj0k-5S9ifvWvaxQHysWHTiA7qAuo_GlNE9EQO8KXo0EGAoXeEhJMsmPRl3mwaiLvkgXop6Q7iQVvgiuU8ghwNlTAw9FRsBfIetmf0PrmZe3bMXxlEzFECGdEITD_fCK-usPKptBQ62P8ekJu5qxzByCHyhdMO9td_AJ2FcwQDRa29GMxgQ4y5HFELpEJFTI9oLRvQoxn6Q7Jd4nNG0cT9AYXRcQAl7WCH_1WTCkEqJpo6KPdhPMl-GHlch_UloTqK4ftpvdrMpfSnOq-utuBdegi1D5UTFUTN1afHanr9s0-I_CZkXcP7TZAz-1tP3tIVkn1ZitCEYz0Bf7eCfaedkyZra66PIB5NLSWyUOvEcSimgR7ept_bpl9D9JbEcNhplHirnOjgRJLSQUpx5MUBakXOjMXcJvxH9prn"
                     }
                   ],
                   "role": "model"
@@ -48,7 +49,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-e4a2daa0-9991-4716-a1e3-d624d596913a",
+                        "id": "adk-e285c42c-4207-431c-b830-903c02a0534f",
                         "name": "track_order",
                         "response": {
                           "status": "success",
@@ -86,22 +87,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410728.962308
+          "creation_timestamp": 1772497650.278271
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_delivered",
       "conversation": [
         {
-          "invocation_id": "e-4794b549-b45b-4fe0-be7d-d38ed6fbf469",
+          "invocation_id": "e-0422f7a4-cb4b-483c-a531-110c95501285",
           "user_content": {
             "parts": [
               {
@@ -113,7 +112,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Your order ORD-67890 was delivered on 2026-02-01 by QuickPost. The tracking number is QP456789012."
+                "text": "Your order ORD-67890 was delivered on January 10, 2026 by QuickPost. The tracking number is QP456789012."
               }
             ],
             "role": "model"
@@ -126,13 +125,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-a7406d3a-f432-4653-a221-e1083849a925",
+                        "id": "adk-35cff596-a499-46cc-b977-4f9d87bfbc16",
                         "args": {
                           "order_id": "ORD-67890"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "CpQCAY89a1-NjATkcgakYRtzIcsEB7jOI37AcASd18xigTQ7tDOYr6I8lmv65Hw-gFr_ao2mbTW1QtQiLhUPL7H7LuPYp7yGOSP-EZo0As71-nPxUqOoT_UBII2Ul6F-3sdKr_yQkY_dnV9jPeVBe-B9xF7n9sw8OLOnAfEhtjP9Pp37fxJimT2tShrIn4hFefzKIWObPo-pQXOtyGfKV7NVSzR5O_PufH8Br4dYm1xVDeBEXXlX1Wa1oVSX-ktsXP5Av02ppLDntZBaDuBLCKlWC-huKOWsxO4jyG4FNwOGnTLTvB4dTYU-nP4qST9YEwID2OQsWsIG7U88jWi3lXAVCM4VBHtcnUsgHodtaUYGI3eT0vDV"
+                      "thought_signature": "CqIDAY89a19eQM_Rcw8D3HUU8TD8jv8jRoqZWrKfNIEPn7WVTTkD1k4e9kLOhC-iDY_1oJEoyxDiWAWCw_kZ3YEZJbyTE-hlyYheUiBFoaxh4eXlgPgsPtiDzGbh-xdhQwEkQwzlk02WgDl0WIim5-P3LGLVMHH1cd1iGBA5UCS1m-Gf91LsKcOjEfMT84chPAZd9UXfl1yg65Mpb7S5Qi7mNm8MNiJWWwXZKn1JB8Aawk3IPPKCUueE58g6TIUE6HxsyytD6rDAmnV60NpXGrdZ5zs1ul6H_u0SlCxglVX6l7OfUpeYl6FaC6qBE4jEyAM42EBw2N3UocBU49OEQgE2ZCeQUfaOj_C0Mo5PAH6nmS54_nSNjqSyZtRddrG75ajGmK4Z62qhV-W_YbB_-pz-ZiDt4FKYG8l9QIeLcHxmlgxn9mrmDD2jwAqojZqMquJBxVQ9qhtsSd0oV6rsdoKaWlOm4DYrINzk39X2xXeXddnYUy7ZS2Ft3ZBfa3pGDKsXx_amXjPwR_sp2qSgdqeD01gM3cmdRJd8m1wxPu6lV9isOQ=="
                     }
                   ],
                   "role": "model"
@@ -144,7 +143,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-a7406d3a-f432-4653-a221-e1083849a925",
+                        "id": "adk-35cff596-a499-46cc-b977-4f9d87bfbc16",
                         "name": "track_order",
                         "response": {
                           "status": "success",
@@ -156,15 +155,15 @@
                             "estimated_delivery": null,
                             "timeline": [
                               {
-                                "date": "2026-01-27",
+                                "date": "2026-01-05",
                                 "event": "Order placed"
                               },
                               {
-                                "date": "2026-01-29",
+                                "date": "2026-01-07",
                                 "event": "Shipped"
                               },
                               {
-                                "date": "2026-02-01",
+                                "date": "2026-01-10",
                                 "event": "Delivered"
                               }
                             ]
@@ -178,22 +177,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410750.6295302
+          "creation_timestamp": 1772497659.8526757
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_old_order",
       "conversation": [
         {
-          "invocation_id": "e-ad8402ad-f460-4a40-9f23-07656d31e122",
+          "invocation_id": "e-6cd66907-b1fb-41e7-b03b-d75f1a6414b6",
           "user_content": {
             "parts": [
               {
@@ -205,7 +202,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "Your order ORD-11111 was delivered on 2025-12-23 by FastShip."
+                "text": "Your order ORD-11111 was delivered by FastShip on 2025-12-01.",
+                "thought_signature": "CuADAY89a1_b8nZ4b4DGVnC_CDvZzjcq11n-LsMtu-OlNYp0Ys9cR6cMmhWQOjE07bRBDxN-10TTeholEEc_MWFe1g8FxRY2WDgW3oiAySRcwGQvAm5OnGoRip03Z_baJJd86y34EgAx7FxkEPiCE8_SBBCKRI8kSD6ritm3dCOd2sIDhFF9zRgMbd7R6_damO3-u-t4jH6k_m2u_mFIqvBy1GMdN5Jagy36vYbNtRbff_NU8_tye0HUugZPIJmWHeBjP1-jrnhgrNG4JBpBsZm3Y8MFxQCNmuqLHXbxOuXCO0_kznm0geL6OZnrjSXhp-fZ7X4LCvUIx6vwefI70MX1RDULsnfEdDcQZo5BG41Gb5ReopsIhjSqcMuCYIlkoVfjTk1qlD3fVc7cyYzGs5Kfbv4w0FLyzJ8rMgyWRx76zJWsa2R6eOSRkHrnX_Yo459NtfIGUPF5AOjsqvrXWfzIDiuuC6uXIPlkiH2LXY68uiMEBHbj5hlNbrtvOcpkU1VzeALY5SeKwsGpSgP9uaLU0fYA7n-EgKUZRHrpvVz_JJc1lmCZ42T_4vFmBPzAxC5R3XVmvsDBoOkamH2J1yxwBrQv83SOPsdi04SPxR895CxfFhOV1JXEMcarR-DYVtJO"
               }
             ],
             "role": "model"
@@ -218,13 +216,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-9d9dffde-3976-44d7-b914-7de6915d65fc",
+                        "id": "adk-e1797753-dc75-4a9b-881b-426b0aa38753",
                         "args": {
                           "order_id": "ORD-11111"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "Cv8BAY89a1-y342T3ec6EK30LG1ZWRjJBUn1rYpp7jwiB-iUBiEQL5lKvDryJ5lqgwKXL-cowNCeJ61o6-JatlVtWhostUYzJAdOISk4k4Wi5lSVbBzxM5GWnfxCBsuB2dJ8EhrLh3vOr0t07W9vWnbb8pNHyUr-NmRUMwtfrM34HuwUKv0lisF-_ifSU-FD2qaaeKQTnJP6ljb8tu9afOMUEwRYoXpdE4vXAh4bemirpIGB9p_5KtcJG2U8TCkMpLO-12-IznL1DmEY3Bo57O-0ccVmYjiC4ZGdI-LVJ0nVFCKh2DIIGfIssPX2nnzCSdxt7d-sQ-ELGuKj4C2AgLHU"
+                      "thought_signature": "CvYBAY89a19TEM_vxEPaEqi0I6sbafsya7ymDHfrzZBDQ-xEKrsQapBLIhz55-NmuuJZ2AWFvGuXhWH5yTNV_8t2c2S3a7pVohXlj2cNLPxeqIWzuFNU1gXcWMAk9OrCSmlSWcCbC5NKc2Y7kUpV90jddRJg5cDv0fMGdx5_4GjtxYJJzkFv_PteyaTTVkBX_Py5rxqZSGGdqPlo4KabUzxSM4ArJWc2oKDwAcgUowDOT9sdDliVZeyGlupodATAdanjHVSuT-j0zh8X5-tIBgsRFW2PBOG8TrAIPocAV1H-W38wKhhhe-9ept3G5EOBmHHGQXV-P5aG"
                     }
                   ],
                   "role": "model"
@@ -236,7 +234,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-9d9dffde-3976-44d7-b914-7de6915d65fc",
+                        "id": "adk-e1797753-dc75-4a9b-881b-426b0aa38753",
                         "name": "track_order",
                         "response": {
                           "status": "success",
@@ -248,11 +246,11 @@
                             "estimated_delivery": null,
                             "timeline": [
                               {
-                                "date": "2025-12-18",
+                                "date": "2025-11-26",
                                 "event": "Order placed"
                               },
                               {
-                                "date": "2025-12-23",
+                                "date": "2025-12-01",
                                 "event": "Delivered"
                               }
                             ]
@@ -266,22 +264,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410768.5960624
+          "creation_timestamp": 1772497667.9822636
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_processing",
       "conversation": [
         {
-          "invocation_id": "e-4457a760-3fad-448c-b452-9f14819d6a1f",
+          "invocation_id": "e-83a08709-7192-4c63-99c2-58f8f8e4f2af",
           "user_content": {
             "parts": [
               {
@@ -293,8 +289,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Your order ORD-22222 is currently processing. It was placed on 2025-01-12 and processing started on 2025-01-13. There is no tracking number or estimated delivery date available yet.",
-                "thought_signature": "CooEAY89a18jso-y5XsecjGfQTgPKuccEb-IJqPa1kU65gmkmYEeGOqUXFhCdp7u2bceSRCSDlRZ3_-SeXI5bRorequoj2v6VS57o96ZpWbW_BAXtVeiLKFY1-43NSWUyDwL5ER1eywR3NuBR7FcEtxef1XCuNUrd-3K3jacdi6JKk72gPkuXY1xR3NdQLlq1LKgXGTKO_x3ZyQ_vCQ59QSWo4Pjx35SdK3onUdtTf9pdy2eBgruOcOhsJaYHfpWGtF6_cB7m4yoLvxc-radxaMwwqQ9GqfLzs9dSGOjzDeqoOSe7tJl_Ldf77fduMkF6vSt3gYd-UnNML-T6Y2Ha6lTOHGTEQdozb-JxNMM9Obk-m8kqN-2Q5y0xcHiK8aMAaofcvpqlALd7JuuEo-HoJKICBWtpwsGM4tn89yfgDe3XRlLa6JD8iziTmhn9lcbRQKBPLE1_ew0yvbl_m2JYoAZJV03jmUM0kjsi3AYjf4boOUmlD-ptSVLhkcp4yJ7tc1101HNh5qG748Q3c91syDcPt2qXHV7rrUBaNKNhReUUb_1eR4DrRHLdLMjBzVJOAiNQOY34jroA8YETe__tRwfxxq7Q53Lgxjtx6Kd1ssHRb1SAQtsFCLSUniS3j98RwbUf6xYAGSi2JXjLlP2hk_n3pmfXj3FChrqvouPlRoegPJOaCrw-W1Auhj3"
+                "text": "Your order ORD-22222 is currently processing. It was placed on January 12, 2025. There is no carrier or estimated delivery information available yet."
               }
             ],
             "role": "model"
@@ -307,13 +302,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-cbd43dde-52ac-488d-a76b-ce730dd52a6e",
+                        "id": "adk-a334193d-c791-44c6-abd1-24944a69a458",
                         "args": {
                           "order_id": "ORD-22222"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "CvoBAY89a18p3FSTdexLPGyXg4P-aIdtgVg3IkiERPtatBysNb5zCQ6vr1hxMoC8NxIEM8RMqOHgKy9z10il2IXN-eKU_5vPRVavaRwgn20xOe6DR1Q-awTNeIhYQDVLz1VdhtGjxw2tCbo0ZYMh3WmCpR3rgRPLYXkIzMEHsusxvI8lyPr5auTqWZ1WPhCdIV65u-h07BqHPvwK1U1LQ_agP9xviOUwBkuCjDGLzA3qJvPrJ4d_Ttq1pfWei6MBT9BfrqvWNFJ0MPGvesYzl9m98fH9XZbeGQEzH-BHmy3FA799pLET4-kFRl77MVNZO8LFkKPQNqQ8zz5n0A=="
+                      "thought_signature": "Cv8BAY89a180i_IbMekDdfCjomsXAjUZ8Mu0z884TNt_rQTIZo6zCRDY7M4v1_ozhJf5JOg7L-hI5apHaYb6c1D5WiKzZgJgDfgLoVMWWmSyArqgLAlzlTn60c93XJVp8AXjNWANRZvMhKlIg_CoyZfXsHmuUm-mhVYq8f9PKkL9ofWe1MPTfz2mawplKwKjwPoeNqBc6EDbDGzbpGrizqWHssrjyODX_i2RaIO0BGmDaWafkPAk5GDLpuVEtdlpp0Q72VJP-1262L-2xEf_ZmCO6O63xnZSlpouQJ-cRdwJ28BBTFChsqwWbNCuTjqXfnbkvYNABE7CbmmdV_ErZ4uY"
                     }
                   ],
                   "role": "model"
@@ -325,7 +320,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-cbd43dde-52ac-488d-a76b-ce730dd52a6e",
+                        "id": "adk-a334193d-c791-44c6-abd1-24944a69a458",
                         "name": "track_order",
                         "response": {
                           "status": "success",
@@ -355,22 +350,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410804.218526
+          "creation_timestamp": 1772497677.5005352
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-002",
-        "state": {}
+        "user_id": "demo-user-002"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_not_found",
       "conversation": [
         {
-          "invocation_id": "e-d5a2036a-8f93-4914-a0c5-ad24ac772143",
+          "invocation_id": "e-7ca25b05-8017-4006-add0-c24bb0f68869",
           "user_content": {
             "parts": [
               {
@@ -382,7 +375,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I'm sorry, I couldn't find any information for order ORD-99999. Please double-check the order ID and try again."
+                "text": "I'm sorry, I couldn't find an order with the ID ORD-99999. Please double-check the order ID and try again."
               }
             ],
             "role": "model"
@@ -395,13 +388,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-1904114b-2a16-42e3-916a-655d8c9f1325",
+                        "id": "adk-c59149b3-dc6c-4087-95ac-b70bafb6fbe0",
                         "args": {
                           "order_id": "ORD-99999"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "Cv4BAY89a18r9lSm2xvSu5O8dvaq0gjgYiDVaMYFTalvgSl5D_IwwW0aHR7VOXD7SBliN5Qcxzu_wPNwjTTAVGqpAs4w6IT27TAQCmkWViNs-ueRmo-PesI5O31jeiOILeTqavCSK0qujEQoIVHGjRRt2T2nz0H3sdthne-tHay38bwPXSCY3bXlL8uGYA7Av9XSKIW1eGXnnQx_CxBQywKsNp9Jp5TxljiYljnomrdx8ru_dtEbDEqaHNVPPylO5enUzEScfavfKB70MIfzNs6SheleY3Q9p8FXNAI-ZK5uDntWPDoH088Gj8TFfO9pOyjTDxqutlYj-csQISow28g="
+                      "thought_signature": "CuQBAY89a1_7KVBFHB-queX43HcJXGXjvpx1a-1wulrMqGCqyigDgAxuGdJFKYvdmFLZBd_YTMqWRMeuAYhOgafiLcNkd22434ZxFobLBIeKJo1wRP7kMoOZx7ciRHteKjEcTZsfh89nfcGV0lnuyDpZLxJjPqLgmUjCm7dq1OtbxFTf8J5LK-R5flDZjlxJ4TRYLdjk-lpBZ8chAI4fTf06AtgODLmQlcu-CvvjIBYxLxFV2VMLj5xkJNUOwwJQujnWKXjcmmTL4nUGRYtQ1CdVaomTsCwGhCRnB3GjNERQ1TFpdWQl"
                     }
                   ],
                   "role": "model"
@@ -413,7 +406,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-1904114b-2a16-42e3-916a-655d8c9f1325",
+                        "id": "adk-c59149b3-dc6c-4087-95ac-b70bafb6fbe0",
                         "name": "track_order",
                         "response": {
                           "status": "error",
@@ -427,22 +420,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410819.2679255
+          "creation_timestamp": 1772497685.38768
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_unauthorized",
       "conversation": [
         {
-          "invocation_id": "e-57fcb70e-49fe-4e7b-8ab3-4cfd4702c2f6",
+          "invocation_id": "e-8bccde96-8c22-4c07-9155-e3d495426e16",
           "user_content": {
             "parts": [
               {
@@ -454,8 +445,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "I'm sorry, I am unable to track order ORD-22222 as you do not have permission to access it.",
-                "thought_signature": "CusCAY89a19zlqr3EAeePWwcVP8EnaBP_blZdSjQ9P6mGF3wAZav6vfUxZ4oDnuOWFJMdTTTIs-FTWAdgrCU3Ruapliuwwn-9w_ENOpNFDRlXmpdC_98ScMPud6kAkgI0QripGwlfUhcBrYigL1L3KBSJ733M2MuUr1sTjbzwY-wJCp-F-uPkBPABuszWHaJHVBAWABYesMl-ItQfAmMoywRMTqdjOGfSi5TA6WbPonmzadG-OZ0DAEgDc0qlX0gHvKJgDBBq3HGbiG-qm1SvUFlGMdT5RqPamiB1pTm3mSHQTSLv2rmp4tQbbppWR9aIbIgDUjzKgaldYSVg_xYskX2aE6ByvVljBk6CDUVSbgxmXNeqf0fvg-bV92TDLD5bHo0RdUyiEeuPiqPLsjZujH-6s8vcXj_qVZbkc_es42Lh0eyqmv9v2FcwHxrh6pQ0L6suD3Vtc_0O0C3LmQGmHnCDL9laTfovXwXcaqa"
+                "text": "I apologize, but I am unable to access the details for order `ORD-22222`. It seems that this order is not associated with your account. Please double-check the order ID or provide an order that you have placed."
               }
             ],
             "role": "model"
@@ -468,13 +458,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-44b85b02-6285-4252-a0f8-845f61ce0790",
+                        "id": "adk-bcf8632b-7611-4a6e-9491-fc8c99c336df",
                         "args": {
                           "order_id": "ORD-22222"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "CvkBAY89a18nao0PzES9p3lxVUKMBsuPoHJ-eQuQTwrFwnl-U6CNZxtvNZPQsIe3KKiJ1coP08GsglWI2GkjxpHhaF45ZE1u3hLZVNsd16zhVrYjqTWjSAD8yLWjhU-psZATADJ76ri_fnrR4OjO2phlI-Nacdfz704ETA0Ldc_9whuzKx3HWOqMag-rTN--ANYPDzFErMNxZXnvZ6fbAbOIpH9KXu74pcBuCdeXkC5kfSOCRSnrz9oyWjd9PchcUU0aoVRGnVtGaoMhiP7k2yMROwXNTJH-T7tZkfi06WDeg60ZDhANOSxQ3TI9PUyZ9MpcBUvTFwXIi7sY"
+                      "thought_signature": "Cv8BAY89a192zo_HLvMHfMh2m6px515uQyzvWAGlSPwaeVkkOyIiRaClcqF7gET8iuFX16seX_bJxRSXqyHs9Y_bW2xOCWDO9PC_9FwkwqLZf-mAcmMBWzpEVO0PiSKCr-AlZz7VC1vjKp-3V7cQvy2e6LR6BrWKXGDJ-hKf-kJGZyx5EW5-8Zlonyb3CI6YN44sYT9t5XyM5W56Gi3MqVijeN57f-O40d4B9ER0lzzzDslod6aRYI61DWF0g3-wvYAa6nkgh5WSTJLSZ9RogSnfjM3jBDInygRsHXKnVliWx_7jKuTLGtZPXCwZ7-m0HmLM-rTpV1dMzUncVrjbeXNv"
                     }
                   ],
                   "role": "model"
@@ -486,7 +476,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-44b85b02-6285-4252-a0f8-845f61ce0790",
+                        "id": "adk-bcf8632b-7611-4a6e-9491-fc8c99c336df",
                         "name": "track_order",
                         "response": {
                           "status": "error",
@@ -500,22 +490,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410839.8452034
+          "creation_timestamp": 1772497695.0597112
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "track_unauthorized_user2",
       "conversation": [
         {
-          "invocation_id": "e-f6affbdc-8c9e-4430-b82d-064db2fdb1a4",
+          "invocation_id": "e-a33aa6f4-bb15-4362-8520-2abf21d67140",
           "user_content": {
             "parts": [
               {
@@ -527,7 +515,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "I am sorry, but it seems that I cannot access the details for order ORD-12345. It's possible that this order ID does not belong to your account. Please double-check the order ID and try again."
+                "text": "I'm sorry, but I can't retrieve tracking information for order `ORD-12345` because you don't have permission to access it. Please ensure you are trying to track one of your own orders.",
+                "thought_signature": "CuoCAY89a1-YLJpUP4SH3uid6C_yFyaZ2Wa51fVXN8JM0OfQZBTJSshoO_PdoD3CVurLYLylBmOZjeuI0tVZ4sk79CkdpXdNS9e1Iy-hk8IPJIbrz0qyUrm5JdYJcPusjDpVxE7Xbqi0cgKcIeJ-qVCPrDHfiHH_6hnq1K2eWKGd48UlT50wzJNPHR2Pm0s4-vdsq9id341Xz95x1JszbXpsTGcdLp9IgqDgHNtzbSFhBMTreur08hR7hqgxGlw_nLQjNkk1klic2f81iPBgFq7IOySlwUNguXuz4oWfIzGUyR2R2WHR5yyOJcyvNDwY0OPfaGLlytAuxB-5VCAjcSsaibjL00pr401bDXivvHfm8h-T-wfPbXbLoduOyOnbgnipxgvwrEZmoBkJqzeKa-j4Qw_SI2f3Bb9STBjN1_iyOFNbac94NUWnAJJXdyaco5dKXA_d9YHOFr1K3g0hR-_q-tf-EjsK6RQqPuk="
               }
             ],
             "role": "model"
@@ -540,13 +529,13 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-a2d96f2a-ff1d-4afb-827b-906ddd744945",
+                        "id": "adk-a70f2edc-abac-4297-ac5b-811d2837eefb",
                         "args": {
                           "order_id": "ORD-12345"
                         },
                         "name": "track_order"
                       },
-                      "thought_signature": "CvYBAY89a1_Gs1kmCIrvAJNliZki7Ka2dtIn7AFugWgr_0piBgJNz44OJJuJnGCYvFw0kXFhVqhKz9rCrmgN-69mSZiG2phlnO4-_VPvTC5-JKWRzF2vwx7V7WBJOORMhCYtZ3i2uZf4Lc5fB1LP5cRdiUbF2jeIZoqBxYaBi2zkYqaSgafJz4l-Rc-_IWz-QjKEdFYIkTQWGHvDm1tQ88yfSubWbmzZEyMEfc1QTIqoOMDZGOEoW1IC4U7dQzL8Mg6rga6U0qr3q_qUmHd7XOexV83Mpo4Esl8C0JpvKXgtay1Ck_pc5McTuqqBlbrjJ4KfVpTDRV7O"
+                      "thought_signature": "CvYBAY89a1_7oCkOMbOYXe8ddQdN7eHPFXiPPiGuFLvcKcFKxBZW0A732sZLGHVQVxPxO7NB46lVHoX7IP6kjon3TTk3VCuc0TND0zUwcc9fBgNCUwh_FxkxUHUDF1qN57vdVYzbW98SeZNAFe5EaaZXmfzKAHE09gqnvoDvZKx3H2dAwMzI1k8VM7BNCNB81YOB4WjOPHiv0VnKCduBZWugRCXBGUDq8sGM3p2iGpgRb-DrmqNxSlbCMVha6VnltZ9t8lOENC5t0Pj_VEODuZUEIAb9JIvHDVTqixO8fk-n81KYwZOXNJx50iUbjhuoGL7W5HY22fDt"
                     }
                   ],
                   "role": "model"
@@ -558,7 +547,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-a2d96f2a-ff1d-4afb-827b-906ddd744945",
+                        "id": "adk-a70f2edc-abac-4297-ac5b-811d2837eefb",
                         "name": "track_order",
                         "response": {
                           "status": "error",
@@ -572,22 +561,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410854.3940554
+          "creation_timestamp": 1772497703.2342968
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-002",
-        "state": {}
+        "user_id": "demo-user-002"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "order_history",
       "conversation": [
         {
-          "invocation_id": "e-61d43168-d1ef-4b4c-af04-4f86559ee438",
+          "invocation_id": "e-0740da48-0b9c-4968-a1bf-4303efdc1296",
           "user_content": {
             "parts": [
               {
@@ -599,7 +586,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here are your recent orders:\n\n* **Order ID:** ORD-12345\n    * **Date:** 2025-01-15\n    * **Total:** $1295.98\n    * **Status:** In Transit\n\n* **Order ID:** ORD-67890\n    * **Date:** 2026-01-27\n    * **Total:** $215.99\n    * **Status:** Delivered\n\n* **Order ID:** ORD-11111\n    * **Date:** 2025-12-18\n    * **Total:** $485.99\n    * **Status:** Delivered\n\nDo you want to track any of these orders or see more details?"
+                "text": "Here are your recent orders:\n\n*   **Order ID:** ORD-12345\n    *   **Date:** 2025-01-15\n    *   **Total:** $1295.98\n    *   **Status:** In Transit\n\n*   **Order ID:** ORD-67890\n    *   **Date:** 2026-01-05\n    *   **Total:** $215.99\n    *   **Status:** Delivered\n\n*   **Order ID:** ORD-11111\n    *   **Date:** 2025-11-26\n    *   **Total:** $485.99\n    *   **Status:** Delivered\n\nLet me know if you'd like more details on any specific order!"
               }
             ],
             "role": "model"
@@ -612,11 +599,11 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-d7c9c855-3d8a-427e-9755-e0e8b5c4b448",
+                        "id": "adk-da407d58-4992-4282-82c2-a26a4d242c6f",
                         "args": {},
                         "name": "get_my_order_history"
                       },
-                      "thought_signature": "CpACAY89a18TBIj39IKBkBXdPkifFMbZsI4H4T7TvGmLDdLpsahNAaHXgmS1cFYMtpAXN8MsVdn-lROj3eP3SbIUwwnpN3LRFbnRGt0FbHgfROqyet05_AEE-BFPQ9_xV_09AEdX_SUfGccKsEi5ey3uuyNWKVh4SB5Vt5R44Ao3aqk0_KSJTyu_cElejn9nw_IstdA2VGBLvP9lGnFlJO-cL14JybfLBaapt3ijb-mhkRR9qM79GcSlY0NUJMkGIJazwPYu7HB20ZzkJXEWq2hOpfwkNRiX2qIAW16vH46dVm2bwkfcEYhwTiEJeKK_le5cRMm6CvUeCcfKmp2VFi1KLjDv0AFC-ktbJtHdGh2GNMM="
+                      "thought_signature": "Cu4DAY89a1_7G-ugeCqEkogw2GJQZGf8Xbd_i8w_qPr-l6F1KUnTmYVh4yJZU6petSKqZMp5c4W886XHDJVVAtA4KZbcRk_hbVrVWhMviNMTpLHSK3Y5CMMvpJRrZHnWBswCFSiSZv-YPzd14Z2UWWYB3xXe3237mK4J-Ss7ndjBGBEQJcxza1IQTxDklJxEzg5jxXVBcc05Z0X4r_nmain6i0pVtqwIiHOIaotdxdQ2uHZgRAAdXlSggvyI_HsVbxUWDA9-aji2RafBME5IeMzBow5dWZ60uTttbGRBSw1Y33VD7lOLFeAM-oOcZerOJd3TvQsRVR3Cd_ngBRn4FJZh2nnUWCuftzsduIHOkbXYgmGRSs4-7rCvwSNrRj3GBWQ-aI2ZmSRBPGpkolPhK8N2eJPwacCvSv1d7amWuStEhMbUEqo3WtrdgPvUX1FZIoFjAmM7jC-EYArJwkjKPYK85dHDIxtk9KYBiWNIkT-daFw65_1uFiSX29pE5E6ePEfXVVjn593iSdtpHyMwEMBokIAcgjhT60BatMdxiJHTwQ2QSgN4kAGUpU0SZZZ_9n9-EdflYRWA3eoTVSE5rjqYR9Vk6UgfcPsX-cvJ0W7pf0UeY_oI7H7NqBDH8uEdRsYar1gDx6hbvk3w44kI7dA="
                     }
                   ],
                   "role": "model"
@@ -628,7 +615,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-d7c9c855-3d8a-427e-9755-e0e8b5c4b448",
+                        "id": "adk-da407d58-4992-4282-82c2-a26a4d242c6f",
                         "name": "get_my_order_history",
                         "response": {
                           "status": "success",
@@ -641,13 +628,13 @@
                             },
                             {
                               "order_id": "ORD-67890",
-                              "date": "2026-01-27",
+                              "date": "2026-01-05",
                               "total": 215.99,
                               "status": "Delivered"
                             },
                             {
                               "order_id": "ORD-11111",
-                              "date": "2025-12-18",
+                              "date": "2025-11-26",
                               "total": 485.99,
                               "status": "Delivered"
                             }
@@ -661,22 +648,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410870.6187248
+          "creation_timestamp": 1772497712.1897352
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "order_history_alt",
       "conversation": [
         {
-          "invocation_id": "e-fe691f02-370a-463b-a7ec-c833aaeef64c",
+          "invocation_id": "e-d494bd96-b0d0-4712-a514-f8af8f98df33",
           "user_content": {
             "parts": [
               {
@@ -688,7 +673,8 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here is your order history:\n\n**Order ID: ORD-12345**\n*   **Date:** 2025-01-15\n*   **Items:**\n    *   ProBook Laptop 15 (Quantity: 1, Price: $999.99)\n    *   Wireless Headphones Pro (Quantity: 1, Price: $199.99)\n*   **Total:** $1295.98\n*   **Status:** In Transit\n*   **Carrier:** FastShip\n*   **Tracking Number:** FS789456123\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\n**Order ID: ORD-67890**\n*   **Date:** 2026-01-27\n*   **Items:**\n    *   Wireless Headphones Pro (Quantity: 1, Price: $199.99)\n*   **Total:** $215.99\n*   **Status:** Delivered\n*   **Carrier:** QuickPost\n*   **Tracking Number:** QP456789012\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\n**Order ID: ORD-11111**\n*   **Date:** 2025-12-18\n*   **Items:**\n    *   Ergonomic Office Chair (Quantity: 1, Price: $449.99)\n*   **Total:** $485.99\n*   **Status:** Delivered\n*   **Carrier:** FastShip\n*   **Tracking Number:** None\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n\nIs there anything else I can help you with regarding your orders?"
+                "text": "Here's a summary of your orders:\n\n**Order ID: ORD-12345**\n*   **Date:** 2025-01-15\n*   **Status:** In Transit\n*   **Items:**\n    *   1 x ProBook Laptop 15 ($999.99)\n    *   1 x Wireless Headphones Pro ($199.99)\n*   **Total:** $1295.98\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n*   **Carrier:** FastShip\n*   **Tracking Number:** FS789456123\n\n**Order ID: ORD-67890**\n*   **Date:** 2026-01-05\n*   **Status:** Delivered\n*   **Items:**\n    *   1 x Wireless Headphones Pro ($199.99)\n*   **Total:** $215.99\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n*   **Carrier:** QuickPost\n*   **Tracking Number:** QP456789012\n\n**Order ID: ORD-11111**\n*   **Date:** 2025-11-26\n*   **Status:** Delivered\n*   **Items:**\n    *   1 x Ergonomic Office Chair ($449.99)\n*   **Total:** $485.99\n*   **Shipping Address:** 123 Main St, San Francisco, CA 94102, USA\n*   **Carrier:** FastShip\n*   **Tracking Number:** Not available\n",
+                "thought_signature": "CoEMAY89a19t2VLwiGVCsfFHCGPRe0Isrf2j2EMPIGEbwYY5CNM_QsDtue8sMSBI03-6a6g4frx2LHxgsZAQr8yR7_1G8jvU0JGADH9qLX-6HH4bds1D9d1uyFl_oUzUEQiyoECi6V8EFkEkrwfu70VnP8RIKEPRCtsiph5fXl6ojNLiPITAydynl9rTeAGxIvKIKVBubhkmyzPeaXRIpf01Dc8Z4d-KBTL-tUDu_LDzgm_9o_h6Aaxjqx3HRCgo61ufKMCB_A7k2bNXdfdya8RYluSZHMqJ4njggwFCqQa-Fn2POg5dPDbJ25M5NRYUn-C7gTdshCq2Wb36sfOHX6S8DVY3VBqaRgGTrk_tFgyPvDq4VwLYW5NICYKKiNCi6x2uf_4lRRW4ZhShOL6WVBQONsIRM5qIRh9_ouw_W5EVLLk2G6R6q53ybSsa2RlF43I6J9iZlhWkdtc311Q9_xBDhUuWXu0QaVpAnnVbKPrjLo0KeWgGBEJBvfw2E9ERuGCl1_J3nIzJPdoSng0ioK86ikiV-shFH0mi3bWfeGHqNyDf1c7-msvaoVP3TAlY93BCRmvu0rCQD_2coHs7N_g3EVnzhTJB2SDSG5qxYQUZTcaUEDdUiFefrz1QUZPcAUM79I8bliph6iGGHQQajDZwEfMcMSEvy5qm8PS2Yx7idZBKX9DQzIPomJF7PKhQ_ReSLsCUvdFdOM8XeMH-TQdo3uKrNlBvHc_CZ1uyJOMzzSdHr4-hrr-ROPKCzhAYhgwlBJ2Jf9kSYtDrsTDBtwvOYdaHxjXYfcup8l9vqJrV9OyE_7ThIjfuCVjZfZvoQPhogF2XX2ZOmBmipGCq8vKzYBRCm16Jvpmu9Jk-3fXD-19tuCC_H-lTHyAVAvNbbCLlihLagNIR1amAZZI7qxhg0p1nk0vo6uC9xKriZ8JwqCOxunuYHzAt91ppvhHmYXjXTqOSuNTeDR4gfCg07ldZDMNJcotNBI4vBVl20vxxr1mVP9K5__4vCgAkTHtlbYfY8mJj2EHpmOrA17f-t9nLDTnJH7Wiyu3E_vbzGjv0ykJ83hQXQzHDmmgW0xW2TUFtfp8ITqXZu0b19qpUfB0QLeRqjV75uEUUprs94pfdAcyi-mYouOHf1yuFdHjgnyZGD5PtTaxLDO_0U25SKz98xIRq0j2crkI7UCEHu78l3AakAyu7CDXzfrd3XOA0kDy7NtwurgU_w3q3oEwHlWayD_xOu_A-N-7lyZlhsX9Wx4ZZvzIK9pPS7w7-_W28iKEH7Z5HnpWvVepZg8rPRjWeP0EHG5L87DHWcsGvjiuY1RyQS1gcR9rdIIxdXLtnF2ynVV0Nhzg_nRa_qhB3KJ51QgTrYmvCNt2uQPDgp5RAShcaUt9BZIbwY1cgOHRhD_oYQva3gWW_T56JrCVNMx5rp_bAWALmFYn34uqGdP5iaGMmbmb7r1ZrZ4CHS9TzOubyhkJZy8GzNtN8Om23APnSSGHi___b2yjnx5TKXlgL14UGANEHBjQrfJNYDHIUERcNA9aL197PNeRUV-FIJBv2rF2L16ud7sUu1lkwE-eslKQKIh1H7JQ4XBSOjK5N-BdEb7pkA0Xgtu3Ko25vT_3pSwmr9lFOT33vBLt7bnpVPVgB_ErDP3p8fnkb6QzGSj2bhXvezvn2Ja08BNLsDYnaCgaQiT_rIungcVlRIDjUo85VbteKfErYt3ggUVw0fsLtyzYRQN9LV8zn9h-D1qErikb9v2toG_uzkEGiqkwoh83AlQTmci8MUDCCU2Hagi0iI3q9KI8-NSHpU0BejsE7O5bKASDj-s8CkU4g_BKPa7o3jN9ZwJboiO-WCGtPSQluvM2jCAWF_-CXOUyD80DJ56H_ahP8LR113nAt53sGVXbjkyfvpFMCm-NjiiAHnuZCgYN8jSwFe5cg2177wyilaCuNKuriE24PSpVCs3jfgyh_ij4ieK-yIPCwRZcJO_WCDeryOYfJFxUST6rufJfRiCCqwlZpOnsCYCD5XkDJone9hZ5lU2DJx8Ab6NRTpTmULw=="
               }
             ],
             "role": "model"
@@ -701,11 +687,11 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-4f443150-fbef-4573-a2c2-f933be7fc71e",
+                        "id": "adk-57c3b5f3-eda8-4092-a1d8-5e1fcdc67a23",
                         "args": {},
                         "name": "get_order_history"
                       },
-                      "thought_signature": "CpsEAY89a1_z00ak3EM4qiCL8TiBukUUSM5ug5Z_5DsL7CA5f3bp0o-sY8Cz7puhKyXKiFp5v-oZGWoPZqowb9hnCnlBYW_uJK34EkuvrBTImomIfDs1rwmPxs-SJQoZO2zctHFeAyKuohJpGCu8Qdhii9NBdoIiKGZxxp2rmdV7yD8i39oKIOg_Vh_rghpgF9vGCpr-ObhGZ7ufBuoHAJQpEvbVZVKLCkMfug7C0bbd5cj4zmAZEq8UuN_KjmJzorTghJo44wuHMTfAbfxXfkDIuAZm8i3AclRzeNvfmnrYUB5Xr9UFFyLYdl7_x9zKSW-7YfTa4XHW1XwQ8xk4q7cejwmDOPvIhpRLDDdOsQc-e6D2PnvjKOQb50zWfmulJdsAd4Rhl1RXk_Qgn045M9sqQS6PGAFpRtEvpQbbcq6iTW4WSCEHjD3oviKhqeHNbTJ_cbfs9vsI9TsAzDBtbgFOtW3YL7-8Ed4w7acFUPa65TDfppMMxf7-vYHf5xJVmChWHtR_y5-UFQfi7bxZGYRMkvTzdl5-lAEamhL6vkMn3jJ3g0TZn1l105ST9PDJ0Qo6c-3QVwnVj2MkfGhFdpYMIpj4tE0mefinxlyxrjgfNSAHPyHM61zZCel4l0fybSRcDNXh30lnVF4lq7uIZgGaaiSbewJAfmqc7kDBEbSDGR8OC5BS9V4EWvsCwwmDpDhi--B7Y5cUlbKiVC0="
+                      "thought_signature": "CuIDAY89a18y_nLqfSAlSyXAAwkTndVVGXaQqpmsVDCkZWUyXTOyWNbFexjkAI7jraLoiYf4i__A3sVsWGbYsJwRFIM3bDQgaVyCYFKmaRHw6XGLerLyj9ZskfXnau591JdtXqNhn49NrmLvJGG49D9Xcrp6Vnebub3g9DDbzJjEcdAQu0OsX0BS7X1sCpv-Cc1XuU01EEv4XwhTFVC5dRgyUjGW5RCbXRDcjokuPj_rg6vAgpb-mv8EVTLXL-AeNjhdNsemK1aS8A33E9hpQXdc05N4niYA74S_Oq8_X4LFvtz_jyVM5WEOdFRp99teIPwlb8uSj44iBF7V8jN3DPztQVgJRqiKEvkX3IALoCqQPjYRyrC7dYCfhBnxymtNd4S4nml8SjvS1rvqWciTE7p1ijczHqzJ1oU1A0iInuebj3lG5c7rI1PQ08JZUF1hyBa_i_CSbY3QOpyHAnHnaRK_GmI7oN1BoKlw3QoJWPugkGDCPPnhm8STbtDH5S8AJ5ZYoxxnfT-w5-YBnTADLou0oOTZ51YsKpCcBkdm1oan_Cqq3h-HN8qxZRuSoDgbv8sHcpVg_Il-0XVERR8bxa8-nAn52-7nsYHdLzRCprslprUob6SWxGaX-ZQQ771nEJaVXjw="
                     }
                   ],
                   "role": "model"
@@ -717,7 +703,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-4f443150-fbef-4573-a2c2-f933be7fc71e",
+                        "id": "adk-57c3b5f3-eda8-4092-a1d8-5e1fcdc67a23",
                         "name": "get_order_history",
                         "response": {
                           "status": "success",
@@ -753,7 +739,7 @@
                             },
                             {
                               "order_id": "ORD-67890",
-                              "date": "2026-01-27",
+                              "date": "2026-01-05",
                               "status": "Delivered",
                               "total": 215.99,
                               "items": [
@@ -776,7 +762,7 @@
                             },
                             {
                               "order_id": "ORD-11111",
-                              "date": "2025-12-18",
+                              "date": "2025-11-26",
                               "status": "Delivered",
                               "total": 485.99,
                               "items": [
@@ -808,22 +794,20 @@
               }
             ]
           },
-          "creation_timestamp": 1770410887.8629067
+          "creation_timestamp": 1772497724.4138212
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-001",
-        "state": {}
+        "user_id": "demo-user-001"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     },
     {
       "eval_id": "order_history_user2",
       "conversation": [
         {
-          "invocation_id": "e-703c0dc0-79a6-4284-b80b-4a1043ce9f98",
+          "invocation_id": "e-86850315-df3a-4844-a0ae-ddfec36325e6",
           "user_content": {
             "parts": [
               {
@@ -835,8 +819,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here's a summary of your orders:\n\n**Order ID:** ORD-22222\n**Date:** 2025-01-12\n**Total:** $647.99\n**Status:** Processing",
-                "thought_signature": "Cu4BAY89a18YBs0ZA8V_rLm01lv88R5Fj_-QARUO1fz4el_pY907EQos09k7vnFHV4lQB-YEwyVvSVSrJnoi3o1Fgv3cOECgRzEtgNpfs46aIpl4xAdRZMNEHEvx5RWbetVFX4kQ5pOrSz0uQQu1zsSaOBcQxLisxg6OqSXYBzXbqRTKaj4fxiucprr9A-Uj55_v2J8QBSn6M5k0BR3WDDxlBl9WZ3TWCjMZzF7sQAMbsXfDhQyN6bVFqolbB1FMKVrcdfQLY9CYeocPoYoGTyJaYPDPzRz8pooP7WKzPhG4h7UR2LSez9NfwAHnwJVloA=="
+                "text": "Here's a summary of your orders:\n\n*   **Order ID:** ORD-22222\n    *   **Date:** 2025-01-12\n    *   **Total:** $647.99\n    *   **Status:** Processing\n\nIs there anything else I can help you with regarding your orders?"
               }
             ],
             "role": "model"
@@ -849,11 +832,11 @@
                   "parts": [
                     {
                       "function_call": {
-                        "id": "adk-14d14b41-285b-437d-9387-2094c1b6492f",
+                        "id": "adk-0294fdda-9711-4df8-bb66-998c71608ba0",
                         "args": {},
                         "name": "get_my_order_history"
                       },
-                      "thought_signature": "CrkBAY89a19gaNZH-z3vL6wygkBvIMz4zMCdGoIxkBqXU5MK2apLWT5DBC35tjyUIEQV2WlZ6lEXjZdlwKElRhSjAWgvPfciTdL3hSapii3D6l936MbvJz5rWTuMcBaSRTiIR5Ftr2ofD1eu9Txah5gIpeYP-xQhLaXA0pvUKWMQvgVghhaPiBo6kWPDkfx7bvPSL4Ee0EaxmM-UVh5YY48x0EXRsoHGMcTuZkr6BGL2H_gmqhd6yLxvwGE="
+                      "thought_signature": "CoECAY89a19VlszS-nUyWLUpHJbEpNI0WwxjIj68t5ENRanU70w7zcBi-NwwGwAQBLpAJikSl63V2Ll9ld3OvxIuhwALG0WMiS9TWeGmxu3RrIvrGtpAVlFWe2c2shpq57ijWLtRz-Tz0BztyyA8AlIOGJZ5v8QhQ-sTAylUCC9Ub87UIDleHRfkLZDgppV2miJW9HIhAyuCrAs20UxQ2eXg3uwkO1XyDvDtWdjqO4Xr7p1Xh6aqSjdYI0_V1pIylE2Befj_wGUBI477Tha-VkDPNui_yRtt4VEfT9EjVaCDULldx9BWTE8VS5XZzbYvkXvvqIR5o1VzO0Kt8SOH-d2lgQA="
                     }
                   ],
                   "role": "model"
@@ -865,7 +848,7 @@
                   "parts": [
                     {
                       "function_response": {
-                        "id": "adk-14d14b41-285b-437d-9387-2094c1b6492f",
+                        "id": "adk-0294fdda-9711-4df8-bb66-998c71608ba0",
                         "name": "get_my_order_history",
                         "response": {
                           "status": "success",
@@ -886,17 +869,15 @@
               }
             ]
           },
-          "creation_timestamp": 1770410903.1362557
+          "creation_timestamp": 1772497732.325546
         }
       ],
       "session_input": {
         "app_name": "eval_order",
-        "user_id": "demo-user-002",
-        "state": {}
+        "user_id": "demo-user-002"
       },
-      "creation_timestamp": 0.0,
-      "final_session_state": {}
+      "creation_timestamp": 0.0
     }
   ],
-  "creation_timestamp": 1770410903.1363237
+  "creation_timestamp": 1772497732.3256116
 }

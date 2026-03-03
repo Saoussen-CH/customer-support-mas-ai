@@ -232,9 +232,29 @@ def apply_mocks():
     """Apply the same Firestore + RAG mocks used by the test suite.
 
     Returns a context manager that keeps the patches active.
+    datetime.now() is frozen to FROZEN_DATE so generated golden responses
+    contain the same dates that CI tests will see (via conftest._FrozenDatetime).
     """
+    from datetime import datetime as real_datetime
+
     from tests.mock_firestore import MockFirestoreClient
     from tests.mock_rag_search import MockRAGProductSearch
+
+    FROZEN_DATE = real_datetime(2026, 1, 15)
+
+    class _FrozenDatetime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return FROZEN_DATE
+
+    # Freeze datetime BEFORE instantiating MockFirestoreClient so that
+    # _days_ago() in seed.py computes from FROZEN_DATE, not real today.
+    datetime_patches = [
+        patch("customer_support_agent.database.seed.datetime", _FrozenDatetime),
+        patch("customer_support_agent.tools.workflow_tools.datetime", _FrozenDatetime),
+    ]
+    for p in datetime_patches:
+        p.start()
 
     mock_db = MockFirestoreClient()
     mock_rag = MockRAGProductSearch()
@@ -264,7 +284,7 @@ def apply_mocks():
             return self
 
         def __exit__(self, *args):
-            for p in patches:
+            for p in patches + datetime_patches:
                 p.stop()
 
     return MockContext()
