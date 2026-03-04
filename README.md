@@ -1,6 +1,8 @@
-# Multi-Agent Customer Support System
+# Multi-Agent AI on GCP — Production-Ready Template
 
-A production-ready customer support system with React frontend and FastAPI backend, built with Google's Agent Development Kit (ADK). Features multi-agent orchestration, RAG semantic search, Memory Bank, and Sequential workflow pattern for validated refund processing.
+[![Use this template](https://img.shields.io/badge/Use_this_template-2ea44f?style=for-the-badge&logo=github)](../../generate)
+
+Reference implementation of a customer support system built with Google ADK and Gemini 2.5 Pro, demonstrating production patterns: multi-agent orchestration, RAG, Memory Bank, 3-layer evaluation, CI/CD pipelines, Firestore, Cloud Run, and full infrastructure-as-code with Terraform.
 
 ## Business Context
 
@@ -29,36 +31,25 @@ For detailed architecture documentation, see [ARCHITECTURE.md](./docs/ARCHITECTU
 
 ## Key Features
 
-| Course Topic | Implementation | Production Enhancement |
-|-------------|----------------|----------------------|
-| **Multi-Agent Orchestration** | ✅ Root + 3 Specialists + Workflow agents | Cost-optimized with Gemini 2.5 Pro + Flash |
-| **Sequential Workflows** | ✅ 3-step refund validation pipeline | Validation gates prevent invalid operations |
-| **Session Management** | ✅ Vertex AI Agent Engine sessions | Backend proxy with JWT auth + multi-user support |
-| **Memory Bank** | ✅ Vertex AI Memory Bank with callbacks | Cross-session preference recall |
-| **Observability** | ✅ LoggingPlugin + Cloud Logging | Production-ready monitoring |
-| **Evaluation & Testing** | ✅ Vertex AI Gen AI Evaluation + AgentEvaluator | 3-layer test suite with switchable eval profiles (fast/standard/full) |
-| **Deployment** | ✅ Vertex AI Agent Engine + Cloud Run | Full-stack with automation scripts |
-| **RAG Semantic Search** | 🚀 text-embedding-004 (768-dim) | Beyond course: Vector search on products |
-| **Smart Tool Design** | 🚀 Batch tools + smart wrappers | Beyond course: Replaced Loop/Parallel patterns |
-| **CI/CD** | 🚀 Cloud Build + GitHub Actions | Beyond course: Full pipeline with eval gating |
-| **Post-Deploy Eval** | 🚀 Vertex AI Gen AI Evaluation Service | Beyond course: Live agent scoring after deploy |
+| Feature | Implementation | Notes |
+|---------|----------------|-------|
+| **Multi-Agent Orchestration** | Root + 3 Specialists + Workflow agents | Cost-optimized with Gemini 2.5 Pro + Flash |
+| **Sequential Workflows** | 3-step refund validation pipeline | Validation gates prevent invalid operations |
+| **Session Management** | Vertex AI Agent Engine sessions | Backend proxy with JWT auth + multi-user support |
+| **Memory Bank** | Vertex AI Memory Bank with callbacks | Cross-session preference recall |
+| **Observability** | LoggingPlugin + Cloud Logging | Production-ready monitoring |
+| **Evaluation & Testing** | Vertex AI Gen AI Evaluation + AgentEvaluator | 3-layer test suite with switchable eval profiles (fast/standard/full) |
+| **Deployment** | Vertex AI Agent Engine + Cloud Run | Full-stack with automation scripts |
+| **RAG Semantic Search** | text-embedding-004 (768-dim) | Vector search on products |
+| **Smart Tool Design** | Batch tools + smart wrappers | Optimized tool design for reliability |
+| **CI/CD** | Cloud Build | Full pipeline with eval gating |
+| **Post-Deploy Eval** | Vertex AI Gen AI Evaluation Service | Live agent scoring after deploy |
 
 
-- 🤖 **Multi-Agent System** - Root agent coordinates specialized agents (Product, Order, Billing)
-- 🧠 **Memory Bank** - Remembers user preferences across sessions
-- 🔍 **RAG Semantic Search** - Vector embeddings for intelligent product search
-- ⚡ **Sequential Workflow** - SequentialAgent for validated refund processing with step-by-step validation gates
-- 🛡️ **Model Armor** - Screens all Gemini calls for prompt injection, jailbreaks, and harmful content
-- 👥 **User Management** - Email/password auth or guest access
-- 💬 **Multi-Session Conversations** - Multiple chat threads per user
-- 🔄 **Retry Logic** - Automatic exponential backoff for transient errors
-- 🧪 **Comprehensive Testing** - Pytest automation with ADK AgentEvaluator
-- 🎤 **Voice Features** - Speech-to-text input and text-to-speech output
-- ☁️ **Cloud Deployment** - Deploy to Cloud Run + Vertex AI Agent Engine
 
 ## Quick Start
 
-> 📖 **New to the project?** See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step setup checklist.
+> **New to the project?** See **[GETTING_STARTED.md](./GETTING_STARTED.md)** for a complete step-by-step setup checklist.
 
 ### Prerequisites
 
@@ -262,7 +253,6 @@ customer-support-mas/
 ```python
 # Use case: "Show me details on all of them" (after search)
 # Uses get_all_saved_products_info — single call for all products
-# Replaces iterative LoopAgent approach to avoid timeouts
 ```
 
 ## Testing
@@ -358,7 +348,7 @@ Four pipelines cover the full lifecycle:
 
 | Trigger | Config | `EVAL_PROFILE` | What it does |
 |---------|--------|----------------|--------------|
-| PR to `main` | `cloudbuild/pr-checks.yaml` | `fast` | Lint + tool tests + fast eval |
+| Push to feature branch | `cloudbuild/pr-checks.yaml` | `fast` | Lint + tool tests + fast eval |
 | Push to `develop` | `cloudbuild/cloudbuild.yaml` | `standard` | Full CI |
 | Push to `main` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | CI + Docker build + Cloud Run deploy |
 | Nightly / Manual | `cloudbuild/cloudbuild-nightly.yaml` | `full` | All metrics + optional post-deploy eval |
@@ -440,7 +430,8 @@ cp .env.example .env
 
 **Optional:**
 - `GOOGLE_CLOUD_LOCATION` — GCP region (default: `us-central1`)
-- `FIRESTORE_DATABASE` — Firestore database name (default: `(default)`)
+- `FIRESTORE_DATABASE` — Firestore database name (default: `customer-support-db`)
+- `AGENT_ENGINE_DISPLAY_NAME` — Display name for find-or-create logic (default: `customer-support-multiagent`); change to deploy a second engine
 - `GOOGLE_GENAI_USE_VERTEXAI` — Use Vertex AI (default: `1`)
 - `FRONTEND_URL` — Frontend URL for CORS (default: `http://localhost:3000`)
 - `PORT` — Backend port (default: `8000`)
@@ -533,17 +524,17 @@ logging.info(f"[PRODUCT SEARCH] Query: {query}, Found: {len(results)} products")
 
 ## Documentation
 
-- **[GETTING_STARTED.md](./GETTING_STARTED.md)** — 📋 Complete setup checklist (START HERE)
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — 🏗️ System design, multi-agent workflows, RAG, Model Armor
-- **[PREREQUISITES.md](./docs/PREREQUISITES.md)** — ⚙️ Required APIs, IAM roles, GCP setup
-- **[ENV_SETUP.md](./docs/ENV_SETUP.md)** — 🔧 Environment configuration
-- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** — 🚀 Deploy to Cloud Run & Vertex AI Agent Engine
-- **[CI_CD.md](./docs/CI_CD.md)** — 🔄 Cloud Build + GitHub Actions setup
-- **[EVAL_ARCHITECTURE.md](./docs/EVAL_ARCHITECTURE.md)** — 🧪 3-layer evaluation strategy
-- **[EVAL_STRATEGY.md](./docs/EVAL_STRATEGY.md)** — 📊 Eval profiles, metrics, and dataset management
-- **[MEMORY_BANK.md](./docs/MEMORY_BANK.md)** — 🧠 Memory Bank implementation details
-- **[PYTHON_SETUP.md](./docs/PYTHON_SETUP.md)** — 🐍 Python 3.11 + uv setup
-- **[VERTEX_CREATE_EVALUATION_RUN.md](./docs/VERTEX_CREATE_EVALUATION_RUN.md)** — 📋 create_evaluation_run() re-enablement guide
+- **[GETTING_STARTED.md](./GETTING_STARTED.md)** — Complete setup checklist (START HERE)
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System design, multi-agent workflows, RAG, Model Armor
+- **[PREREQUISITES.md](./docs/PREREQUISITES.md)** — Required APIs, IAM roles, GCP setup
+- **[ENV_SETUP.md](./docs/ENV_SETUP.md)** — Environment configuration
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** — Deploy to Cloud Run & Vertex AI Agent Engine
+- **[CI_CD.md](./docs/CI_CD.md)** — Cloud Build pipeline setup
+- **[EVAL_ARCHITECTURE.md](./docs/EVAL_ARCHITECTURE.md)** — 3-layer evaluation strategy
+- **[EVAL_STRATEGY.md](./docs/EVAL_STRATEGY.md)** — Eval profiles, metrics, and dataset management
+- **[MEMORY_BANK.md](./docs/MEMORY_BANK.md)** — Memory Bank implementation details
+- **[PYTHON_SETUP.md](./docs/PYTHON_SETUP.md)** — Python 3.11 + uv setup
+- **[VERTEX_CREATE_EVALUATION_RUN.md](./docs/VERTEX_CREATE_EVALUATION_RUN.md)** — create_evaluation_run() re-enablement guide
 
 ## Resources
 

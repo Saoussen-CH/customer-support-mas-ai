@@ -71,32 +71,36 @@ python deployment/deploy.py --action deploy
 Deploy the agent as a serverless reasoning engine:
 
 ```bash
-# Deploy agent
+# Deploy agent (or make deploy-agent-engine)
 python deployment/deploy.py --action deploy
 ```
 
 **Important:** Always run from project root directory.
 
 **What it does:**
-- Packages the agent code
-- Uploads to GCS staging bucket
-- Creates a reasoning engine on Vertex AI
-- Returns a resource name for querying
+- Looks for an existing Agent Engine with the configured display name
+- If found → **updates** it in place (same resource name, Cloud Run needs no change)
+- If not found → **creates** a new one, writes its resource name to `/workspace/agent_engine_resource_name.txt` (for pipeline handoff), prints it to stdout, and reminds you to update `AGENT_ENGINE_RESOURCE_NAME` in `.env`
+- Configures Memory Bank on the engine after deploy/update
 
 **Environment variables:**
-- `GOOGLE_CLOUD_PROJECT` - Your GCP project ID
-- `GOOGLE_CLOUD_LOCATION` - Region (default: us-central1)
-- `GOOGLE_CLOUD_STORAGE_BUCKET` - GCS bucket for staging
 
-**Output:**
-```
-Agent Engine Resource Name: projects/.../locations/.../reasoningEngines/...
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GOOGLE_CLOUD_PROJECT` | Yes | — | GCP project ID |
+| `GOOGLE_CLOUD_STORAGE_BUCKET` | Yes | — | GCS bucket for staging (with `gs://` prefix) |
+| `GOOGLE_CLOUD_LOCATION` | No | `us-central1` | Deployment region |
+| `AGENT_ENGINE_DISPLAY_NAME` | No | `customer-support-multiagent` | Display name used for find-or-create |
+| `FIRESTORE_DATABASE` | No | `customer-support-db` | Firestore database name |
 
-Save this resource name:
-```bash
-export AGENT_ENGINE_RESOURCE_NAME="projects/.../reasoningEngines/..."
-```
+**To deploy a new/separate agent engine:**
+
+1. Change `AGENT_ENGINE_DISPLAY_NAME` in `.env` to a new name.
+2. Run `make submit-build DEPLOY_AGENT_ENGINE=true` — `deploy.py` won't find the old engine and will create a new one.
+3. Copy the printed resource name into `AGENT_ENGINE_RESOURCE_NAME` in `.env`.
+4. Run `make submit-build` (without `DEPLOY_AGENT_ENGINE=true`) to redeploy Cloud Run pointing to the new engine.
+
+`AGENT_ENGINE_DISPLAY_NAME` is automatically read from `.env` by `make submit-build` and passed to Cloud Build as `_AGENT_ENGINE_DISPLAY_NAME`. Do not rely on the trigger substitution default — always set it in `.env`.
 
 ### Option 2: Cloud Run (Full Stack)
 
@@ -302,9 +306,10 @@ export GOOGLE_CLOUD_STORAGE_BUCKET="gs://your-bucket"
 ### Optional
 
 ```bash
-export GOOGLE_CLOUD_LOCATION="us-central1"        # Default region
-export FIRESTORE_DATABASE="customer-support-db"   # Database name
-export AGENT_ENGINE_RESOURCE_NAME="projects/..."  # Deployed agent
+export GOOGLE_CLOUD_LOCATION="us-central1"                      # Default region
+export FIRESTORE_DATABASE="customer-support-db"                  # Database name
+export AGENT_ENGINE_DISPLAY_NAME="customer-support-multiagent"   # Agent Engine display name
+export AGENT_ENGINE_RESOURCE_NAME="projects/..."                 # Set automatically by deploy.py
 ```
 
 ## Troubleshooting

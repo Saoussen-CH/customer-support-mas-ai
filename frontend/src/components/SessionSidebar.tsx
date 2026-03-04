@@ -132,7 +132,14 @@ export default function SessionSidebar({
       {error && <div className="sidebar-error">{error}</div>}
 
       {isLoading ? (
-        <div className="sidebar-loading">Loading sessions...</div>
+        <div className="session-list">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-session-item">
+              <div className="skeleton-line skeleton-title" />
+              <div className="skeleton-line skeleton-meta" />
+            </div>
+          ))}
+        </div>
       ) : sessions.length === 0 ? (
         <div className="sidebar-empty">
           <p>No conversations yet</p>

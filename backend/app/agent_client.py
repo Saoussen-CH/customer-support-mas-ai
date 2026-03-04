@@ -1,4 +1,7 @@
 import asyncio
+import threading
+import time
+from enum import Enum
 from typing import Optional
 
 import vertexai
@@ -29,6 +32,74 @@ AGENT_RETRY_POLICY = retry.Retry(
         exceptions.TooManyRequests,  # 429 Too Many Requests
     ),
 )
+
+
+class _CircuitState(Enum):
+    CLOSED = "closed"  # Normal operation — requests flow through
+    OPEN = "open"  # Failing fast — requests rejected immediately
+    HALF_OPEN = "half_open"  # Probing recovery — one request let through
+
+
+class CircuitBreaker:
+    """
+    Simple thread-safe circuit breaker for Agent Engine calls.
+
+    States:
+      CLOSED   → normal operation; failures are counted.
+      OPEN     → fast-fail; no requests reach Agent Engine.
+                 Transitions to HALF_OPEN after recovery_timeout seconds.
+      HALF_OPEN → one probe request is allowed through.
+                  Success → CLOSED; failure → OPEN (reset timer).
+
+    This prevents cascading timeouts when Agent Engine is unavailable:
+    instead of each request burning the full 3-minute retry budget, the
+    circuit opens after 5 consecutive failures and fails immediately for
+    60 seconds before probing again.
+    """
+
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
+        self._state = _CircuitState.CLOSED
+        self._failure_count = 0
+        self._failure_threshold = failure_threshold
+        self._recovery_timeout = recovery_timeout
+        self._last_failure_time: float = 0.0
+        self._lock = threading.Lock()
+
+    @property
+    def state(self) -> _CircuitState:
+        with self._lock:
+            if self._state == _CircuitState.OPEN:
+                elapsed = time.monotonic() - self._last_failure_time
+                if elapsed >= self._recovery_timeout:
+                    self._state = _CircuitState.HALF_OPEN
+                    logger.info("Circuit breaker → HALF_OPEN (probing recovery)")
+            return self._state
+
+    def is_open(self) -> bool:
+        return self.state == _CircuitState.OPEN
+
+    def record_success(self):
+        with self._lock:
+            if self._state != _CircuitState.CLOSED:
+                logger.info("Circuit breaker → CLOSED (service recovered)")
+            self._state = _CircuitState.CLOSED
+            self._failure_count = 0
+
+    def record_failure(self):
+        with self._lock:
+            self._failure_count += 1
+            self._last_failure_time = time.monotonic()
+            if self._failure_count >= self._failure_threshold and self._state != _CircuitState.OPEN:
+                logger.warning(
+                    "Circuit breaker → OPEN",
+                    consecutive_failures=self._failure_count,
+                    recovery_in_seconds=self._recovery_timeout,
+                )
+            self._state = _CircuitState.OPEN
+
+
+# Module-level circuit breaker shared across all requests
+_circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=60.0)
 
 
 class AgentEngineClient:
@@ -91,6 +162,11 @@ class AgentEngineClient:
             TimeoutError: If the operation exceeds timeout_seconds
             Exception: For other failures
         """
+        # Fail fast if the circuit is open (Agent Engine repeatedly unavailable)
+        if _circuit_breaker.is_open():
+            logger.warning("Circuit breaker OPEN — rejecting request without hitting Agent Engine")
+            raise Exception("The agent service is temporarily unavailable. Please try again in a moment.")
+
         try:
             async with asyncio.timeout(timeout_seconds):
                 # Check if we need to create a new session on Agent Engine
@@ -162,18 +238,21 @@ class AgentEngineClient:
                     logger.error("No response text extracted", event_count=event_count)
                     response_text = "I apologize, but I didn't receive a response. Please try again."
 
+                _circuit_breaker.record_success()
                 # Return agent_engine_session_id so it can be tracked in our database
                 return response_text, agent_engine_session_id
 
         except asyncio.TimeoutError:
+            _circuit_breaker.record_failure()
             logger.error("Agent query timed out", timeout_seconds=timeout_seconds, user_id=user_id)
             raise TimeoutError(
                 f"Request timed out after {timeout_seconds} seconds. " "The system is busy. Please try again."
             )
         except TimeoutError:
-            # Re-raise TimeoutError from session creation
+            # Re-raise TimeoutError from session creation (already counted above)
             raise
         except Exception as e:
+            _circuit_breaker.record_failure()
             logger.error("Error querying agent", error=str(e), exc_info=True)
             raise Exception(f"Failed to query agent: {str(e)}")
 

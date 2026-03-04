@@ -57,7 +57,7 @@ logs/
 *.json
 !package.json
 !package-lock.json
-!tsconfig.json
+!tsconfig*.json
 !*evalset.json
 !test_config.json
 !*.test.json
@@ -76,6 +76,8 @@ backend/build/
 refs/
 presentations/
 eval_report.html
+ENTRY.md
+file.md
 docs/DATA_MODEL.md
 docs/EVAL_ARCHITECTURE.md
 docs/EVAL_PROMOTION_STRATEGY.md

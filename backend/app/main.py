@@ -132,7 +132,7 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> Optional[st
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = parts[1]
-    user_id = auth.verify_token(token)
+    user_id = db.verify_token(token)
 
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
@@ -229,17 +229,7 @@ async def get_prometheus_metrics():
 
 @app.post("/api/auth/register", response_model=AuthResponse)
 async def register(request: RegisterRequest, _rate_check: bool = Depends(RateLimitDependency("auth"))):
-    """
-    Register a new user account.
-
-    Note: Demo accounts (demo@example.com, jane@example.com) are pre-seeded
-    and cannot be registered. Users should log in with these accounts instead:
-    - demo@example.com / demo123 (Gold tier, 3 orders)
-    - jane@example.com / jane123 (Silver tier, 1 order)
-
-    New users start with NO order history - they can browse products but
-    have nothing to track, refund, or view invoices for.
-    """
+    """Register a new user account."""
     try:
         # Hash password and create user
         # Note: create_user() handles demo email validation and duplicate check
@@ -247,7 +237,7 @@ async def register(request: RegisterRequest, _rate_check: bool = Depends(RateLim
         user_id = db.create_user(email=request.email, name=request.name, password_hash=password_hash)
 
         # Generate auth token
-        token = auth.generate_token(user_id)
+        token = db.create_token(user_id)
 
         logger.info("User registered", user_id=user_id, email=request.email)
 
@@ -266,41 +256,22 @@ async def register(request: RegisterRequest, _rate_check: bool = Depends(RateLim
 
 @app.post("/api/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest, _rate_check: bool = Depends(RateLimitDependency("auth"))):
-    """
-    Login with email and password.
-
-    Demo accounts with pre-seeded order history:
-    - demo@example.com / demo123 (Gold tier, 3 orders, can refund ORD-12345, ORD-67890)
-    - jane@example.com / jane123 (Silver tier, 1 order, can refund ORD-22222)
-    """
+    """Login with email and password."""
     try:
         # Get user by email
         user = db.get_user_by_email(request.email)
         if not user:
-            # Provide helpful message for demo emails that haven't been seeded
-            from .database import is_demo_email
-
-            if is_demo_email(request.email):
-                raise HTTPException(
-                    status_code=401, detail="Demo user not found. Please run the database seed script first."
-                )
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Verify password
         if not auth.verify_password(request.password, user["password_hash"]):
-            # Provide helpful hint for demo users with wrong password
-            from .database import is_demo_email
-
-            if is_demo_email(request.email):
-                hint = "demo123" if "demo@" in request.email.lower() else "jane123"
-                raise HTTPException(status_code=401, detail=f"Invalid password. Hint: demo password is '{hint}'")
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Update last login
         db.update_last_login(user["user_id"])
 
         # Generate auth token
-        token = auth.generate_token(user["user_id"])
+        token = db.create_token(user["user_id"])
 
         logger.info("User logged in", user_id=user["user_id"], email=request.email)
 
@@ -334,7 +305,7 @@ async def logout(authorization: str = Header(...)):
         parts = authorization.split()
         if len(parts) == 2 and parts[0].lower() == "bearer":
             token = parts[1]
-            auth.revoke_token(token)
+            db.revoke_token(token)
             return {"status": "logged_out"}
 
         raise HTTPException(status_code=400, detail="Invalid authorization header")
@@ -583,26 +554,6 @@ async def api_root():
         "message": "Customer Support AI Backend v2.0",
         "docs": "/docs",
         "health": "/health",
-        "demo_accounts": {
-            "description": "Pre-seeded accounts with order history for testing",
-            "accounts": [
-                {
-                    "email": "demo@example.com",
-                    "password": "demo123",
-                    "tier": "Gold",
-                    "orders": ["ORD-12345", "ORD-67890", "ORD-11111"],
-                    "refundable": ["ORD-12345", "ORD-67890"],
-                },
-                {
-                    "email": "jane@example.com",
-                    "password": "jane123",
-                    "tier": "Silver",
-                    "orders": ["ORD-22222"],
-                    "refundable": ["ORD-22222"],
-                },
-            ],
-            "note": "New users start with NO order history",
-        },
         "endpoints": {
             "auth": {
                 "register": "POST /api/auth/register",

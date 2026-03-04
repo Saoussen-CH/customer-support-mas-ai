@@ -1,13 +1,13 @@
 """
 Deployment Script for Multi-Agent Customer Support System
 ==========================================================
-Deploys to Vertex AI Agent Engine with Memory Bank using a two-stage approach:
+Deploys to Vertex AI Agent Engine with Memory Bank.
 
-  Stage 1: Deploy AdkApp → get agent_engine_id
-  Stage 2: Update with Memory Bank configuration
-
-This solves the chicken-and-egg problem where the agent_engine_id is only
-known after deployment but is required to configure memory callbacks.
+Behaviour:
+  - If an Agent Engine with the same display name already exists → UPDATE it
+    (resource name stays the same, Cloud Run needs no change)
+  - If none exists → CREATE it, then save the resource name to Secret Manager
+    so Cloud Run and future CI runs can read it
 
 Usage:
     python deployment/deploy.py --action [test_local|deploy|test_remote|cleanup]
@@ -29,10 +29,11 @@ from vertexai import Client, agent_engines
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from customer_support_agent.main import root_agent  # noqa: E402
-
-# Load environment variables from .env file
+# Load environment variables from .env file — must happen before importing
+# customer_support_agent, whose config.py validates GOOGLE_CLOUD_PROJECT at import time
 load_dotenv()
+
+from customer_support_agent.main import root_agent  # noqa: E402
 
 # =============================================================================
 # CONFIGURATION
@@ -45,7 +46,21 @@ LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 STAGING_BUCKET = os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
 if not STAGING_BUCKET:
     raise ValueError("GOOGLE_CLOUD_STORAGE_BUCKET environment variable is required")
-DISPLAY_NAME = "customer-support-multiagent"
+DISPLAY_NAME = os.getenv("AGENT_ENGINE_DISPLAY_NAME", "customer-support-multiagent")
+
+REQUIREMENTS = [
+    "google-cloud-aiplatform[adk,agent_engines]>=1.112",
+    "google-cloud-firestore>=2.16.0",
+    "requests",
+    "numpy>=1.24.0",
+    "vertexai>=1.38.0",
+]
+
+ENV_VARS = {
+    "FIRESTORE_DATABASE": os.getenv("FIRESTORE_DATABASE", "customer-support-db"),
+    "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY": "true",
+    "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true",
+}
 
 
 # =============================================================================
@@ -54,7 +69,17 @@ DISPLAY_NAME = "customer-support-multiagent"
 
 
 def get_numeric_project_id(project_id: str) -> str:
-    """Get the numeric project ID using gcloud (required for Memory Bank model paths)."""
+    """Get the numeric project ID (required for Memory Bank model paths).
+
+    In Cloud Build, PROJECT_NUMBER is injected as an env var — no gcloud needed.
+    Falls back to gcloud for local runs.
+    """
+    # Cloud Build injects PROJECT_NUMBER as an env var
+    project_number = os.getenv("PROJECT_NUMBER")
+    if project_number:
+        return project_number
+
+    # Local fallback: use gcloud
     try:
         result = subprocess.run(
             ["gcloud", "projects", "describe", project_id, "--format=value(projectNumber)"],
@@ -63,8 +88,8 @@ def get_numeric_project_id(project_id: str) -> str:
             check=True,
         )
         return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        print(f"⚠️  Failed to get numeric project ID: {e.stderr}")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"⚠️  Failed to get numeric project ID: {e}")
         return project_id
 
 
@@ -79,6 +104,41 @@ def init_vertex_ai():
     print(f"  Project:  {PROJECT_ID}")
     print(f"  Location: {LOCATION}")
     print(f"  Staging:  {STAGING_BUCKET}")
+
+
+def find_existing_agent_engine():
+    """Find existing Agent Engine by display name. Returns the engine or None."""
+    try:
+        print(f"  Checking for existing Agent Engine '{DISPLAY_NAME}'...")
+        for engine in agent_engines.list():
+            if engine.display_name == DISPLAY_NAME:
+                print(f"  ✓ Found existing: {engine.resource_name}")
+                return engine
+        print("  No existing Agent Engine found — will create new")
+    except Exception as e:
+        print(f"  ⚠️  Could not list Agent Engines: {e}")
+    return None
+
+
+def configure_memory_bank(client: Client, resource_name: str, numeric_project_id: str):
+    """Configure Memory Bank on the Agent Engine resource."""
+    print("\n⏳ Configuring Memory Bank...")
+    client.agent_engines.update(
+        name=resource_name,
+        config={
+            "context_spec": {
+                "memory_bank_config": {
+                    "generation_config": {
+                        "model": f"projects/{numeric_project_id}/locations/{LOCATION}/publishers/google/models/gemini-2.5-flash"
+                    },
+                    "similarity_search_config": {
+                        "embedding_model": f"projects/{numeric_project_id}/locations/{LOCATION}/publishers/google/models/gemini-embedding-001"
+                    },
+                }
+            }
+        },
+    )
+    print("✓ Memory Bank configured")
 
 
 # =============================================================================
@@ -139,16 +199,17 @@ async def test_locally():
 
 
 # =============================================================================
-# DEPLOYMENT (Two-Stage with Memory Bank)
+# DEPLOYMENT — Update if exists, create if not
 # =============================================================================
 
 
 def deploy_to_agent_engine():
     """
-    Deploy to Vertex AI Agent Engine with Memory Bank (two-stage).
+    Deploy to Vertex AI Agent Engine with Memory Bank.
 
-    Stage 1: Deploy AdkApp → get agent_engine_id
-    Stage 2: Update Agent Engine with Memory Bank configuration
+    - If an engine with display_name already exists → UPDATE (same resource name)
+    - If none exists → CREATE + save resource name to Secret Manager
+    - Always reconfigures Memory Bank after deploy/update
     """
     print("\n" + "=" * 70)
     print("DEPLOYING TO VERTEX AI AGENT ENGINE (with Memory Bank)")
@@ -161,11 +222,6 @@ def deploy_to_agent_engine():
 
     client = Client(project=numeric_project_id, location=LOCATION)
 
-    # -------------------------------------------------------------------------
-    # Stage 1: Deploy AdkApp
-    # -------------------------------------------------------------------------
-    print("\n⏳ Stage 1/2: Deploying ADK agent...")
-
     adk_app = agent_engines.AdkApp(
         agent=root_agent,
         app_name="customer_support",
@@ -173,68 +229,59 @@ def deploy_to_agent_engine():
         plugins=[LoggingPlugin()],
     )
 
-    remote_app = agent_engines.create(
-        agent_engine=adk_app,
-        requirements=[
-            "google-cloud-aiplatform[adk,agent_engines]>=1.112",
-            "google-cloud-firestore>=2.16.0",
-            "requests",
-            "numpy>=1.24.0",
-            "vertexai>=1.38.0",
-        ],
-        extra_packages=["customer_support_agent"],
-        display_name=DISPLAY_NAME,
-        env_vars={
-            "FIRESTORE_DATABASE": os.getenv("FIRESTORE_DATABASE", "customer-support-db"),
-            "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY": "true",
-            "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true",
-        },
-    )
+    # -------------------------------------------------------------------------
+    # Stage 1: Update existing or create new
+    # -------------------------------------------------------------------------
+    existing = find_existing_agent_engine()
 
-    resource_name = remote_app.resource_name
+    if existing:
+        print("\n⏳ Stage 1/2: Updating existing Agent Engine...")
+        existing.update(
+            agent_engine=adk_app,
+            requirements=REQUIREMENTS,
+            extra_packages=["customer_support_agent"],
+            env_vars=ENV_VARS,
+        )
+        resource_name = existing.resource_name
+        print("✓ Agent Engine updated (resource name unchanged)")
+    else:
+        print("\n⏳ Stage 1/2: Creating new Agent Engine...")
+        remote_app = agent_engines.create(
+            agent_engine=adk_app,
+            requirements=REQUIREMENTS,
+            extra_packages=["customer_support_agent"],
+            display_name=DISPLAY_NAME,
+            env_vars=ENV_VARS,
+        )
+        resource_name = remote_app.resource_name
+        print("✓ Agent Engine created!")
+
     agent_engine_id = resource_name.split("/")[-1]
-
-    print("\n✓ Agent deployed!")
     print(f"  Resource: {resource_name}")
     print(f"  ID:       {agent_engine_id}")
+
+    # Write resource name to /workspace so the deploy-cloud-run step can read it.
+    # This handles the first-create case where the resource name is not yet in .env.
+    workspace_file = Path("/workspace/agent_engine_resource_name.txt")
+    if workspace_file.parent.exists():
+        workspace_file.write_text(resource_name)
+        print(f"✓ Resource name written to {workspace_file}")
 
     # -------------------------------------------------------------------------
     # Stage 2: Configure Memory Bank
     # -------------------------------------------------------------------------
-    print("\n⏳ Stage 2/2: Configuring Memory Bank...")
-
-    client.agent_engines.update(
-        name=resource_name,
-        config={
-            "context_spec": {
-                "memory_bank_config": {
-                    "generation_config": {
-                        "model": f"projects/{numeric_project_id}/locations/{LOCATION}/publishers/google/models/gemini-2.5-flash"
-                    },
-                    "similarity_search_config": {
-                        "embedding_model": f"projects/{numeric_project_id}/locations/{LOCATION}/publishers/google/models/gemini-embedding-001"
-                    },
-                }
-            }
-        },
-    )
+    configure_memory_bank(client, resource_name, numeric_project_id)
 
     print("\n" + "=" * 70)
     print("✅ DEPLOYMENT SUCCESSFUL!")
     print("=" * 70)
     print(f"\nResource Name:  {resource_name}")
     print(f"Agent Engine ID: {agent_engine_id}")
-    print("\n✓ Memory Bank configured:")
-    print("  - Generation:  gemini-2.5-flash")
-    print("  - Embeddings:  gemini-embedding-001")
-    print("  - PreloadMemoryTool loads memories at session start")
-    print("  - Callbacks consolidate memories after each turn")
-    print("\nUpdate your .env:")
-    print(f'  AGENT_ENGINE_RESOURCE_NAME="{resource_name}"')
+    if not existing:
+        print("⚠️  Update AGENT_ENGINE_RESOURCE_NAME in .env with the resource name above.")
+        print("    Cloud Build reads it as _AGENT_ENGINE_RESOURCE_NAME substitution.")
     print("\nView in Cloud Console:")
     print(f"  https://console.cloud.google.com/vertex-ai/agents/agent-engines?project={PROJECT_ID}")
-
-    return remote_app
 
 
 # =============================================================================

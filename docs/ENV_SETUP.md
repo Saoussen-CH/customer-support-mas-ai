@@ -66,6 +66,7 @@ VITE_API_URL=http://localhost:8000
 |----------|-------------|---------|---------|
 | `GOOGLE_CLOUD_LOCATION` | GCP region | `us-central1` | `us-east1`, `europe-west1` |
 | `FIRESTORE_DATABASE` | Firestore database name | `customer-support-db` | `(default)` |
+| `AGENT_ENGINE_DISPLAY_NAME` | Display name for find-or-create logic in `deploy.py` | `customer-support-multiagent` | `customer-support-v2` |
 | `GOOGLE_GENAI_USE_VERTEXAI` | Use Vertex AI instead of direct Gemini API | `1` | `0` or `1` |
 | `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` | `https://app.example.com` |
 | `PORT` | Backend port | `8000` | `8080`, `3000` |
@@ -177,7 +178,7 @@ python -c "from backend.app.config import settings; print(settings.google_cloud_
 
 - ✅ Use `.env` files for local development
 - ✅ Keep `.env` in `.gitignore` (already configured)
-- ✅ Use Cloud Secret Manager for production
+- ✅ Use environment variables or Cloud Run `--set-env-vars` for production
 - ✅ Share `.env.example` files (without sensitive values)
 - ✅ Rotate credentials regularly
 
@@ -268,14 +269,25 @@ uvicorn app.main:app --reload
 
 ### CI/CD Workflow
 
-```yaml
-# .github/workflows/deploy.yml
-- name: Deploy to Agent Engine
-  env:
-    GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT }}
-    GOOGLE_CLOUD_STORAGE_BUCKET: ${{ secrets.GCS_BUCKET }}
-  run: python deployment/deploy.py --action deploy
+CI/CD runs on Google Cloud Build. The following variables are read from `.env` by `make submit-build` and forwarded as Cloud Build substitutions:
+
+| `.env` variable | Cloud Build substitution |
+|-----------------|--------------------------|
+| `GOOGLE_CLOUD_STORAGE_BUCKET` | `_STAGING_BUCKET` |
+| `AGENT_ENGINE_RESOURCE_NAME` | `_AGENT_ENGINE_RESOURCE_NAME` |
+| `AGENT_ENGINE_DISPLAY_NAME` | `_AGENT_ENGINE_DISPLAY_NAME` |
+
+```bash
+# Submit the full CI+CD pipeline manually
+make submit-build
+
+# Also redeploy the Agent Engine (when agent code changed)
+make submit-build DEPLOY_AGENT_ENGINE=true
 ```
+
+`AGENT_ENGINE_DISPLAY_NAME` controls whether `deploy.py` updates the existing engine or creates a new one. Change it in `.env` before running with `DEPLOY_AGENT_ENGINE=true` to provision a fresh engine.
+
+See [CI_CD.md](./CI_CD.md) for full pipeline documentation.
 
 ## See Also
 

@@ -2,7 +2,7 @@
 
 Complete this checklist to deploy the Customer Support Multi-Agent System.
 
-## ✅ Setup Checklist
+## Setup Checklist
 
 ### Step 1: Prerequisites (5 minutes)
 
@@ -49,10 +49,10 @@ Complete this checklist to deploy the Customer Support Multi-Agent System.
   ```
 
   This script will:
-  - ✓ Enable 10+ required GCP APIs
-  - ✓ Create service account `customer-support-agent`
-  - ✓ Grant IAM roles to service account and your user
-  - ✓ Create GCS bucket for staging
+  - Enable 10+ required GCP APIs
+  - Create service account `customer-support-agent`
+  - Grant IAM roles to service account and your user
+  - Create GCS bucket for staging
 
 - [ ] **Setup Firestore database and seed data**
   ```bash
@@ -192,19 +192,19 @@ See **[docs/CI_CD.md](./docs/CI_CD.md)** for full setup instructions.
 
 ---
 
-## 🎉 You're Done!
+## You're Done!
 
 Your multi-agent customer support system is now deployed and ready to use!
 
 ## What You've Set Up
 
-✅ **Vertex AI Agent Engine** — Serverless agent deployment
-✅ **Firestore Database** — Products, orders, invoices, users
-✅ **RAG Search** — Semantic product search with embeddings
-✅ **Memory Bank** — Cross-session user preferences
-✅ **Multi-Agent System** — Root + Product + Order + Billing agents
-✅ **Sequential Workflow** — Validated refund processing
-✅ **Cloud Run** — Frontend + Backend web application
+- **Vertex AI Agent Engine** — Serverless agent deployment
+- **Firestore Database** — Products, orders, invoices, users
+- **RAG Search** — Semantic product search with embeddings
+- **Memory Bank** — Cross-session user preferences
+- **Multi-Agent System** — Root + Product + Order + Billing agents
+- **Sequential Workflow** — Validated refund processing
+- **Cloud Run** — Frontend + Backend web application
 
 ## Test These Scenarios
 

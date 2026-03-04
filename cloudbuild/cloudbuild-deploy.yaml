@@ -1,7 +1,19 @@
 # CI + CD Pipeline — Used by push to main trigger
-# Runs full CI, then builds/deploys on success
 #
-# Trigger: Push to main → _EVAL_PROFILE=standard
+# Two Cloud Build triggers point to this file:
+#
+#   Trigger 1 — agent code changed (includedFiles: customer_support_agent/**)
+#     _DEPLOY_AGENT_ENGINE=true
+#
+#   Trigger 2 — everything else (ignoredFiles: customer_support_agent/**)
+#     _DEPLOY_AGENT_ENGINE=false
+#
+# Ordering:
+#   CI (install → lint + tool-tests → unit-tests → integration-tests)
+#     → docker-build + push
+#       → deploy-agent-engine (if enabled)   ← agent first
+#         → deploy-cloud-run                 ← cloud run second
+#           → smoke-test
 
 substitutions:
   _EVAL_PROFILE: "standard"
@@ -12,6 +24,9 @@ substitutions:
   _SERVICE_NAME: "customer-support-app"
   _AR_REPO: "customer-support"
   _DEPLOY_AGENT_ENGINE: "false"
+  _STAGING_BUCKET: ""
+  _AGENT_ENGINE_RESOURCE_NAME: ""
+  _AGENT_ENGINE_DISPLAY_NAME: "customer-support-multiagent"
   _MODEL_ARMOR_ENABLED: "false"
   _MODEL_ARMOR_TEMPLATE_ID: ""
 
@@ -106,11 +121,12 @@ steps:
     waitFor: ["unit-tests"]
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # CD STEPS — Only run after all CI steps pass
+  # CD STEPS — Only run after all CI passes
   # ═══════════════════════════════════════════════════════════════════════════
 
   # ===========================================================================
   # Docker Build (multi-stage: React frontend + FastAPI backend)
+  # Runs in parallel with the tail end of CI (after integration-tests + lint)
   # ===========================================================================
   - id: "docker-build"
     name: "gcr.io/cloud-builders/docker"
@@ -137,29 +153,10 @@ steps:
     waitFor: ["docker-build"]
 
   # ===========================================================================
-  # Deploy to Cloud Run
-  # ===========================================================================
-  - id: "deploy-cloud-run"
-    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: "gcloud"
-    args:
-      - "run"
-      - "deploy"
-      - "${_SERVICE_NAME}"
-      - "--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
-      - "--region=${_REGION}"
-      - "--platform=managed"
-      - "--allow-unauthenticated"
-      - "--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=True,MODEL_ARMOR_ENABLED=${_MODEL_ARMOR_ENABLED},MODEL_ARMOR_TEMPLATE_ID=${_MODEL_ARMOR_TEMPLATE_ID}"
-      - "--memory=1Gi"
-      - "--cpu=1"
-      - "--min-instances=0"
-      - "--max-instances=10"
-      - "--port=8080"
-    waitFor: ["docker-push"]
-
-  # ===========================================================================
-  # Deploy Agent Engine (optional — set _DEPLOY_AGENT_ENGINE=true to enable)
+  # Deploy Agent Engine (optional — enabled by Trigger 1 when agent code changes)
+  # Must run BEFORE Cloud Run so Cloud Run always talks to the updated agent.
+  # On update: same resource name — Cloud Run needs no change.
+  # On first create: resource name saved to Secret Manager for Cloud Run to read.
   # ===========================================================================
   - id: "deploy-agent-engine"
     name: "python:${_PYTHON_VERSION}-slim"
@@ -177,16 +174,47 @@ steps:
       - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
       - "GOOGLE_CLOUD_LOCATION=${_REGION}"
       - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
-    secretEnv: ["STAGING_BUCKET"]
-    waitFor: ["deploy-cloud-run"]
+      - "GOOGLE_CLOUD_STORAGE_BUCKET=${_STAGING_BUCKET}"
+      - "PROJECT_NUMBER=$PROJECT_NUMBER"
+      - "AGENT_ENGINE_DISPLAY_NAME=${_AGENT_ENGINE_DISPLAY_NAME}"
+    waitFor: ["docker-push"]
 
-availableSecrets:
-  secretManager:
-    - versionName: "projects/$PROJECT_ID/secrets/staging-bucket/versions/latest"
-      env: "STAGING_BUCKET"
+  # ===========================================================================
+  # Deploy to Cloud Run
+  # AGENT_ENGINE_RESOURCE_NAME passed as substitution _AGENT_ENGINE_RESOURCE_NAME
+  # (read from .env by make submit-build, or set in trigger substitutions).
+  # Runs after deploy-agent-engine so it always gets the latest resource name.
+  # ===========================================================================
+  - id: "deploy-cloud-run"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        # Use resource name written by deploy-agent-engine (first create),
+        # or fall back to the substitution value from .env (updates).
+        if [ -f /workspace/agent_engine_resource_name.txt ]; then
+          RESOURCE_NAME=$(cat /workspace/agent_engine_resource_name.txt)
+          echo "Using resource name from deploy-agent-engine: $$RESOURCE_NAME"
+        else
+          RESOURCE_NAME="${_AGENT_ENGINE_RESOURCE_NAME}"
+          echo "Using resource name from substitution: $$RESOURCE_NAME"
+        fi
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA" \
+          --region="${_REGION}" \
+          --platform=managed \
+          --allow-unauthenticated \
+          --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIRESTORE_DATABASE=${_FIRESTORE_DATABASE},GOOGLE_CLOUD_LOCATION=${_REGION},GOOGLE_GENAI_USE_VERTEXAI=True,ENVIRONMENT=production,AGENT_ENGINE_RESOURCE_NAME=$$RESOURCE_NAME,MODEL_ARMOR_ENABLED=${_MODEL_ARMOR_ENABLED},MODEL_ARMOR_TEMPLATE_ID=${_MODEL_ARMOR_TEMPLATE_ID}" \
+          --memory=1Gi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=10 \
+          --port=8080
+    waitFor: ["deploy-agent-engine"]
 
 images:
   - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"
   - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:latest"
 
-timeout: "2400s"
+timeout: "3600s"

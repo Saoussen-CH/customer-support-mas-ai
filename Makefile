@@ -39,7 +39,7 @@ COMMON_ENV := GOOGLE_GENAI_USE_VERTEXAI=True
         eval-post-deploy \
         frontend-install frontend-build frontend-dev \
         deploy-agent-engine test-local \
-        deploy-cloud-run
+        deploy-cloud-run submit-build
 
 # ==============================================================================
 # HELP
@@ -233,3 +233,14 @@ deploy-agent-engine: ## Deploy agent to Vertex AI Agent Engine
 
 deploy-cloud-run: ## Build and deploy backend to Cloud Run
 	bash deployment/deploy-cloudrun.sh
+
+submit-build: ## Submit full CI+CD pipeline to Cloud Build (DEPLOY_AGENT_ENGINE=true to also redeploy agent)
+	@PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT=' .env | cut -d= -f2-); \
+	STAGING_BUCKET=$$(grep '^GOOGLE_CLOUD_STORAGE_BUCKET=' .env | cut -d= -f2-); \
+	AGENT_ENGINE_RESOURCE_NAME=$$(grep '^AGENT_ENGINE_RESOURCE_NAME=' .env | cut -d= -f2-); \
+	AGENT_ENGINE_DISPLAY_NAME=$$(grep '^AGENT_ENGINE_DISPLAY_NAME=' .env | cut -d= -f2-); \
+	COMMIT_SHA=$$(git rev-parse HEAD); \
+	gcloud builds submit . \
+		--config cloudbuild/cloudbuild-deploy.yaml \
+		--project "$$PROJECT_ID" \
+		--substitutions "COMMIT_SHA=$$COMMIT_SHA,_STAGING_BUCKET=$$STAGING_BUCKET,_AGENT_ENGINE_RESOURCE_NAME=$$AGENT_ENGINE_RESOURCE_NAME,_AGENT_ENGINE_DISPLAY_NAME=$$AGENT_ENGINE_DISPLAY_NAME,_DEPLOY_AGENT_ENGINE=$(if $(DEPLOY_AGENT_ENGINE),$(DEPLOY_AGENT_ENGINE),false),_EVAL_PROFILE=$(EVAL_PROFILE)"

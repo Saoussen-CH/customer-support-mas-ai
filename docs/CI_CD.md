@@ -5,10 +5,10 @@ The project uses **Google Cloud Build** for continuous integration and deploymen
 ## Pipeline Overview
 
 ```
-cloudbuild/pr-checks.yaml      PR checks (pull_request to main)
-cloudbuild/cloudbuild.yaml     CI only (develop push)
-cloudbuild/cloudbuild-deploy.yaml     CI + CD (main push)
-cloudbuild/cloudbuild-nightly.yaml    Full eval + optional post-deploy eval (scheduled/manual)
+cloudbuild/pr-checks.yaml          PR checks (pull_request to main)
+cloudbuild/cloudbuild.yaml         CI only (develop push)
+cloudbuild/cloudbuild-deploy.yaml  CI + CD (main push) — two triggers point here
+cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
 ```
 
 ### Job Dependency Graph
@@ -19,24 +19,56 @@ install-deps
 └── tool-tests                    │
     └── unit-tests                │
         └── integration-tests     │
-            └── [CD steps] ◄─────┘  (cloudbuild-deploy.yaml only)
-                ├── docker-build
-                ├── docker-push
-                ├── deploy-cloud-run
-                └── deploy-agent-engine (optional)
+            └── docker-build ◄────┘  (waits for integration-tests + lint)
+                └── docker-push
+                    └── deploy-agent-engine  ← agent first (skipped if _DEPLOY_AGENT_ENGINE=false)
+                        └── deploy-cloud-run ← cloud run second (always runs)
 ```
 
-`lint` and `tool-tests` run in parallel after `install-deps`. CD steps only start after **all** CI steps pass.
+`lint` and `tool-tests` run in parallel after `install-deps`. CD steps only start after **all** CI steps pass. `deploy-agent-engine` must complete before `deploy-cloud-run` so Cloud Run always talks to the already-updated agent.
 
 ## Trigger Configuration
 
-| Trigger | Event | Config | `_EVAL_PROFILE` |
-|---------|-------|--------|-----------------|
-| `ci-pull-request` | PR to `main` | `cloudbuild/pr-checks.yaml` | `fast` |
-| `ci-push-develop` | Push to `develop` | `cloudbuild/cloudbuild.yaml` | `standard` |
-| `ci-cd-push-main` | Push to `main` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` |
-| `ci-manual` | Manual dispatch | `cloudbuild/cloudbuild-nightly.yaml` | `full` |
-| Cloud Scheduler | Nightly (midnight UTC) | `cloudbuild/cloudbuild-nightly.yaml` | `full` |
+Three triggers, one per branch tier:
+
+| Trigger | Event | Config | `_EVAL_PROFILE` | `_DEPLOY_AGENT_ENGINE` |
+|---------|-------|--------|-----------------|------------------------|
+| `ci-branch-push` | Push to any feature branch (not `develop`, not `main`) | `cloudbuild/pr-checks.yaml` | `fast` | — |
+| `ci-push-develop` | Push to `develop` | `cloudbuild/cloudbuild.yaml` | `standard` | — |
+| `ci-cd-push-main-agent` | Push to `main` touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `true` |
+| `ci-cd-push-main` | Push to `main` not touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `false` |
+| `ci-manual` | Manual dispatch | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
+| Cloud Scheduler | Nightly (midnight UTC) | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
+
+### Two triggers for `cloudbuild-deploy.yaml`
+
+`cloudbuild-deploy.yaml` is pointed to by **two** triggers that both fire on push to `main`, but with different file filters:
+
+- **`ci-cd-push-main-agent`** — `includedFiles: ["customer_support_agent/**"]`, sets `_DEPLOY_AGENT_ENGINE=true`: redeploys Agent Engine + Cloud Run
+- **`ci-cd-push-main`** — `ignoredFiles: ["customer_support_agent/**"]`, sets `_DEPLOY_AGENT_ENGINE=false`: deploys Cloud Run only
+
+This means pushing changes to tests, frontend, backend, or infra does not trigger a (slow, expensive) Agent Engine redeploy. Only changes to `customer_support_agent/` do.
+
+### Skipping builds entirely with `[skip ci]`
+
+For commits that change nothing deployable — docs, Terraform, CI config itself — you can prevent all triggers from running by including `[skip ci]` or `[ci skip]` anywhere in the commit message:
+
+```bash
+git commit -m "docs: update CI_CD.md [skip ci]"
+git commit -m "[skip ci] fix typo in README"
+```
+
+Cloud Build checks the commit message of the HEAD commit on the pushed branch. If it contains `[skip ci]` or `[ci skip]`, **all** triggered builds for that push are skipped.
+
+**When to use each mechanism:**
+
+| Scenario | Mechanism |
+|----------|-----------|
+| Working on a feature branch | Push normally → `ci-branch-push` fires (fast checks) |
+| Merging to `develop` | Push normally → `ci-push-develop` fires (full CI) |
+| Agent logic changed, merging to `main` | Push normally → `ci-cd-push-main-agent` fires (`_DEPLOY_AGENT_ENGINE=true`) |
+| Non-agent code, merging to `main` | Push normally → `ci-cd-push-main` fires (`_DEPLOY_AGENT_ENGINE=false`) |
+| Docs / Terraform / CI config only | Add `[skip ci]` to commit message → no build runs |
 
 ### Eval Profile Details
 
@@ -84,11 +116,11 @@ Multi-stage Docker build (`backend/Dockerfile`): React frontend (Node 20) + Fast
 ### 7. docker-push
 Pushes to Artifact Registry at `$_REGION-docker.pkg.dev/$PROJECT_ID/customer-support/customer-support-app`.
 
-### 8. deploy-cloud-run
-Deploys the image to Cloud Run with env vars for project, Firestore database, and region.
+### 8. deploy-agent-engine (conditional)
+Runs `deployment/deploy.py --action deploy` when `_DEPLOY_AGENT_ENGINE=true`. Receives the GCS staging bucket via the `_STAGING_BUCKET` substitution variable. Uses update-or-create logic: if an Agent Engine with `AGENT_ENGINE_DISPLAY_NAME` already exists it is updated in place (same resource name, Cloud Run needs no change); otherwise a new engine is created and its resource name is written to `/workspace/agent_engine_resource_name.txt` so the next step can read it.
 
-### 9. deploy-agent-engine (optional)
-Runs `deployment/deploy.py` when `_DEPLOY_AGENT_ENGINE=true`. Reads the staging bucket name from Secret Manager.
+### 9. deploy-cloud-run
+Deploys the image to Cloud Run. Reads `AGENT_ENGINE_RESOURCE_NAME` from `/workspace/agent_engine_resource_name.txt` (written by step 8 on first create) or falls back to the `_AGENT_ENGINE_RESOURCE_NAME` substitution variable (used on updates where the resource name is unchanged). Sets `ENVIRONMENT=production` to enable structured JSON logging.
 
 ## Nightly Pipeline (cloudbuild-nightly.yaml)
 
@@ -104,7 +136,7 @@ Runs all CI steps with `_EVAL_PROFILE=full` (all metrics including LLM-as-judge)
 
 ### Quick Start (Terraform — recommended)
 
-All infrastructure (APIs, IAM, Firestore, GCS, Artifact Registry, Secret Manager, Cloud Build triggers, Cloud Scheduler) is managed by Terraform in the `terraform/` directory.
+All infrastructure (APIs, IAM, Firestore, GCS, Artifact Registry, Cloud Build triggers, Cloud Scheduler) is managed by Terraform in the `terraform/` directory.
 
 ```bash
 # 1. Copy and fill in your values
@@ -134,9 +166,8 @@ See [../terraform/](../terraform/) for full Terraform configuration.
 This script:
 1. Grants IAM roles to the Cloud Build service account
 2. Creates the Artifact Registry repository
-3. Creates Secret Manager secrets
-4. Enables required APIs
-5. Prints trigger creation commands
+3. Enables required APIs
+4. Prints trigger creation commands
 
 ### IAM Roles Required
 
@@ -151,7 +182,6 @@ The Cloud Build service account (`PROJECT_NUMBER@cloudbuild.gserviceaccount.com`
 | `roles/run.admin` | Cloud Run deployment |
 | `roles/iam.serviceAccountUser` | Act as Cloud Run service account |
 | `roles/storage.objectAdmin` | Staging bucket access |
-| `roles/secretmanager.secretAccessor` | Read secrets |
 
 No service account key file is needed — Cloud Build runs natively on GCP with IAM.
 
@@ -160,25 +190,16 @@ No service account key file is needed — Cloud Build runs natively on GCP with 
 After connecting your GitHub repo in Cloud Console (Cloud Build > Triggers > Connect Repository):
 
 ```bash
-# PR trigger (fast checks + ruff format)
+# Feature branch push — fast checks (lint + tool tests + fast eval)
 gcloud builds triggers create github \
-  --name="ci-pull-request" \
+  --name="ci-branch-push" \
   --repo-name="customer-support-mas-kaggle" \
   --repo-owner="YOUR_GITHUB_OWNER" \
-  --pull-request-pattern="^main$" \
+  --branch-pattern="^(?!main$|develop$).*" \
   --build-config="cloudbuild/pr-checks.yaml" \
   --substitutions="_GOOGLE_CLOUD_LOCATION=us-central1"
 
-# Push to main (CI + deploy)
-gcloud builds triggers create github \
-  --name="ci-cd-push-main" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch-pattern="^main$" \
-  --build-config="cloudbuild/cloudbuild-deploy.yaml" \
-  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1"
-
-# Push to develop (CI only)
+# Push to develop — full CI (standard eval, no deploy)
 gcloud builds triggers create github \
   --name="ci-push-develop" \
   --repo-name="customer-support-mas-kaggle" \
@@ -186,6 +207,26 @@ gcloud builds triggers create github \
   --branch-pattern="^develop$" \
   --build-config="cloudbuild/cloudbuild.yaml" \
   --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1"
+
+# Push to main — agent code changed: redeploy Agent Engine + Cloud Run
+gcloud builds triggers create github \
+  --name="ci-cd-push-main-agent" \
+  --repo-name="customer-support-mas-kaggle" \
+  --repo-owner="YOUR_GITHUB_OWNER" \
+  --branch-pattern="^main$" \
+  --included-files="customer_support_agent/**" \
+  --build-config="cloudbuild/cloudbuild-deploy.yaml" \
+  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1,_DEPLOY_AGENT_ENGINE=true,_STAGING_BUCKET=gs://YOUR_STAGING_BUCKET"
+
+# Push to main — everything else: Cloud Run only (no Agent Engine redeploy)
+gcloud builds triggers create github \
+  --name="ci-cd-push-main" \
+  --repo-name="customer-support-mas-kaggle" \
+  --repo-owner="YOUR_GITHUB_OWNER" \
+  --branch-pattern="^main$" \
+  --ignored-files="customer_support_agent/**" \
+  --build-config="cloudbuild/cloudbuild-deploy.yaml" \
+  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1,_DEPLOY_AGENT_ENGINE=false,_STAGING_BUCKET=gs://YOUR_STAGING_BUCKET"
 
 # Manual trigger (full eval)
 gcloud builds triggers create manual \
@@ -225,7 +266,11 @@ gcloud scheduler jobs create http nightly-full-eval \
 | `_REGION` | `us-central1` | Cloud Run / Artifact Registry region |
 | `_SERVICE_NAME` | `customer-support-app` | Cloud Run service name |
 | `_AR_REPO` | `customer-support` | Artifact Registry repository |
-| `_DEPLOY_AGENT_ENGINE` | `false` | Enable Agent Engine deployment |
+| `_DEPLOY_AGENT_ENGINE` | `false` | Redeploy Agent Engine (set `true` by agent-code trigger, `false` by everything-else trigger) |
+| `_STAGING_BUCKET` | `` | GCS staging bucket for Agent Engine deployment (e.g. `gs://my-bucket`) |
+| `_AGENT_ENGINE_RESOURCE_NAME` | `` | Full resource name of the Agent Engine for Cloud Run (e.g. `projects/P/locations/L/reasoningEngines/ID`) |
+| `_MODEL_ARMOR_ENABLED` | `false` | Enable Model Armor prompt filtering |
+| `_MODEL_ARMOR_TEMPLATE_ID` | `` | Model Armor template ID (if enabled) |
 | `_RUN_POST_DEPLOY_EVAL` | `false` | Enable post-deploy eval (nightly only) |
 | `_AGENT_ENGINE_ID` | `` | Agent Engine ID for post-deploy eval |
 
@@ -236,8 +281,8 @@ gcloud scheduler jobs create http nightly-full-eval \
 | Pipeline | Timeout | Rationale |
 |----------|---------|-----------|
 | `pr-checks.yaml` | 20 min | Fast profile only, quick feedback |
-| `cloudbuild.yaml` | 30 min | CI tests only |
-| `cloudbuild-deploy.yaml` | 40 min | CI + Docker build + Cloud Run deploy |
+| `cloudbuild.yaml` | 60 min | Standard eval (integration tests ~36 min) |
+| `cloudbuild-deploy.yaml` | 60 min | CI + Docker build + Agent Engine + Cloud Run |
 | `cloudbuild-nightly.yaml` | 60 min | Full eval with LLM judges is slow |
 
 ## Local Development with Make
@@ -259,6 +304,11 @@ make test-unit EVAL_PROFILE=full
 
 # Post-deploy eval
 make eval-post-deploy AGENT_ENGINE_ID=<id> EVAL_PROFILE=standard
+
+# Submit the full CI+CD pipeline to Cloud Build (mirrors what the main trigger does)
+make submit-build                          # Cloud Run only (_DEPLOY_AGENT_ENGINE=false)
+make submit-build DEPLOY_AGENT_ENGINE=true # + Agent Engine redeploy
+make submit-build EVAL_PROFILE=fast        # faster feedback (skip LLM-heavy evals)
 
 # Show all targets
 make help

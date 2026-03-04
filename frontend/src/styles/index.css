@@ -270,11 +270,33 @@ code {
   font-size: 13px;
 }
 
-.sidebar-loading {
-  padding: 40px 20px;
-  text-align: center;
-  color: #999;
-  font-size: 14px;
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-session-item {
+  padding: 12px;
+  margin-bottom: 4px;
+}
+
+.skeleton-title {
+  height: 14px;
+  width: 75%;
+  margin-bottom: 8px;
+}
+
+.skeleton-meta {
+  height: 11px;
+  width: 50%;
 }
 
 .sidebar-empty {

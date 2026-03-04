@@ -408,6 +408,46 @@ class Database:
         logger.info(f"Deleted session: {session_id}")
 
     # =========================================================================
+    # TOKEN MANAGEMENT
+    # =========================================================================
+
+    @with_retry
+    def create_token(self, user_id: str) -> str:
+        """Generate and persist an auth token for user_id. Returns the token."""
+        import secrets
+        from datetime import timedelta
+
+        token = secrets.token_urlsafe(32)
+        self.db.collection("tokens").document(token).set(
+            {
+                "user_id": user_id,
+                "created_at": datetime.utcnow(),
+                "expires_at": datetime.utcnow() + timedelta(days=30),
+            }
+        )
+        logger.info("Token created", user_id=user_id)
+        return token
+
+    @with_retry
+    def verify_token(self, token: str) -> Optional[str]:
+        """Return user_id for a valid, non-expired token, or None."""
+        doc = self.db.collection("tokens").document(token).get()
+        if not doc.exists:
+            return None
+        data = doc.to_dict()
+        if datetime.utcnow() > data["expires_at"]:
+            self.db.collection("tokens").document(token).delete()
+            logger.info("Token expired and deleted")
+            return None
+        return data["user_id"]
+
+    @with_retry
+    def revoke_token(self, token: str):
+        """Delete a token (logout)."""
+        self.db.collection("tokens").document(token).delete()
+        logger.info("Token revoked")
+
+    # =========================================================================
     # MESSAGE MANAGEMENT
     # =========================================================================
 

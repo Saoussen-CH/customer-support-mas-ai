@@ -234,7 +234,7 @@ graph TB
 - `PreloadMemoryTool` - Loads user memories at session start (budget preferences, product interests)
 - `search_products` - RAG semantic search with Firestore vector search
 - **`get_product_info`** - **Smart unified tool (DEFAULT)** - Fetches details + inventory + reviews comprehensively
-- `get_all_saved_products_info` - Efficient multi-product fetch (replaces LoopAgent to avoid timeouts)
+- `get_all_saved_products_info` - Efficient multi-product fetch for all products from last search
 - `get_last_mentioned_product` - Context-aware retrieval from session state
 - `get_product_details` - Fetch only details (for explicit "ONLY details" requests)
 - `check_inventory` - Stock levels only (for explicit "ONLY inventory" requests)
