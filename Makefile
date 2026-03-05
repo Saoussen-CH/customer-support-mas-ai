@@ -39,7 +39,7 @@ COMMON_ENV := GOOGLE_GENAI_USE_VERTEXAI=True
         eval-post-deploy \
         frontend-install frontend-build frontend-dev \
         deploy-agent-engine test-local \
-        deploy-cloud-run submit-build
+        deploy-cloud-run submit-build nightly
 
 # ==============================================================================
 # HELP
@@ -56,6 +56,8 @@ help: ## Show this help message
 	@echo "  make test-unit EVAL_PROFILE=standard   # unit eval with standard profile"
 	@echo "  make gen-evalset AGENT=order           # generate order agent eval dataset"
 	@echo "  make eval-post-deploy AGENT_ENGINE_ID=1234567890"
+	@echo "  make nightly                                    # run all steps (post-deploy off)"
+	@echo "  make nightly RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true"
 	@echo ""
 
 # ==============================================================================
@@ -139,9 +141,10 @@ test-unit: ## Run unit agent eval (EVAL_PROFILE=fast|standard|full)
 		tests/unit/test_agent_eval_ci.py \
 		$(PYTEST_FLAGS)
 
-test-integration: ## Run integration eval (EVAL_PROFILE=fast|standard|full)
+test-integration: ## Run integration eval (EVAL_PROFILE=fast|standard|full, TEST=test_name to filter)
 	$(COMMON_ENV) EVAL_PROFILE=$(EVAL_PROFILE) $(PYTEST) \
 		tests/integration/test_integration_eval_ci.py \
+		$(if $(TEST),-k $(TEST),) \
 		$(PYTEST_FLAGS)
 
 test: test-tools test-unit test-integration ## Run all tests (EVAL_PROFILE=fast by default)
@@ -233,6 +236,24 @@ deploy-agent-engine: ## Deploy agent to Vertex AI Agent Engine
 
 deploy-cloud-run: ## Build and deploy backend to Cloud Run
 	bash deployment/deploy-cloudrun.sh
+
+nightly: ## Trigger ci-manual Cloud Build with selective step flags
+	@# Defaults: all steps on, post-deploy off. Override with RUN_LINT=false, RUN_UNIT_TESTS=false, etc.
+	@PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT=' .env | cut -d= -f2-); \
+	RUN_LINT_VAL="$(if $(RUN_LINT),$(RUN_LINT),true)"; \
+	RUN_TOOL_VAL="$(if $(RUN_TOOL_TESTS),$(RUN_TOOL_TESTS),true)"; \
+	RUN_UNIT_VAL="$(if $(RUN_UNIT_TESTS),$(RUN_UNIT_TESTS),true)"; \
+	RUN_INT_VAL="$(if $(RUN_INTEGRATION_TESTS),$(RUN_INTEGRATION_TESTS),true)"; \
+	RUN_PD_VAL="$(if $(RUN_POST_DEPLOY_EVAL),$(RUN_POST_DEPLOY_EVAL),false)"; \
+	AGENT_ID="$(AGENT_ENGINE_ID)"; \
+	if [ -z "$$AGENT_ID" ] && [ -f .env ]; then \
+		AGENT_ID=$$(grep '^AGENT_ENGINE_RESOURCE_NAME=' .env | cut -d= -f2-); \
+	fi; \
+	gcloud builds triggers run ci-manual \
+		--project="$$PROJECT_ID" \
+		--region=us-central1 \
+		--branch=main \
+		--substitutions="_RUN_LINT=$$RUN_LINT_VAL,_RUN_TOOL_TESTS=$$RUN_TOOL_VAL,_RUN_UNIT_TESTS=$$RUN_UNIT_VAL,_RUN_INTEGRATION_TESTS=$$RUN_INT_VAL,_RUN_POST_DEPLOY_EVAL=$$RUN_PD_VAL,_AGENT_ENGINE_ID=$$AGENT_ID"
 
 submit-build: ## Submit full CI+CD pipeline to Cloud Build (DEPLOY_AGENT_ENGINE=true to also redeploy agent)
 	@PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT=' .env | cut -d= -f2-); \

@@ -1,11 +1,11 @@
 # CI/CD with Google Cloud Build
 
-The project uses **Google Cloud Build** for continuous integration and deployment. Three pipeline configs handle different scenarios, with eval profile selection per trigger type.
+The project uses **Google Cloud Build** for continuous integration and deployment. Four pipeline configs handle different scenarios, with eval profile selection per trigger type.
 
 ## Pipeline Overview
 
 ```
-cloudbuild/pr-checks.yaml          PR checks (pull_request to main)
+cloudbuild/pr-checks.yaml          PR checks (push to feature branches)
 cloudbuild/cloudbuild.yaml         CI only (develop push)
 cloudbuild/cloudbuild-deploy.yaml  CI + CD (main push) — two triggers point here
 cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
@@ -29,11 +29,11 @@ install-deps
 
 ## Trigger Configuration
 
-Three triggers, one per branch tier:
+Five triggers across three branch tiers:
 
 | Trigger | Event | Config | `_EVAL_PROFILE` | `_DEPLOY_AGENT_ENGINE` |
 |---------|-------|--------|-----------------|------------------------|
-| `ci-branch-push` | Push to any feature branch (not `develop`, not `main`) | `cloudbuild/pr-checks.yaml` | `fast` | — |
+| `ci-branch-push` | Push to any branch except `main` (includes `develop` — harmless extra checks) | `cloudbuild/pr-checks.yaml` | `fast` | — |
 | `ci-push-develop` | Push to `develop` | `cloudbuild/cloudbuild.yaml` | `standard` | — |
 | `ci-cd-push-main-agent` | Push to `main` touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `true` |
 | `ci-cd-push-main` | Push to `main` not touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `false` |
@@ -75,7 +75,7 @@ Cloud Build checks the commit message of the HEAD commit on the pushed branch. I
 | Profile | Unit Metrics | Integration Metrics | Cost |
 |---------|-------------|-------------------|------|
 | `fast` | Rouge-1 response match | Rouge-1 response match | Free |
-| `standard` | + tool trajectory exact match | + rubric-based LLM judge | Low |
+| `standard` | + tool name F1 (custom metric) | + rubric-based LLM judge | Low |
 | `full` | + LLM-as-judge response quality | + LLM-as-judge response quality | Higher |
 
 Profile configs: `tests/eval_configs/{unit,integration}/{fast,standard,full}.json`
@@ -83,7 +83,7 @@ Profile configs: `tests/eval_configs/{unit,integration}/{fast,standard,full}.jso
 ## CI Steps
 
 ### 1. install-deps
-Installs Python dependencies into `/workspace/.local` (shared across all steps via Cloud Build's `/workspace` volume).
+Installs Python dependencies via `uv sync --frozen` into `/workspace/.venv` (shared across all steps via Cloud Build's `/workspace` volume). Each subsequent step activates the venv with `export PATH="/workspace/.venv/bin:$PATH"`.
 
 ### 2. lint
 Runs `ruff check customer_support_agent/ --ignore=E501`.
@@ -124,13 +124,20 @@ Deploys the image to Cloud Run. Reads `AGENT_ENGINE_RESOURCE_NAME` from `/worksp
 
 ## Nightly Pipeline (cloudbuild-nightly.yaml)
 
-Runs all CI steps with `_EVAL_PROFILE=full` (all metrics including LLM-as-judge). Optionally runs post-deploy evaluation against a deployed Agent Engine:
+Runs all CI steps with `_EVAL_PROFILE=full` (all metrics including LLM-as-judge). Optionally runs post-deploy evaluation against a deployed Agent Engine.
 
 ```bash
-# Enable post-deploy eval by setting substitutions:
-# _RUN_POST_DEPLOY_EVAL=true
-# _AGENT_ENGINE_ID=<your-engine-id>
+# Full eval only (default — post-deploy eval skipped)
+gcloud builds triggers run ci-manual \
+  --project=YOUR_PROJECT_ID --region=us-central1 --branch=main
+
+# Full eval + post-deploy eval against a live Agent Engine
+gcloud builds triggers run ci-manual \
+  --project=YOUR_PROJECT_ID --region=us-central1 --branch=main \
+  --substitutions="_RUN_POST_DEPLOY_EVAL=true,_AGENT_ENGINE_ID=YOUR_ENGINE_ID"
 ```
+
+`_RUN_POST_DEPLOY_EVAL` and `_AGENT_ENGINE_ID` default to `false` and `""` in the trigger definition — override them at run time only when needed.
 
 ## Setup
 
@@ -187,55 +194,170 @@ No service account key file is needed — Cloud Build runs natively on GCP with 
 
 ### Creating Triggers
 
-After connecting your GitHub repo in Cloud Console (Cloud Build > Triggers > Connect Repository):
+> **Prerequisites**
+> 1. Connect your GitHub repo: Cloud Console → Cloud Build → Triggers → **Connect Repository** → GitHub → select `customer-support-mas-ai`
+> 2. Note your project number (`gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)"`)
+
+#### Cloud Console — quick reference
+
+For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in the fields below → **Save**.
+
+| Field | ci-branch-push | ci-push-develop | ci-cd-push-main-agent | ci-cd-push-main | ci-manual |
+|---|---|---|---|---|---|
+| **Name** | `ci-branch-push` | `ci-push-develop` | `ci-cd-push-main-agent` | `ci-cd-push-main` | `ci-manual` |
+| **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
+| **Event** | Push to branch | Push to branch | Push to branch | Push to branch | Manual invocation |
+| **Source (2nd gen)** | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` |
+| **Branch** | `^main$` | `^develop$` | `^main$` | `^main$` | `main` |
+| **Invert regex** | Yes | No | No | No | — |
+| **Included files filter** | — | — | `customer_support_agent/**` | — | — |
+| **Ignored files filter** | — | — | — | `customer_support_agent/**` | — |
+| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` |
+| **Service account** | `PROJECT_NUMBER-compute@developer.gserviceaccount.com` | same | same | same | same |
+| **_EVAL_PROFILE** | — | `standard` | `standard` | `standard` | `full` |
+| **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
+| **_DEPLOY_AGENT_ENGINE** | — | — | `true` | `false` | — |
+| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | — |
+| **_AGENT_ENGINE_DISPLAY_NAME** | — | — | `customer-support-multiagent` | `customer-support-multiagent` | — |
+| **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` | — |
+
+Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
+
+Replace `YOUR_PROJECT_ID`, `YOUR_PROJECT_NUMBER`, and `YOUR_STAGING_BUCKET` throughout.
+
+#### Trigger 1 — Feature branch push (fast checks)
 
 ```bash
-# Feature branch push — fast checks (lint + tool tests + fast eval)
-gcloud builds triggers create github \
-  --name="ci-branch-push" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch-pattern="^(?!main$|develop$).*" \
-  --build-config="cloudbuild/pr-checks.yaml" \
-  --substitutions="_GOOGLE_CLOUD_LOCATION=us-central1"
+gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
+name: ci-branch-push
+filename: cloudbuild/pr-checks.yaml
+repositoryEventConfig:
+  push:
+    branch: "^main$"
+    invertRegex: true
+  repository: projects/YOUR_PROJECT_ID/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
+  repositoryType: GITHUB
+serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com
+substitutions:
+  _GOOGLE_CLOUD_LOCATION: us-central1
+EOF
+```
 
-# Push to develop — full CI (standard eval, no deploy)
-gcloud builds triggers create github \
-  --name="ci-push-develop" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch-pattern="^develop$" \
-  --build-config="cloudbuild/cloudbuild.yaml" \
-  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1"
+> `invertRegex: true` on `^main$` fires on every branch except `main`. This includes `develop`, which means develop pushes run pr-checks in addition to the standard CI trigger — harmless extra checks.
 
-# Push to main — agent code changed: redeploy Agent Engine + Cloud Run
-gcloud builds triggers create github \
-  --name="ci-cd-push-main-agent" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch-pattern="^main$" \
-  --included-files="customer_support_agent/**" \
-  --build-config="cloudbuild/cloudbuild-deploy.yaml" \
-  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1,_DEPLOY_AGENT_ENGINE=true,_STAGING_BUCKET=gs://YOUR_STAGING_BUCKET"
+#### Trigger 2 — Push to `develop` (standard CI, no deploy)
 
-# Push to main — everything else: Cloud Run only (no Agent Engine redeploy)
-gcloud builds triggers create github \
-  --name="ci-cd-push-main" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch-pattern="^main$" \
-  --ignored-files="customer_support_agent/**" \
-  --build-config="cloudbuild/cloudbuild-deploy.yaml" \
-  --substitutions="_EVAL_PROFILE=standard,_GOOGLE_CLOUD_LOCATION=us-central1,_DEPLOY_AGENT_ENGINE=false,_STAGING_BUCKET=gs://YOUR_STAGING_BUCKET"
+```bash
+gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
+name: ci-push-develop
+filename: cloudbuild/cloudbuild.yaml
+repositoryEventConfig:
+  push:
+    branch: "^develop$"
+  repository: projects/YOUR_PROJECT_ID/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
+  repositoryType: GITHUB
+serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com
+substitutions:
+  _EVAL_PROFILE: standard
+  _GOOGLE_CLOUD_LOCATION: us-central1
+EOF
+```
 
-# Manual trigger (full eval)
-gcloud builds triggers create manual \
-  --name="ci-manual" \
-  --repo-name="customer-support-mas-kaggle" \
-  --repo-owner="YOUR_GITHUB_OWNER" \
-  --branch="main" \
-  --build-config="cloudbuild/cloudbuild-nightly.yaml" \
-  --substitutions="_EVAL_PROFILE=full,_GOOGLE_CLOUD_LOCATION=us-central1"
+#### Trigger 3 — Push to `main`, agent code changed (redeploy Agent Engine + Cloud Run)
+
+```bash
+gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
+name: ci-cd-push-main-agent
+filename: cloudbuild/cloudbuild-deploy.yaml
+includedFiles:
+  - "customer_support_agent/**"
+repositoryEventConfig:
+  push:
+    branch: "^main$"
+  repository: projects/YOUR_PROJECT_ID/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
+  repositoryType: GITHUB
+serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com
+substitutions:
+  _EVAL_PROFILE: standard
+  _GOOGLE_CLOUD_LOCATION: us-central1
+  _DEPLOY_AGENT_ENGINE: "true"
+  _STAGING_BUCKET: gs://YOUR_STAGING_BUCKET
+  _AGENT_ENGINE_DISPLAY_NAME: customer-support-multiagent
+  _AGENT_ENGINE_RESOURCE_NAME: ""
+EOF
+```
+
+#### Trigger 4 — Push to `main`, everything else (Cloud Run only)
+
+```bash
+gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
+name: ci-cd-push-main
+filename: cloudbuild/cloudbuild-deploy.yaml
+ignoredFiles:
+  - "customer_support_agent/**"
+repositoryEventConfig:
+  push:
+    branch: "^main$"
+  repository: projects/YOUR_PROJECT_ID/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
+  repositoryType: GITHUB
+serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com
+substitutions:
+  _EVAL_PROFILE: standard
+  _GOOGLE_CLOUD_LOCATION: us-central1
+  _DEPLOY_AGENT_ENGINE: "false"
+  _STAGING_BUCKET: gs://YOUR_STAGING_BUCKET
+  _AGENT_ENGINE_DISPLAY_NAME: customer-support-multiagent
+  _AGENT_ENGINE_RESOURCE_NAME: ""
+EOF
+```
+
+#### Trigger 5 — Manual / nightly (full eval)
+
+The `manual` event type must be created from the **Cloud Console** (not supported by `triggers import`):
+
+1. Cloud Build → Triggers → **Create Trigger**
+2. Name: `ci-manual` | Region: `us-central1`
+3. Event: **Manual invocation**
+4. Source (2nd gen): repository `Saoussen-CH/customer-support-mas-ai` | branch: `main`
+5. Configuration: Cloud Build configuration file → `cloudbuild/cloudbuild-nightly.yaml`
+6. Substitution variables: `_EVAL_PROFILE=full`, `_GOOGLE_CLOUD_LOCATION=us-central1`
+7. Service account: `YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com`
+
+Run on demand via CLI:
+```bash
+gcloud builds triggers run ci-manual --region=us-central1 --project=YOUR_PROJECT_ID --branch=main
+```
+
+Or use the `nightly` make target (reads project and engine IDs from `.env` automatically):
+```bash
+# Push your changes first — Cloud Build clones from GitHub, not local files
+git push origin main
+
+# Then trigger (all CI steps, post-deploy off by default)
+make nightly
+
+# Run specific steps only
+make nightly RUN_LINT=false RUN_TOOL_TESTS=false   # unit + integration only
+make nightly RUN_LINT=false RUN_TOOL_TESTS=false RUN_UNIT_TESTS=false RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # post-deploy only
+```
+
+**Note:** `make nightly` runs against the code already pushed to `main` on GitHub. Always push before running it.
+
+#### Fixing existing triggers with typos
+
+If a trigger was created with trailing spaces in the filename or branch pattern, update it in place:
+
+```bash
+# List trigger IDs
+gcloud builds triggers list --region=us-central1 --format="table(name,id)"
+
+# Re-import with the id field to update in place (no delete needed)
+gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
+name: ci-cd-push-main
+id: YOUR_TRIGGER_ID
+filename: cloudbuild/cloudbuild-deploy.yaml
+...
+EOF
 ```
 
 ### Nightly Schedule
@@ -248,7 +370,7 @@ TRIGGER_ID=$(gcloud builds triggers list \
 
 gcloud scheduler jobs create http nightly-full-eval \
   --schedule="0 0 * * *" \
-  --uri="https://cloudbuild.googleapis.com/v1/projects/$PROJECT_ID/locations/global/triggers/${TRIGGER_ID}:run" \
+  --uri="https://cloudbuild.googleapis.com/v1/projects/$PROJECT_ID/locations/us-central1/triggers/${TRIGGER_ID}:run" \
   --http-method=POST \
   --oauth-service-account-email="PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
   --message-body='{"branchName": "main"}' \
@@ -271,6 +393,10 @@ gcloud scheduler jobs create http nightly-full-eval \
 | `_AGENT_ENGINE_RESOURCE_NAME` | `` | Full resource name of the Agent Engine for Cloud Run (e.g. `projects/P/locations/L/reasoningEngines/ID`) |
 | `_MODEL_ARMOR_ENABLED` | `false` | Enable Model Armor prompt filtering |
 | `_MODEL_ARMOR_TEMPLATE_ID` | `` | Model Armor template ID (if enabled) |
+| `_RUN_LINT` | `true` | Run lint step (nightly only) |
+| `_RUN_TOOL_TESTS` | `true` | Run tool-tests step (nightly only) |
+| `_RUN_UNIT_TESTS` | `true` | Run unit-tests step (nightly only) |
+| `_RUN_INTEGRATION_TESTS` | `true` | Run integration-tests step (nightly only) |
 | `_RUN_POST_DEPLOY_EVAL` | `false` | Enable post-deploy eval (nightly only) |
 | `_AGENT_ENGINE_ID` | `` | Agent Engine ID for post-deploy eval |
 
@@ -309,6 +435,13 @@ make eval-post-deploy AGENT_ENGINE_ID=<id> EVAL_PROFILE=standard
 make submit-build                          # Cloud Run only (_DEPLOY_AGENT_ENGINE=false)
 make submit-build DEPLOY_AGENT_ENGINE=true # + Agent Engine redeploy
 make submit-build EVAL_PROFILE=fast        # faster feedback (skip LLM-heavy evals)
+
+# Trigger the nightly pipeline (ci-manual) against already-pushed code on main
+# Cloud Build reads from GitHub — push your changes first
+make nightly                                         # all CI steps, post-deploy off
+make nightly RUN_LINT=false RUN_TOOL_TESTS=false     # unit + integration only
+make nightly RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # skip integration, run post-deploy
+make nightly RUN_LINT=false RUN_TOOL_TESTS=false RUN_UNIT_TESTS=false RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # post-deploy eval only
 
 # Show all targets
 make help

@@ -60,7 +60,7 @@ class TestMultiAgentHandoffs:
             eval_set=load_eval_set("tests/integration/order_tracking_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
             num_runs=2,
-            print_detailed_results=False,
+            print_detailed_results=True,
         )
 
     @pytest.mark.asyncio

@@ -8,6 +8,10 @@ substitutions:
   _PYTHON_VERSION: "3.11"
   _FIRESTORE_DATABASE: "customer-support-db"
   _GOOGLE_CLOUD_LOCATION: "us-central1"
+  _RUN_LINT: "true"
+  _RUN_TOOL_TESTS: "true"
+  _RUN_UNIT_TESTS: "true"
+  _RUN_INTEGRATION_TESTS: "true"
   _RUN_POST_DEPLOY_EVAL: "false"
   _AGENT_ENGINE_ID: ""
 
@@ -37,6 +41,7 @@ steps:
     args:
       - "-c"
       - |
+        if [ "${_RUN_LINT}" != "true" ]; then echo "Skipping lint"; exit 0; fi
         export PATH="/workspace/.venv/bin:$$PATH"
         ruff check customer_support_agent/ --ignore=E501
     waitFor: ["install-deps"]
@@ -50,6 +55,7 @@ steps:
     args:
       - "-c"
       - |
+        if [ "${_RUN_TOOL_TESTS}" != "true" ]; then echo "Skipping tool-tests"; exit 0; fi
         export PATH="/workspace/.venv/bin:$$PATH"
         pytest tests/unit/test_tools.py tests/unit/test_mock_rag.py tests/unit/test_refund_standalone.py -v --tb=short
     env:
@@ -68,6 +74,7 @@ steps:
     args:
       - "-c"
       - |
+        if [ "${_RUN_UNIT_TESTS}" != "true" ]; then echo "Skipping unit-tests"; exit 0; fi
         export PATH="/workspace/.venv/bin:$$PATH"
         pytest tests/unit/test_agent_eval_ci.py -v --tb=short
     env:
@@ -87,6 +94,7 @@ steps:
     args:
       - "-c"
       - |
+        if [ "${_RUN_INTEGRATION_TESTS}" != "true" ]; then echo "Skipping integration-tests"; exit 0; fi
         export PATH="/workspace/.venv/bin:$$PATH"
         pytest tests/integration/test_integration_eval_ci.py -v --tb=short
     env:
