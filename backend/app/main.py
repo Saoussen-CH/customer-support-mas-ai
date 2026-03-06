@@ -46,7 +46,7 @@ if _MODEL_ARMOR_ENABLED and _MODEL_ARMOR_TEMPLATE_ID:
         from google.api_core.client_options import ClientOptions as _ClientOptions
         from google.cloud import modelarmor_v1 as _modelarmor_v1
 
-        from customer_support_agent.safety.safety_util import parse_model_armor_response as _parse_ma_response
+        from app.safety_util import parse_model_armor_response as _parse_ma_response
 
         _location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
         _model_armor_client = _modelarmor_v1.ModelArmorClient(
