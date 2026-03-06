@@ -22,7 +22,7 @@ Data Model:
 import hashlib
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 from typing import Dict, List, Optional
 
@@ -174,7 +174,7 @@ class Database:
             "email": email,
             "name": name,
             "password_hash": password_hash,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "last_login": None,
             "is_demo": False,  # Mark as non-demo user
         }
@@ -250,7 +250,7 @@ class Database:
     @with_retry
     def update_last_login(self, user_id: str):
         """Update user's last login timestamp."""
-        self.db.collection("users").document(user_id).update({"last_login": datetime.utcnow()})
+        self.db.collection("users").document(user_id).update({"last_login": datetime.now(timezone.utc)})
 
     @with_retry
     def create_anonymous_user(self) -> str:
@@ -265,7 +265,7 @@ class Database:
         user_data = {
             "user_id": user_id,
             "is_anonymous": True,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         self.db.collection("users").document(user_id).set(user_data)
@@ -296,9 +296,9 @@ class Database:
             "session_id": session_id,
             "user_id": user_id,
             "agent_engine_session_id": agent_engine_session_id,
-            "session_name": session_name or f"Chat {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "session_name": session_name or f"Chat {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}",
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "message_count": 0,
             "is_active": True,
         }
@@ -350,7 +350,7 @@ class Database:
 
         # Filter for active sessions and sort by updated_at
         active_sessions = [s for s in sessions if s.get("is_active", True)]
-        active_sessions.sort(key=lambda x: x.get("updated_at", datetime.min), reverse=True)
+        active_sessions.sort(key=lambda x: x.get("updated_at", datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
 
         # Limit to requested number
         result = active_sessions[:limit]
@@ -369,7 +369,7 @@ class Database:
         """
         self.db.collection("sessions").document(session_id).update(
             {
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
                 "message_count": firestore.Increment(1),
             }
         )
@@ -386,7 +386,7 @@ class Database:
         self.db.collection("sessions").document(session_id).update(
             {
                 "session_name": new_name,
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             }
         )
         logger.info(f"Renamed session {session_id} to: {new_name}")
@@ -402,7 +402,7 @@ class Database:
         self.db.collection("sessions").document(session_id).update(
             {
                 "is_active": False,
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             }
         )
         logger.info(f"Deleted session: {session_id}")
@@ -421,8 +421,8 @@ class Database:
         self.db.collection("tokens").document(token).set(
             {
                 "user_id": user_id,
-                "created_at": datetime.utcnow(),
-                "expires_at": datetime.utcnow() + timedelta(days=30),
+                "created_at": datetime.now(timezone.utc),
+                "expires_at": datetime.now(timezone.utc) + timedelta(days=30),
             }
         )
         logger.info("Token created", user_id=user_id)
@@ -435,7 +435,7 @@ class Database:
         if not doc.exists:
             return None
         data = doc.to_dict()
-        if datetime.utcnow() > data["expires_at"]:
+        if datetime.now(timezone.utc) > data["expires_at"]:
             self.db.collection("tokens").document(token).delete()
             logger.info("Token expired and deleted")
             return None
@@ -473,7 +473,7 @@ class Database:
             "session_id": session_id,
             "role": role,
             "content": content,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
 
         # Store in subcollection: sessions/{session_id}/messages/{message_id}
