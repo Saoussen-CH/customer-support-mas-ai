@@ -239,7 +239,9 @@ deploy-cloud-run: ## Build and deploy backend to Cloud Run
 
 nightly: ## Trigger ci-manual Cloud Build with selective step flags
 	@# Defaults: all steps on, post-deploy off. Override with RUN_LINT=false, RUN_UNIT_TESTS=false, etc.
+	@# RUN_POST_DEPLOY_EVAL=true requires AGENT_ENGINE_ID (or AGENT_ENGINE_RESOURCE_NAME in .env)
 	@PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT=' .env | cut -d= -f2-); \
+	STAGING_BUCKET=$$(grep '^GOOGLE_CLOUD_STORAGE_BUCKET=' .env | cut -d= -f2-); \
 	RUN_LINT_VAL="$(if $(RUN_LINT),$(RUN_LINT),true)"; \
 	RUN_TOOL_VAL="$(if $(RUN_TOOL_TESTS),$(RUN_TOOL_TESTS),true)"; \
 	RUN_UNIT_VAL="$(if $(RUN_UNIT_TESTS),$(RUN_UNIT_TESTS),true)"; \
@@ -253,7 +255,7 @@ nightly: ## Trigger ci-manual Cloud Build with selective step flags
 		--project="$$PROJECT_ID" \
 		--region=us-central1 \
 		--branch=main \
-		--substitutions="_RUN_LINT=$$RUN_LINT_VAL,_RUN_TOOL_TESTS=$$RUN_TOOL_VAL,_RUN_UNIT_TESTS=$$RUN_UNIT_VAL,_RUN_INTEGRATION_TESTS=$$RUN_INT_VAL,_RUN_POST_DEPLOY_EVAL=$$RUN_PD_VAL,_AGENT_ENGINE_ID=$$AGENT_ID"
+		--substitutions="_RUN_LINT=$$RUN_LINT_VAL,_RUN_TOOL_TESTS=$$RUN_TOOL_VAL,_RUN_UNIT_TESTS=$$RUN_UNIT_VAL,_RUN_INTEGRATION_TESTS=$$RUN_INT_VAL,_RUN_POST_DEPLOY_EVAL=$$RUN_PD_VAL,_AGENT_ENGINE_ID=$$AGENT_ID,_STAGING_BUCKET=$$STAGING_BUCKET"
 
 submit-build: ## Submit full CI+CD pipeline to Cloud Build (DEPLOY_AGENT_ENGINE=true to also redeploy agent)
 	@PROJECT_ID=$$(grep '^GOOGLE_CLOUD_PROJECT=' .env | cut -d= -f2-); \

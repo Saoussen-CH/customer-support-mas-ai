@@ -14,6 +14,7 @@ substitutions:
   _RUN_INTEGRATION_TESTS: "true"
   _RUN_POST_DEPLOY_EVAL: "false"
   _AGENT_ENGINE_ID: ""
+  _STAGING_BUCKET: ""
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -127,6 +128,7 @@ steps:
     env:
       - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
       - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "GOOGLE_CLOUD_STORAGE_BUCKET=${_STAGING_BUCKET}"
     waitFor: ["integration-tests"]
 
 timeout: "3600s"

@@ -413,8 +413,15 @@ def log_to_vertex_experiments(
     project_id: str,
     location: str,
     experiment_name: str = "post-deploy-eval",
+    report_path: str = None,
+    gcs_bucket: str = None,
+    run_name: str = None,
 ):
     """Log evaluation results to Vertex AI Experiments for console visibility.
+
+    Uploads the HTML report to GCS (if gcs_bucket is set) and logs the GCS URI
+    as a parameter in the experiment run so the report is accessible from the
+    Experiments console.
 
     Results appear at:
         Vertex AI → Experiments → post-deploy-eval
@@ -424,13 +431,19 @@ def log_to_vertex_experiments(
         project_id: GCP project ID.
         location: GCP region.
         experiment_name: Experiment name (created if it doesn't exist).
+        report_path: Local path to the HTML report file to upload.
+        gcs_bucket: GCS bucket (gs://... or bare name) for HTML upload.
+        run_name: Experiment run name — pass a pre-generated timestamp name so
+            the HTML filename and the run name share the same timestamp.
     """
     try:
         from google.cloud import aiplatform
 
         aiplatform.init(project=project_id, location=location, experiment=experiment_name)
 
-        run_name = f"eval-{pd.Timestamp.now().strftime('%Y%m%d-%H%M%S')}"
+        if run_name is None:
+            run_name = f"eval-{pd.Timestamp.now().strftime('%Y%m%d-%H%M%S')}"
+
         metrics = {}
         params = {}
 
@@ -453,6 +466,15 @@ def log_to_vertex_experiments(
             logger.warning("No metrics to log to Vertex AI Experiments.")
             return
 
+        # Upload HTML report to GCS and record the URI as a param
+        if report_path and gcs_bucket and Path(report_path).exists():
+            try:
+                object_path = f"eval-reports/{run_name}.html"
+                gcs_uri = upload_to_gcs(report_path, gcs_bucket, object_path)
+                params["report_gcs_uri"] = gcs_uri
+            except Exception as upload_err:
+                logger.warning("Could not upload report to GCS: %s", upload_err)
+
         with aiplatform.start_run(run=run_name):
             aiplatform.log_params(params)
             aiplatform.log_metrics(metrics)
@@ -463,12 +485,24 @@ def log_to_vertex_experiments(
             run_name,
         )
         logger.info(
-            "View in console: https://console.cloud.google.com/vertex-ai/" "experiments/experiments/%s/runs?project=%s",
-            experiment_name,
+            "View in console: https://console.cloud.google.com/vertex-ai/experiments?project=%s",
             project_id,
         )
     except Exception as e:
         logger.warning("Failed to log to Vertex AI Experiments: %s", e)
+
+
+def upload_to_gcs(local_path: str, gcs_bucket: str, object_path: str) -> str:
+    """Upload a local file to GCS and return the gs:// URI."""
+    from google.cloud import storage
+
+    bucket_name = gcs_bucket.lstrip("gs://").split("/")[0]
+    client = storage.Client()
+    blob = client.bucket(bucket_name).blob(object_path)
+    blob.upload_from_filename(local_path)
+    gcs_uri = f"gs://{bucket_name}/{object_path}"
+    logger.info("Uploaded to GCS: %s", gcs_uri)
+    return gcs_uri
 
 
 def save_html_report(evaluation_result, output_path: str):
@@ -677,6 +711,16 @@ def main():
     # Initialize
     project_id, location = init_vertex_ai()
 
+    # Shared timestamp — used for the run name, report filename, and GCS path
+    # so they all line up in the console and bucket.
+    run_timestamp = pd.Timestamp.now().strftime("%Y%m%d-%H%M%S")
+    run_name = f"eval-{run_timestamp}"
+
+    # Default report filename matches the Vertex AI Experiments run name exactly:
+    # eval-20260306-152928.html → same name as the experiment run → easy to correlate
+    if args.report == "eval_report.html":
+        args.report = f"{run_name}.html"
+
     # GCS destination for eval results (optional — results are returned in-memory if not set)
     gcs_bucket = os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET", "")
     gcs_dest = f"{gcs_bucket}/eval-results" if gcs_bucket else None
@@ -770,9 +814,15 @@ def main():
     # Save full HTML report (per-item scores, explanations, traces)
     save_html_report(evaluation_result, args.report)
 
-    # Log to Vertex AI Experiments for console visibility
-    # (shown at Vertex AI → Experiments → post-deploy-eval)
-    log_to_vertex_experiments(evaluation_result, project_id, location)
+    # Log to Vertex AI Experiments — uploads HTML to GCS and records the URI as a param
+    log_to_vertex_experiments(
+        evaluation_result,
+        project_id,
+        location,
+        report_path=args.report,
+        gcs_bucket=gcs_bucket,
+        run_name=run_name,
+    )
 
     # Step 3: Check thresholds and report
     print("\n--- Step 3/3: Checking thresholds ---")
