@@ -7,47 +7,51 @@ The project uses **Google Cloud Build** for continuous integration and deploymen
 ```
 cloudbuild/pr-checks.yaml          PR checks (push to feature branches)
 cloudbuild/cloudbuild.yaml         CI only (develop push)
-cloudbuild/cloudbuild-deploy.yaml  CI + CD (main push) — two triggers point here
+cloudbuild/cloudbuild-deploy.yaml  CI + CD (main push) — one trigger, auto-detects agent changes
 cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
 ```
 
 ### Job Dependency Graph
 
 ```
-install-deps
-├── lint ─────────────────────────┐
-└── tool-tests                    │
-    └── unit-tests                │
-        └── integration-tests     │
-            └── docker-build ◄────┘  (waits for integration-tests + lint)
-                └── docker-push
-                    └── deploy-agent-engine  ← agent first (skipped if _DEPLOY_AGENT_ENGINE=false)
-                        └── deploy-cloud-run ← cloud run second (always runs)
+detect-agent-changes
+└── install-deps
+    ├── lint ─────────────────────────┐
+    └── tool-tests                    │
+        └── unit-tests                │
+            └── integration-tests     │
+                └── docker-build ◄────┘  (waits for integration-tests + lint)
+                    └── docker-push
+                        └── deploy-agent-engine  ← agent first (skipped if no agent changes)
+                            └── deploy-cloud-run ← cloud run second (always runs)
 ```
 
 `lint` and `tool-tests` run in parallel after `install-deps`. CD steps only start after **all** CI steps pass. `deploy-agent-engine` must complete before `deploy-cloud-run` so Cloud Run always talks to the already-updated agent.
 
 ## Trigger Configuration
 
-Five triggers across three branch tiers:
+Four triggers across three branch tiers:
 
-| Trigger | Event | Config | `_EVAL_PROFILE` | `_DEPLOY_AGENT_ENGINE` |
-|---------|-------|--------|-----------------|------------------------|
-| `ci-branch-push` | Push to any branch except `main` (includes `develop` — harmless extra checks) | `cloudbuild/pr-checks.yaml` | `fast` | — |
+| Trigger | Event | Config | `_EVAL_PROFILE` | Agent Engine deploy |
+|---------|-------|--------|-----------------|---------------------|
+| `ci-branch-push` | Push to any branch except `main` | `cloudbuild/pr-checks.yaml` | `fast` | — |
 | `ci-push-develop` | Push to `develop` | `cloudbuild/cloudbuild.yaml` | `standard` | — |
-| `ci-cd-push-main-agent` | Push to `main` touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `true` |
-| `ci-cd-push-main` | Push to `main` not touching `customer_support_agent/**` | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | `false` |
+| `ci-cd-push-main` | Push to `main` (all files) | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
 | `ci-manual` | Manual dispatch | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
 | Cloud Scheduler | Nightly (midnight UTC) | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
 
-### Two triggers for `cloudbuild-deploy.yaml`
+### Auto-detection of agent changes
 
-`cloudbuild-deploy.yaml` is pointed to by **two** triggers that both fire on push to `main`, but with different file filters:
+`cloudbuild-deploy.yaml` has a `detect-agent-changes` step that runs first on every push to `main`:
 
-- **`ci-cd-push-main-agent`** — `includedFiles: ["customer_support_agent/**"]`, sets `_DEPLOY_AGENT_ENGINE=true`: redeploys Agent Engine + Cloud Run
-- **`ci-cd-push-main`** — `ignoredFiles: ["customer_support_agent/**"]`, sets `_DEPLOY_AGENT_ENGINE=false`: deploys Cloud Run only
+```bash
+git diff --name-only HEAD~1 HEAD -- customer_support_agent/
+```
 
-This means pushing changes to tests, frontend, backend, or infra does not trigger a (slow, expensive) Agent Engine redeploy. Only changes to `customer_support_agent/` do.
+- If `customer_support_agent/` files changed → writes `true` → Agent Engine is redeployed
+- Otherwise → writes `false` → only Cloud Run is deployed
+
+`_DEPLOY_AGENT_ENGINE=true` can still be set explicitly on the trigger (or via `make submit-build DEPLOY_AGENT_ENGINE=true`) to force an Agent Engine deploy regardless of which files changed.
 
 ### Skipping builds entirely with `[skip ci]`
 
@@ -66,8 +70,9 @@ Cloud Build checks the commit message of the HEAD commit on the pushed branch. I
 |----------|-----------|
 | Working on a feature branch | Push normally → `ci-branch-push` fires (fast checks) |
 | Merging to `develop` | Push normally → `ci-push-develop` fires (full CI) |
-| Agent logic changed, merging to `main` | Push normally → `ci-cd-push-main-agent` fires (`_DEPLOY_AGENT_ENGINE=true`) |
-| Non-agent code, merging to `main` | Push normally → `ci-cd-push-main` fires (`_DEPLOY_AGENT_ENGINE=false`) |
+| Agent logic changed, merging to `main` | Push normally → `ci-cd-push-main` fires, auto-detects agent change → deploys Agent Engine + Cloud Run |
+| Non-agent code, merging to `main` | Push normally → `ci-cd-push-main` fires, no agent change detected → deploys Cloud Run only |
+| Mixed commit (agent + backend), merging to `main` | Push normally → `ci-cd-push-main` fires once, detects agent change → full deploy |
 | Docs / Terraform / CI config only | Add `[skip ci]` to commit message → no build runs |
 
 ### Eval Profile Details
@@ -205,24 +210,23 @@ No service account key file is needed — Cloud Build runs natively on GCP with 
 
 For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in the fields below → **Save**.
 
-| Field | ci-branch-push | ci-push-develop | ci-cd-push-main-agent | ci-cd-push-main | ci-manual |
-|---|---|---|---|---|---|
-| **Name** | `ci-branch-push` | `ci-push-develop` | `ci-cd-push-main-agent` | `ci-cd-push-main` | `ci-manual` |
-| **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **Event** | Push to branch | Push to branch | Push to branch | Push to branch | Manual invocation |
-| **Source (2nd gen)** | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` |
-| **Branch** | `^main$` | `^develop$` | `^main$` | `^main$` | `main` |
-| **Invert regex** | Yes | No | No | No | — |
-| **Included files filter** | — | — | `customer_support_agent/**` | — | — |
-| **Ignored files filter** | — | — | — | `customer_support_agent/**` | — |
-| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` |
-| **Service account** | `PROJECT_NUMBER-compute@developer.gserviceaccount.com` | same | same | same | same |
-| **_EVAL_PROFILE** | — | `standard` | `standard` | `standard` | `full` |
-| **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **_DEPLOY_AGENT_ENGINE** | — | — | `true` | `false` | — |
-| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
-| **_AGENT_ENGINE_DISPLAY_NAME** | — | — | `customer-support-multiagent` | `customer-support-multiagent` | — |
-| **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` | — |
+| Field | ci-branch-push | ci-push-develop | ci-cd-push-main | ci-manual |
+|---|---|---|---|---|
+| **Name** | `ci-branch-push` | `ci-push-develop` | `ci-cd-push-main` | `ci-manual` |
+| **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
+| **Event** | Push to branch | Push to branch | Push to branch | Manual invocation |
+| **Source (2nd gen)** | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` |
+| **Branch** | `^main$` | `^develop$` | `^main$` | `main` |
+| **Invert regex** | Yes | No | No | — |
+| **Included/Ignored files** | — | — | — | — |
+| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` |
+| **Service account** | `PROJECT_NUMBER-compute@developer.gserviceaccount.com` | same | same | same |
+| **_EVAL_PROFILE** | — | `standard` | `standard` | `full` |
+| **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
+| **_DEPLOY_AGENT_ENGINE** | — | — | `false` (auto-detected at runtime) | — |
+| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
+| **_AGENT_ENGINE_DISPLAY_NAME** | — | — | `customer-support-multiagent` | — |
+| **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | — |
 
 Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
 
@@ -266,38 +270,14 @@ substitutions:
 EOF
 ```
 
-#### Trigger 3 — Push to `main`, agent code changed (redeploy Agent Engine + Cloud Run)
+#### Trigger 3 — Push to `main` (CI + CD, auto-detects whether to redeploy Agent Engine)
 
-```bash
-gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
-name: ci-cd-push-main-agent
-filename: cloudbuild/cloudbuild-deploy.yaml
-includedFiles:
-  - "customer_support_agent/**"
-repositoryEventConfig:
-  push:
-    branch: "^main$"
-  repository: projects/YOUR_PROJECT_ID/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
-  repositoryType: GITHUB
-serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com
-substitutions:
-  _EVAL_PROFILE: standard
-  _GOOGLE_CLOUD_LOCATION: us-central1
-  _DEPLOY_AGENT_ENGINE: "true"
-  _STAGING_BUCKET: gs://YOUR_STAGING_BUCKET
-  _AGENT_ENGINE_DISPLAY_NAME: customer-support-multiagent
-  _AGENT_ENGINE_RESOURCE_NAME: ""
-EOF
-```
-
-#### Trigger 4 — Push to `main`, everything else (Cloud Run only)
+No file filters needed. The `detect-agent-changes` step inside the YAML uses `git diff` to decide whether Agent Engine needs a redeploy.
 
 ```bash
 gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
 name: ci-cd-push-main
 filename: cloudbuild/cloudbuild-deploy.yaml
-ignoredFiles:
-  - "customer_support_agent/**"
 repositoryEventConfig:
   push:
     branch: "^main$"
@@ -314,9 +294,12 @@ substitutions:
 EOF
 ```
 
-#### Trigger 5 — Manual / nightly (full eval)
+> `_DEPLOY_AGENT_ENGINE=false` is the default. The `detect-agent-changes` step overrides it at runtime when `customer_support_agent/` files are detected in the diff. Set it explicitly to `true` on a manual trigger run to force an Agent Engine redeploy regardless.
+
+#### Trigger 4 — Manual / nightly (full eval)
 
 The `manual` event type must be created from the **Cloud Console** (not supported by `triggers import`):
+
 
 1. Cloud Build → Triggers → **Create Trigger**
 2. Name: `ci-manual` | Region: `us-central1`
@@ -391,7 +374,7 @@ gcloud scheduler jobs create http nightly-full-eval \
 | `_REGION` | `us-central1` | Cloud Run / Artifact Registry region |
 | `_SERVICE_NAME` | `customer-support-app` | Cloud Run service name |
 | `_AR_REPO` | `customer-support` | Artifact Registry repository |
-| `_DEPLOY_AGENT_ENGINE` | `false` | Redeploy Agent Engine (set `true` by agent-code trigger, `false` by everything-else trigger) |
+| `_DEPLOY_AGENT_ENGINE` | `false` | Override to force Agent Engine redeploy. Auto-detected at runtime by `detect-agent-changes` step via `git diff`; set explicitly to `true` to force a redeploy regardless of changed files. |
 | `_STAGING_BUCKET` | `` | GCS staging bucket for Agent Engine deployment (e.g. `gs://my-bucket`) |
 | `_AGENT_ENGINE_RESOURCE_NAME` | `` | Full resource name of the Agent Engine for Cloud Run (e.g. `projects/P/locations/L/reasoningEngines/ID`) |
 | `_MODEL_ARMOR_ENABLED` | `false` | Enable Model Armor prompt filtering |

@@ -1,19 +1,18 @@
-# CI + CD Pipeline — Used by push to main trigger
+# CI + CD Pipeline — Used by the single push-to-main trigger (ci-cd-push-main)
 #
-# Two Cloud Build triggers point to this file:
-#
-#   Trigger 1 — agent code changed (includedFiles: customer_support_agent/**)
-#     _DEPLOY_AGENT_ENGINE=true
-#
-#   Trigger 2 — everything else (ignoredFiles: customer_support_agent/**)
-#     _DEPLOY_AGENT_ENGINE=false
+# One trigger fires on ALL pushes to main. A detect-agent-changes step at the
+# start auto-detects whether customer_support_agent/** files changed and writes
+# the result to /workspace/deploy_agent_engine.txt.  The deploy-agent-engine
+# step respects both that file AND the explicit _DEPLOY_AGENT_ENGINE=true
+# substitution (set by manual / forced deploys via ci-manual trigger).
 #
 # Ordering:
-#   CI (install → lint + tool-tests → unit-tests → integration-tests)
-#     → docker-build + push
-#       → deploy-agent-engine (if enabled)   ← agent first
-#         → deploy-cloud-run                 ← cloud run second
-#           → smoke-test
+#   detect-agent-changes
+#     → CI (install → lint + tool-tests → unit-tests → integration-tests)
+#       → docker-build + push
+#         → deploy-agent-engine (if agent changed or forced)   ← agent first
+#           → deploy-cloud-run                                 ← cloud run second
+#             → smoke-test
 
 substitutions:
   _EVAL_PROFILE: "standard"
@@ -38,6 +37,29 @@ options:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 steps:
+  # ===========================================================================
+  # Detect whether agent code changed — decides if Agent Engine needs deploy
+  # Writes "true"/"false" to /workspace/deploy_agent_engine.txt.
+  # Overridden to "true" if _DEPLOY_AGENT_ENGINE=true is set explicitly.
+  # ===========================================================================
+  - id: "detect-agent-changes"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        if [ "${_DEPLOY_AGENT_ENGINE}" = "true" ]; then
+          echo "Agent Engine deploy forced via _DEPLOY_AGENT_ENGINE=true"
+          echo "true" > /workspace/deploy_agent_engine.txt
+        elif git diff --name-only HEAD~1 HEAD -- customer_support_agent/ | grep -q .; then
+          echo "Agent code changed — will deploy Agent Engine"
+          echo "true" > /workspace/deploy_agent_engine.txt
+        else
+          echo "No agent code changed — skipping Agent Engine deploy"
+          echo "false" > /workspace/deploy_agent_engine.txt
+        fi
+    waitFor: ["-"]
+
   # ===========================================================================
   # Install dependencies into shared /workspace/.venv
   # ===========================================================================
@@ -164,8 +186,8 @@ steps:
     args:
       - "-c"
       - |
-        if [ "${_DEPLOY_AGENT_ENGINE}" != "true" ]; then
-          echo "Skipping Agent Engine deploy (_DEPLOY_AGENT_ENGINE != true)"
+        if [ "$(cat /workspace/deploy_agent_engine.txt)" != "true" ]; then
+          echo "Skipping Agent Engine deploy (no agent code changes)"
           exit 0
         fi
         export PATH="/workspace/.venv/bin:$$PATH"

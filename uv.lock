@@ -565,6 +565,7 @@ dependencies = [
     { name = "google-adk" },
     { name = "google-cloud-aiplatform", extra = ["adk", "agent-engines", "evaluation"] },
     { name = "google-cloud-firestore" },
+    { name = "google-cloud-modelarmor" },
     { name = "ipython" },
     { name = "numpy" },
     { name = "pandas" },
@@ -588,6 +589,7 @@ requires-dist = [
     { name = "google-adk", specifier = ">=1.19.0" },
     { name = "google-cloud-aiplatform", extras = ["adk", "agent-engines", "evaluation"], specifier = ">=1.112" },
     { name = "google-cloud-firestore", specifier = ">=2.16.0" },
+    { name = "google-cloud-modelarmor", specifier = ">=0.4.0" },
     { name = "ipython", specifier = ">=9.10.0" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pandas", specifier = ">=2.0" },
@@ -615,6 +617,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "google-cloud-aiplatform", extra = ["adk", "agent-engines"] },
     { name = "google-cloud-firestore" },
+    { name = "google-cloud-modelarmor" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
@@ -629,6 +632,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "google-cloud-aiplatform", extras = ["adk", "agent-engines"], specifier = ">=1.112" },
     { name = "google-cloud-firestore", specifier = ">=2.16.0" },
+    { name = "google-cloud-modelarmor", specifier = ">=0.1.0" },
     { name = "pydantic", specifier = ">=2.6.1" },
     { name = "pydantic-settings", specifier = ">=2.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -1240,6 +1244,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7f/47/31ef0261802fe8b37c221392e1d6ff01d30b03dce5e20e77fc7d57ddf8a3/google_cloud_logging-3.13.0.tar.gz", hash = "sha256:3aae0573b1a1a4f59ecdf4571f4e7881b5823bd129fe469561c1c49a7fa8a4c1", size = 290169, upload-time = "2025-12-16T14:11:07.345Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/5a/778dca2e375171af4085554cb3bc643627717a7e4e1539842ced3afd6ec4/google_cloud_logging-3.13.0-py3-none-any.whl", hash = "sha256:f215e1c76ee29239c6cacf02443dffa985663c74bf47c9818854694805c6019f", size = 230518, upload-time = "2025-12-16T14:11:05.894Z" },
+]
+
+[[package]]
+name = "google-cloud-modelarmor"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f7/0c/6d5fbece0a054a55f0af84030e7849200fbf2531af6177cded9b21b58908/google_cloud_modelarmor-0.4.0.tar.gz", hash = "sha256:6e07941e6ee54d28ce3933d50d0999d2dfe32b3d39b49a791e7b180237db0166", size = 158141, upload-time = "2026-01-15T13:05:00.339Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/2b/0dae8c1d8288f7384259a376f46a6e591c1d3dc704c13efe2abc5cd94ef6/google_cloud_modelarmor-0.4.0-py3-none-any.whl", hash = "sha256:aa701ad77dcc52e482c0c80985a7e7bcf87e669726043b1ce851c844abf8dfbf", size = 137555, upload-time = "2026-01-15T13:03:14.902Z" },
 ]
 
 [[package]]
