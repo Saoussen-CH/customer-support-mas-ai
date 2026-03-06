@@ -30,6 +30,7 @@ AGENT_RETRY_POLICY = retry.Retry(
         exceptions.DeadlineExceeded,  # 504 Gateway Timeout
         exceptions.InternalServerError,  # 500 Internal Server Error
         exceptions.TooManyRequests,  # 429 Too Many Requests
+        exceptions.FailedPrecondition,  # Agent Engine uses this for "Rate exceeded"
     ),
 )
 
@@ -252,6 +253,12 @@ class AgentEngineClient:
             # Re-raise TimeoutError from session creation (already counted above)
             raise
         except Exception as e:
+            error_str = str(e)
+            # Rate limit errors (Agent Engine returns FAILED_PRECONDITION with "Rate exceeded")
+            # are transient quota exhaustion — don't trip the circuit breaker.
+            if "Rate exceeded" in error_str or "rate exceeded" in error_str.lower():
+                logger.warning("Agent Engine rate limit hit — not tripping circuit breaker", error=error_str[:200])
+                raise Exception("The service is currently rate limited. Please wait a moment and try again.")
             _circuit_breaker.record_failure()
             logger.error("Error querying agent", error=str(e), exc_info=True)
             raise Exception(f"Failed to query agent: {str(e)}")
