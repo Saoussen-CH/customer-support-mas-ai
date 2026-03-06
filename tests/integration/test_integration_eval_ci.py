@@ -76,12 +76,18 @@ class TestMultiAgentHandoffs:
 
     @pytest.mark.asyncio
     async def test_refund_agent_handoffs(self):
-        """Refund flows: eligible, denied, refund then context switch."""
+        """Refund flows: eligible, denied, refund then context switch.
+
+        num_runs=1: eval cases are intentionally stateful — refund_eligible_flow
+        writes a refund record that refund_then_other expects to find already present.
+        Running twice with a shared mock DB would cause refund_eligible_flow to fail
+        on run 2 (item already refunded from run 1).
+        """
         await AgentEvaluator.evaluate_eval_set(
             agent_module=AGENT_MODULE,
             eval_set=load_eval_set("tests/integration/refund_agent_handoffs.evalset.json"),
             eval_config=load_eval_config("integration"),
-            num_runs=2,
+            num_runs=1,
             print_detailed_results=False,
         )
 
