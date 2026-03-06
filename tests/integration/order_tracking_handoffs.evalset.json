@@ -77,7 +77,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "This order (ORD-67890) was placed on January 28, 2026, and delivered on February 2, 2026.\n\nIt contained:\n*   1 x Wireless Headphones Pro ($199.99)\n\nThe total for the order was $215.99 (including $16 tax). It was shipped via QuickPost with tracking number QP456789012 to 123 Main St, San Francisco, CA, 94102, USA.\n"
+                "text": "This order (ORD-67890) was placed on January 5, 2026, and delivered on January 10, 2026.\n\nIt contained:\n*   1 x Wireless Headphones Pro ($199.99)\n\nThe total for the order was $215.99 (including $16 tax). It was shipped via QuickPost with tracking number QP456789012 to 123 Main St, San Francisco, CA, 94102, USA.\n"
               }
             ],
             "role": "model"
@@ -111,7 +111,7 @@
                         "id": "adk-8a16a929-b73c-474d-bf74-c1d0a28bfea0",
                         "name": "order_agent",
                         "response": {
-                          "result": "This order (ORD-67890) was placed on January 28, 2026, and delivered on February 2, 2026.\n\nIt contained:\n*   1 x Wireless Headphones Pro ($199.99)\n\nThe total for the order was $215.99 (including $16 tax). It was shipped via QuickPost with tracking number QP456789012 to 123 Main St, San Francisco, CA, 94102, USA."
+                          "result": "This order (ORD-67890) was placed on January 5, 2026, and delivered on January 10, 2026.\n\nIt contained:\n*   1 x Wireless Headphones Pro ($199.99)\n\nThe total for the order was $215.99 (including $16 tax). It was shipped via QuickPost with tracking number QP456789012 to 123 Main St, San Francisco, CA, 94102, USA."
                         }
                       }
                     }
@@ -136,7 +136,7 @@
           "final_response": {
             "parts": [
               {
-                "text": "Here's a summary of all your orders:\n\n*   **Order ID:** ORD-12345\n    *   **Date:** 2025-01-15\n    *   **Total:** $1295.98\n    *   **Status:** In Transit\n*   **Order ID:** ORD-67890\n    *   **Date:** 2026-01-28\n    *   **Total:** $215.99\n    *   **Status:** Delivered\n*   **Order ID:** ORD-11111\n    *   **Date:** 2025-12-19\n    *   **Total:** $485.99\n    *   **Status:** Delivered\n\nWould you like more details on any specific order, or perhaps full details of all your orders?\n"
+                "text": "Here's a summary of all your orders:\n\n*   **Order ID:** ORD-12345\n    *   **Date:** 2025-01-15\n    *   **Total:** $1295.98\n    *   **Status:** In Transit\n*   **Order ID:** ORD-67890\n    *   **Date:** 2026-01-05\n    *   **Total:** $215.99\n    *   **Status:** Delivered\n*   **Order ID:** ORD-11111\n    *   **Date:** 2025-11-26\n    *   **Total:** $485.99\n    *   **Status:** Delivered\n\nWould you like more details on any specific order, or perhaps full details of all your orders?\n"
               }
             ],
             "role": "model"
@@ -170,7 +170,7 @@
                         "id": "adk-a33a891e-3d3a-46a5-b5d7-478fc2959ce1",
                         "name": "order_agent",
                         "response": {
-                          "result": "Here's a summary of all your orders:\n\n*   **Order ID:** ORD-12345\n    *   **Date:** 2025-01-15\n    *   **Total:** $1295.98\n    *   **Status:** In Transit\n*   **Order ID:** ORD-67890\n    *   **Date:** 2026-01-28\n    *   **Total:** $215.99\n    *   **Status:** Delivered\n*   **Order ID:** ORD-11111\n    *   **Date:** 2025-12-19\n    *   **Total:** $485.99\n    *   **Status:** Delivered\n\nWould you like more details on any specific order, or perhaps full details of all your orders?"
+                          "result": "Here's a summary of all your orders:\n\n*   **Order ID:** ORD-12345\n    *   **Date:** 2025-01-15\n    *   **Total:** $1295.98\n    *   **Status:** In Transit\n*   **Order ID:** ORD-67890\n    *   **Date:** 2026-01-05\n    *   **Total:** $215.99\n    *   **Status:** Delivered\n*   **Order ID:** ORD-11111\n    *   **Date:** 2025-11-26\n    *   **Total:** $485.99\n    *   **Status:** Delivered\n\nWould you like more details on any specific order, or perhaps full details of all your orders?"
                         }
                       }
                     }
