@@ -617,94 +617,100 @@ sessions/
 
 ### Model Armor
 
-[Model Armor](https://cloud.google.com/model-armor/docs) is Google Cloud's security layer that screens prompts and responses for harmful content, prompt injection, and jailbreak attempts on every Gemini `generateContent` call.
+[Model Armor](https://cloud.google.com/model-armor/docs) is Google Cloud's AI firewall that screens prompts and responses for prompt injection, jailbreaks, harmful content, PII leakage, and malicious URIs.
 
-#### How it integrates with this project
+#### Two layers of protection
 
 ```
-User message → FastAPI backend → Agent Engine
-                                      │
-                         (Agent Engine calls Gemini internally)
-                                      │
-                             ┌────────▼────────┐
-                             │  Model Armor     │
-                             │  Floor Settings  │  ← project-level, automatic
-                             └────────┬────────┘
-                                      │ screens every generateContent call
-                                      ▼
-                                  Gemini API
-                                      │
-                             ┌────────▼────────┐
-                             │  Model Armor     │
-                             │  response check  │
-                             └────────┬────────┘
-                                      ▼
-                              Agent response → User
+User message
+     │
+     ▼
+┌─────────────────────────────┐
+│  FastAPI backend            │
+│  POST /api/chat             │
+│                             │
+│  ① Backend check            │  ← MODEL_ARMOR_ENABLED=true
+│    sanitize_user_prompt()   │     blocks unsafe input (HTTP 400)
+│    template-based policy    │     before it reaches the agent
+└──────────────┬──────────────┘
+               │ safe prompt
+               ▼
+        Agent Engine
+               │
+  (Gemini generateContent calls)
+               │
+     ┌─────────▼─────────┐
+     │  Model Armor       │
+     │  ② Floor Settings  │  ← project-level, automatic
+     └─────────┬─────────┘     screens every generateContent call
+               ▼
+           Gemini API
+               │
+        Agent response
+               ▼
+             User
 ```
 
-**Floor settings** are project-level and intercept every `generateContent` call made by Agent Engine — no code changes to agents or tools are required.
+**Layer 1 — Backend template check** (`MODEL_ARMOR_ENABLED=true`): The FastAPI `/api/chat` endpoint calls `sanitize_user_prompt()` against the named template before routing to the agent. Returns HTTP 400 if the prompt violates the template policy. Controlled by `MODEL_ARMOR_ENABLED` and `MODEL_ARMOR_TEMPLATE_ID`.
 
-**Templates** (optional) provide per-deployment fine-grained policy on top of floor settings, configured via `MODEL_ARMOR_TEMPLATE_ID`.
+**Layer 2 — Floor settings** (always active once configured): Project-level policy applied automatically to every Gemini `generateContent` call including those made internally by Agent Engine. No code changes required — set via `make setup-model-armor`.
+
+#### ADK Plugin (for reference / workshops)
+
+`customer_support_agent/safety/model_armor_plugin.py` implements a `BasePlugin` that hooks into the ADK agent lifecycle to screen at four points: incoming user message, before LLM call, after model response, and after tool output. It is intentionally **disabled** in this deployment (Layer 1 is sufficient) but available for scenarios where the agent is exposed directly without a backend, or when tools fetch untrusted external content. See the plugin file for instructions to re-enable.
 
 #### What it protects against
 
-| Threat | Coverage |
-|--------|---------|
-| **Prompt injection** | User embeds instructions like "ignore your system prompt" |
-| **Jailbreaks** | Attempts to bypass refund validation or authorization checks |
-| **Harmful content** | Harassment, hate speech, dangerous content in responses |
-| **Sensitive data exposure** | PII leakage in billing or order responses |
-| **Malicious URIs** | Links to phishing or malware sites |
-
-#### Enforcement modes
-
-| Mode | Behaviour |
-|------|-----------|
-| `INSPECT_ONLY` | Log violations to Cloud Logging, allow request through |
-| `INSPECT_AND_BLOCK` | Reject requests/responses that violate thresholds (default) |
+| Threat | Filter |
+|--------|--------|
+| Prompt injection / jailbreaks | `pi_and_jailbreak` |
+| Harassment, hate speech, dangerous content | `rai` |
+| PII leakage (credit cards, SSN, email) | `sdp` (via DLP templates) |
+| Malicious URIs in responses | `malicious_uris` |
 
 #### Setup
 
 ```bash
-# Enable Model Armor with INSPECT_AND_BLOCK floor settings
+# 1. Enable API + grant IAM + configure floor settings
 make setup-model-armor
 
-# INSPECT_ONLY mode (log only, no blocking)
-make setup-model-armor MODE=INSPECT_ONLY
+# 2. Create the named template (gcloud model-armor not yet in SDK 482 — use Python SDK)
+make create-model-armor-template
+# Prints: MODEL_ARMOR_TEMPLATE_ID=projects/.../locations/.../templates/customer-support-policy
 
-# Also create a named template for fine-grained control
-make setup-model-armor CREATE_TEMPLATE=1
-```
+# 3. Add to .env
+MODEL_ARMOR_ENABLED=true
+MODEL_ARMOR_TEMPLATE_ID=projects/YOUR_PROJECT/locations/us-central1/templates/customer-support-policy
 
-Or directly:
-```bash
-./scripts/setup_model_armor.sh
-./scripts/setup_model_armor.sh --mode INSPECT_ONLY
-./scripts/setup_model_armor.sh --create-template
+# 4. Smoke test (safe prompt → ALLOWED, jailbreak → BLOCKED, harassment → BLOCKED)
+make test-model-armor
 ```
 
 #### Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL_ARMOR_ENABLED` | `false` | Enables template-based screening (floor settings are independent) |
+| `MODEL_ARMOR_ENABLED` | `false` | Enables backend template-based screening in `/api/chat` |
 | `MODEL_ARMOR_TEMPLATE_ID` | `` | Full template resource name (`projects/.../locations/.../templates/...`) |
-| `MODEL_ARMOR_MODE` | `INSPECT_AND_BLOCK` | Floor enforcement mode (informational — set via `gcloud`, not code) |
+| `MODEL_ARMOR_MODE` | `INSPECT_AND_BLOCK` | Floor enforcement mode (informational — configured via `gcloud`, not code) |
 
-**Note:** Floor settings take effect at the GCP project level and do not require `MODEL_ARMOR_ENABLED=true`. The env vars only govern optional template-based screening on top of floor settings.
+**Note:** Floor settings are independent of `MODEL_ARMOR_ENABLED`. They activate at the GCP project level once `make setup-model-armor` is run, regardless of env vars.
 
 #### Observability
 
-All Model Armor screening results are logged to Cloud Logging. Enable the sink:
-```bash
-gcloud logging sinks create model-armor-sink \
-  logging.googleapis.com/projects/$PROJECT_ID/logs/modelarmor.googleapis.com \
-  --log-filter='resource.type="modelarmor.googleapis.com/Template"'
-```
+All template screening results are logged to Cloud Logging automatically when `log_template_operations=true` is set on the template (default in `create_model_armor_template.py`). View in Cloud Console → Logging → `modelarmor.googleapis.com`.
 
-**Config:** `customer_support_agent/config.py` — `MODEL_ARMOR_CONFIG`
+#### Key files
 
-**Setup script:** `scripts/setup_model_armor.sh`
+| File | Purpose |
+|------|---------|
+| `customer_support_agent/safety/safety_util.py` | Parses Model Armor responses, extracts violated filter names |
+| `customer_support_agent/safety/model_armor_plugin.py` | ADK plugin (disabled — available for reference) |
+| `backend/app/main.py` | Backend check in `/api/chat` (Layer 1) |
+| `scripts/setup_model_armor.sh` | Enable API, grant IAM, configure floor settings |
+| `scripts/create_model_armor_template.py` | Create named template via Python SDK |
+| `scripts/test_model_armor.py` | Smoke test: 3 prompts (safe, jailbreak, harassment) |
+| `customer_support_agent/config.py` | `MODEL_ARMOR_CONFIG` dict |
 
 ## Observability
 
