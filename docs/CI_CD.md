@@ -132,12 +132,15 @@ gcloud builds triggers run ci-manual \
   --project=YOUR_PROJECT_ID --region=us-central1 --branch=main
 
 # Full eval + post-deploy eval against a live Agent Engine
+# _STAGING_BUCKET is required when _RUN_POST_DEPLOY_EVAL=true:
+#   - eval HTML report is uploaded to gs://BUCKET/eval-reports/eval-TIMESTAMP.html
+#   - the GCS URI is recorded as a param in the Vertex AI Experiments run
 gcloud builds triggers run ci-manual \
   --project=YOUR_PROJECT_ID --region=us-central1 --branch=main \
-  --substitutions="_RUN_POST_DEPLOY_EVAL=true,_AGENT_ENGINE_ID=YOUR_ENGINE_ID"
+  --substitutions="_RUN_POST_DEPLOY_EVAL=true,_AGENT_ENGINE_ID=YOUR_ENGINE_ID,_STAGING_BUCKET=gs://YOUR_BUCKET"
 ```
 
-`_RUN_POST_DEPLOY_EVAL` and `_AGENT_ENGINE_ID` default to `false` and `""` in the trigger definition — override them at run time only when needed.
+`_RUN_POST_DEPLOY_EVAL`, `_AGENT_ENGINE_ID`, and `_STAGING_BUCKET` default to `false`, `""`, and `""` in the trigger definition — override them at run time only when needed.
 
 ## Setup
 
@@ -217,7 +220,7 @@ For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in th
 | **_EVAL_PROFILE** | — | `standard` | `standard` | `standard` | `full` |
 | **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
 | **_DEPLOY_AGENT_ENGINE** | — | — | `true` | `false` | — |
-| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | — |
+| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
 | **_AGENT_ENGINE_DISPLAY_NAME** | — | — | `customer-support-multiagent` | `customer-support-multiagent` | — |
 | **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` | — |
 
@@ -320,7 +323,7 @@ The `manual` event type must be created from the **Cloud Console** (not supporte
 3. Event: **Manual invocation**
 4. Source (2nd gen): repository `Saoussen-CH/customer-support-mas-ai` | branch: `main`
 5. Configuration: Cloud Build configuration file → `cloudbuild/cloudbuild-nightly.yaml`
-6. Substitution variables: `_EVAL_PROFILE=full`, `_GOOGLE_CLOUD_LOCATION=us-central1`
+6. Substitution variables: `_EVAL_PROFILE=full`, `_GOOGLE_CLOUD_LOCATION=us-central1`, `_STAGING_BUCKET=gs://YOUR_BUCKET`
 7. Service account: `YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com`
 
 Run on demand via CLI:
@@ -399,6 +402,7 @@ gcloud scheduler jobs create http nightly-full-eval \
 | `_RUN_INTEGRATION_TESTS` | `true` | Run integration-tests step (nightly only) |
 | `_RUN_POST_DEPLOY_EVAL` | `false` | Enable post-deploy eval (nightly only) |
 | `_AGENT_ENGINE_ID` | `` | Agent Engine ID for post-deploy eval |
+| `_STAGING_BUCKET` (nightly) | `` | GCS bucket for post-deploy eval HTML report upload (e.g. `gs://my-bucket`). Report saved to `gs://BUCKET/eval-reports/eval-TIMESTAMP.html`; URI logged as a param in Vertex AI Experiments run. |
 
 `$PROJECT_ID` and `$COMMIT_SHA` are built-in Cloud Build substitutions.
 
@@ -442,6 +446,9 @@ make nightly                                         # all CI steps, post-deploy
 make nightly RUN_LINT=false RUN_TOOL_TESTS=false     # unit + integration only
 make nightly RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # skip integration, run post-deploy
 make nightly RUN_LINT=false RUN_TOOL_TESTS=false RUN_UNIT_TESTS=false RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # post-deploy eval only
+# _STAGING_BUCKET is read automatically from GOOGLE_CLOUD_STORAGE_BUCKET in .env
+# HTML report → gs://BUCKET/eval-reports/eval-TIMESTAMP.html
+# Vertex AI Experiments run → eval-TIMESTAMP (same name, GCS URI logged as param)
 
 # Show all targets
 make help
