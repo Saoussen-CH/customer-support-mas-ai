@@ -101,6 +101,17 @@ resource "google_service_account_iam_member" "cloud_build_impersonate_compute" {
 # Model Armor — grant modelarmor.user to both Vertex AI service accounts
 # so that Agent Engine and embedding calls can pass through Model Armor screening
 # ------------------------------------------------------------------------------
+# Cloud Run SA calls Model Armor API directly from the FastAPI backend
+resource "google_project_iam_member" "model_armor_cloud_run" {
+  count = var.model_armor_enabled ? 1 : 0
+
+  project = var.project_id
+  role    = "roles/modelarmor.user"
+  member  = "serviceAccount:${local.cloud_run_sa}"
+
+  depends_on = [google_project_service.apis]
+}
+
 resource "google_project_iam_member" "model_armor_agent_engine" {
   count = var.model_armor_enabled ? 1 : 0
 

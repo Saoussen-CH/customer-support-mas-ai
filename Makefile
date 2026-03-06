@@ -32,6 +32,7 @@ COMMON_ENV := GOOGLE_GENAI_USE_VERTEXAI=True
 # ------------------------------------------------------------------------------
 .PHONY: help \
         install setup-gcp setup-firestore setup-cloud-build \
+        setup-model-armor create-model-armor-template test-model-armor \
         seed-db add-embeddings vector-index \
         lint format \
         test-tools test-unit test-integration test \
@@ -101,6 +102,12 @@ setup-model-armor: ## Enable Model Armor and configure floor settings
 	if [ -n "$(MODE)" ]; then ARGS="$$ARGS --mode $(MODE)"; fi; \
 	if [ -n "$(CREATE_TEMPLATE)" ]; then ARGS="$$ARGS --create-template"; fi; \
 	bash scripts/setup_model_armor.sh $$ARGS
+
+create-model-armor-template: ## Create Model Armor template via Python SDK (use when gcloud model-armor is unavailable)
+	PYTHONPATH=. $(PYTHON) scripts/create_model_armor_template.py
+
+test-model-armor: ## Smoke test Model Armor API (safe + unsafe prompts)
+	PYTHONPATH=. $(PYTHON) scripts/test_model_armor.py
 
 seed-db: ## Seed Firestore with sample products, orders, invoices, users
 	PYTHONPATH=. $(PYTHON) -m customer_support_agent.database.seed \

@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -33,6 +34,26 @@ from .rate_limiter import RateLimitDependency
 is_production = os.getenv("ENVIRONMENT", "development") == "production"
 setup_logging(level=os.getenv("LOG_LEVEL", "INFO"), json_format=is_production, service_name="customer-support-api")
 logger = get_logger(__name__)
+
+# Model Armor (optional — only initialized when enabled)
+_MODEL_ARMOR_ENABLED = os.getenv("MODEL_ARMOR_ENABLED", "false").lower() == "true"
+_MODEL_ARMOR_TEMPLATE_ID = os.getenv("MODEL_ARMOR_TEMPLATE_ID", "")
+_model_armor_client = None
+_modelarmor_v1 = None
+_parse_ma_response = None
+if _MODEL_ARMOR_ENABLED and _MODEL_ARMOR_TEMPLATE_ID:
+    try:
+        from google.api_core.client_options import ClientOptions as _ClientOptions
+        from google.cloud import modelarmor_v1 as _modelarmor_v1
+
+        from customer_support_agent.safety.safety_util import parse_model_armor_response as _parse_ma_response
+
+        _location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+        _model_armor_client = _modelarmor_v1.ModelArmorClient(
+            client_options=_ClientOptions(api_endpoint=f"modelarmor.{_location}.rep.googleapis.com")
+        )
+    except Exception as _ma_init_err:
+        logging.getLogger(__name__).warning("Model Armor init failed: %s", _ma_init_err)
 
 # Initialize database
 db = get_database(project_id=settings.google_cloud_project, database_id="customer-support-db")
@@ -379,6 +400,27 @@ async def chat(
             internal_session_id = None
             agent_engine_session_id = None
             logger.info("Creating new session")
+
+        # Model Armor safety check — screen user prompt before sending to agent
+        if _model_armor_client and _MODEL_ARMOR_TEMPLATE_ID:
+            try:
+                ma_response = _model_armor_client.sanitize_user_prompt(
+                    request=_modelarmor_v1.SanitizeUserPromptRequest(
+                        name=_MODEL_ARMOR_TEMPLATE_ID,
+                        user_prompt_data=_modelarmor_v1.DataItem(text=request.message),
+                    )
+                )
+                violations = _parse_ma_response(ma_response)
+                if violations:
+                    logger.warning("Model Armor blocked user prompt", violations=str(violations))
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Request blocked by safety policy: {violations}",
+                    )
+            except HTTPException:
+                raise
+            except Exception as ma_err:
+                logger.error("Model Armor check error (failing open)", error=str(ma_err))
 
         # Query the agent
         response_text, agent_engine_session_id = await agent_client.query_agent(

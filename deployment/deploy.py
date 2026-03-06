@@ -33,6 +33,7 @@ sys.path.insert(0, str(project_root))
 # customer_support_agent, whose config.py validates GOOGLE_CLOUD_PROJECT at import time
 load_dotenv()
 
+from customer_support_agent.config import MODEL_ARMOR_CONFIG  # noqa: E402
 from customer_support_agent.main import root_agent  # noqa: E402
 
 # =============================================================================
@@ -51,6 +52,7 @@ DISPLAY_NAME = os.getenv("AGENT_ENGINE_DISPLAY_NAME", "customer-support-multiage
 REQUIREMENTS = [
     "google-cloud-aiplatform[adk,agent_engines]>=1.112",
     "google-cloud-firestore>=2.16.0",
+    "google-cloud-modelarmor>=0.1.0",
     "requests",
     "numpy>=1.24.0",
     "vertexai>=1.38.0",
@@ -62,10 +64,32 @@ ENV_VARS = {
     "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true",
 }
 
+# Propagate Model Armor settings to Agent Engine runtime if enabled
+if MODEL_ARMOR_CONFIG["enabled"] and MODEL_ARMOR_CONFIG["template_id"]:
+    ENV_VARS["MODEL_ARMOR_ENABLED"] = "true"
+    ENV_VARS["MODEL_ARMOR_TEMPLATE_ID"] = MODEL_ARMOR_CONFIG["template_id"]
+
 
 # =============================================================================
 # HELPERS
 # =============================================================================
+
+
+def build_plugins() -> list:
+    """Build the ADK plugin list, conditionally including Model Armor."""
+    plugins = [LoggingPlugin()]
+    # NOTE: ModelArmorSafetyFilterPlugin is intentionally disabled for this deployment.
+    # The backend (/api/chat) already screens user prompts via Model Armor before
+    # they reach the agent, which is sufficient for this project.
+    # Uncomment to enable ADK-level screening (useful when the agent is exposed
+    # directly without a backend, or when tools fetch untrusted external content):
+    #
+    # if MODEL_ARMOR_CONFIG["enabled"] and MODEL_ARMOR_CONFIG["template_id"]:
+    #     from customer_support_agent.safety import ModelArmorSafetyFilterPlugin
+    #     plugins.append(
+    #         ModelArmorSafetyFilterPlugin(template_id=MODEL_ARMOR_CONFIG["template_id"])
+    #     )
+    return plugins
 
 
 def get_numeric_project_id(project_id: str) -> str:
@@ -156,7 +180,7 @@ async def test_locally():
         agent=root_agent,
         app_name="customer_support",
         enable_tracing=True,
-        plugins=[LoggingPlugin()],
+        plugins=build_plugins(),
     )
 
     session = await app.async_create_session(user_id="test_user_001")
@@ -226,7 +250,7 @@ def deploy_to_agent_engine():
         agent=root_agent,
         app_name="customer_support",
         enable_tracing=True,
-        plugins=[LoggingPlugin()],
+        plugins=build_plugins(),
     )
 
     # -------------------------------------------------------------------------

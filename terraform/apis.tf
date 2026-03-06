@@ -21,9 +21,12 @@ locals {
     "cloudscheduler.googleapis.com",       # Cloud Scheduler (nightly eval trigger)
   ]
 
-  model_armor_api = var.model_armor_enabled ? ["modelarmor.googleapis.com"] : []
+  model_armor_apis = var.model_armor_enabled ? [
+    "modelarmor.googleapis.com",
+    "dlp.googleapis.com",  # Cloud DLP — required for SDP filter in Model Armor template
+  ] : []
 
-  all_apis = concat(local.base_apis, local.model_armor_api)
+  all_apis = concat(local.base_apis, local.model_armor_apis)
 }
 
 resource "google_project_service" "apis" {

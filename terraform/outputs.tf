@@ -43,6 +43,11 @@ output "model_armor_enabled" {
   value       = var.model_armor_enabled
 }
 
+output "model_armor_template_name" {
+  description = "Full resource name of the Model Armor template. Set MODEL_ARMOR_TEMPLATE_ID to this value in .env and Cloud Run env vars."
+  value       = var.model_armor_enabled ? google_model_armor_template.customer_support_policy[0].name : ""
+}
+
 output "next_steps" {
   description = "Post-apply checklist."
   value = <<-EOT
@@ -61,6 +66,10 @@ output "next_steps" {
          make deploy-cloud-run
 
     5. Set AGENT_ENGINE_RESOURCE_NAME in backend/.env, then redeploy Cloud Run.
+
+    6. (If model_armor_enabled=true) Set MODEL_ARMOR_TEMPLATE_ID to the
+       model_armor_template_name output value in .env and Cloud Run env vars,
+       then set MODEL_ARMOR_ENABLED=true.
 
     Artifact Registry URL: ${local.ar_base_url}
     Firestore database:    ${var.firestore_database_id}
