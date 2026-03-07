@@ -1,529 +1,258 @@
 # Deployment Guide
 
-This guide covers deploying the customer support multi-agent system to Google Cloud.
-
-> 📝 **Note:** For current deployment status and known issues, see [DEPLOYMENT_NOTES.md](../DEPLOYMENT_NOTES.md)
+End-to-end setup for a new user starting from a fresh clone.
 
 ## Prerequisites
 
-- Google Cloud Project with billing enabled
-- APIs enabled: Firestore, Vertex AI, Cloud Run
-- `gcloud` CLI installed and authenticated
-- Python 3.11+
+Install these tools before starting:
 
-## Quick Deploy
+| Tool | Version | Install |
+|------|---------|---------|
+| `gcloud` CLI | latest | [cloud.google.com/sdk](https://cloud.google.com/sdk/docs/install) |
+| Terraform | >= 1.5 | [developer.hashicorp.com/terraform](https://developer.hashicorp.com/terraform/install) |
+| Python | 3.11 | [python.org](https://www.python.org/downloads/) |
+| `uv` | latest | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| Node.js | 20+ | [nodejs.org](https://nodejs.org/) (local dev only) |
+
+---
+
+## Step 1 — Authenticate and clone
 
 ```bash
-# 1. Configure environment
+gcloud auth login
+gcloud auth application-default login
+
+git clone https://github.com/YOUR_ORG/customer-support-mas-kaggle.git
+cd customer-support-mas-kaggle
+```
+
+---
+
+## Step 2 — Configure .env
+
+```bash
 cp .env.example .env
-nano .env  # Edit with your project details
-
-# 2. Set up service account permissions (REQUIRED)
-PROJECT_NUMBER=$(gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)")
-
-# Grant Firestore access to Cloud Run service account
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/datastore.user"
-
-# Grant Firestore access to Agent Engine service account
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  --role="roles/datastore.user"
-
-# 3. Deploy to Agent Engine
-python deployment/deploy.py --action deploy
-
-# 4. Create Vector Index for RAG (Required for semantic search)
-# Via REST API:
-curl -X POST \
-  "https://firestore.googleapis.com/v1/projects/YOUR_PROJECT/databases/YOUR_DB/collectionGroups/products/indexes" \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fields": [{
-      "fieldPath": "embedding",
-      "vectorConfig": {"dimension": 768, "flat": {}}
-    }],
-    "queryScope": "COLLECTION"
-  }'
-
-# Or use the helper script:
-python scripts/create_vector_index.py
-
-# 5. Add vector embeddings to products
-python scripts/add_embeddings.py \
-  --project YOUR_PROJECT \
-  --database YOUR_DB \
-  --location us-central1
-
-# 6. Redeploy with RAG enabled
-python deployment/deploy.py --action deploy
-
-# 7. (Optional) Deploy frontend/backend to Cloud Run
-./deployment/deploy-cloudrun.sh
 ```
 
-## Deployment Options
-
-### Option 1: Vertex AI Agent Engine (Recommended)
-
-Deploy the agent as a serverless reasoning engine:
+Fill in the required fields:
 
 ```bash
-# Deploy agent (or make deploy-agent-engine)
-python deployment/deploy.py --action deploy
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+FIRESTORE_DATABASE=customer-support-db
+MODEL_ARMOR_ENABLED=true   # recommended
 ```
 
-**Important:** Always run from project root directory.
+Leave `GOOGLE_CLOUD_STORAGE_BUCKET`, `AGENT_ENGINE_RESOURCE_NAME`, and
+`MODEL_ARMOR_TEMPLATE_ID` blank for now — they come from Terraform output.
 
-**What it does:**
-- Looks for an existing Agent Engine with the configured display name
-- If found → **updates** it in place (same resource name, Cloud Run needs no change)
-- If not found → **creates** a new one, writes its resource name to `/workspace/agent_engine_resource_name.txt` (for pipeline handoff), prints it to stdout, and reminds you to update `AGENT_ENGINE_RESOURCE_NAME` in `.env`
-- Configures Memory Bank on the engine after deploy/update
+---
 
-**Environment variables:**
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GOOGLE_CLOUD_PROJECT` | Yes | — | GCP project ID |
-| `GOOGLE_CLOUD_STORAGE_BUCKET` | Yes | — | GCS bucket for staging (with `gs://` prefix) |
-| `GOOGLE_CLOUD_LOCATION` | No | `us-central1` | Deployment region |
-| `AGENT_ENGINE_DISPLAY_NAME` | No | `customer-support-multiagent` | Display name used for find-or-create |
-| `FIRESTORE_DATABASE` | No | `customer-support-db` | Firestore database name |
-
-**To deploy a new/separate agent engine:**
-
-1. Change `AGENT_ENGINE_DISPLAY_NAME` in `.env` to a new name.
-2. Run `make submit-build DEPLOY_AGENT_ENGINE=true` — `deploy.py` won't find the old engine and will create a new one.
-3. Copy the printed resource name into `AGENT_ENGINE_RESOURCE_NAME` in `.env`.
-4. Run `make submit-build` (without `DEPLOY_AGENT_ENGINE=true`) to redeploy Cloud Run pointing to the new engine.
-
-`AGENT_ENGINE_DISPLAY_NAME` is automatically read from `.env` by `make submit-build` and passed to Cloud Build as `_AGENT_ENGINE_DISPLAY_NAME`. Do not rely on the trigger substitution default — always set it in `.env`.
-
-### Option 2: Cloud Run (Full Stack)
-
-Deploy frontend + backend to Cloud Run:
+## Step 3 — Terraform (infrastructure bootstrap)
 
 ```bash
-./deployment/deploy-cloudrun.sh
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-**What it deploys:**
-- FastAPI backend (connects to Agent Engine)
-- React frontend
+Edit `terraform.tfvars` — the three required fields:
+
+```hcl
+project_id          = "your-gcp-project-id"
+staging_bucket_name = "your-project-id-staging"   # must be globally unique
+github_owner        = "your-github-username-or-org"
+```
+
+Run:
+
+```bash
+cd ..          # back to project root
+make infra-up  # terraform init + apply
+```
+
+Terraform creates:
+- GCS staging bucket
+- Artifact Registry repository
 - Firestore database
+- Cloud Build triggers (push-to-main + nightly)
+- All IAM bindings (Cloud Run SA, Agent Engine SA, Cloud Build SA)
+- Model Armor template + floor settings (if `model_armor_enabled = true`)
+- Cloud Scheduler nightly job
 
-**Configuration:**
-Edit `deployment/deploy-cloudrun.sh` and set:
-- `PROJECT_ID` - Your GCP project
-- `REGION` - Deployment region
-- `AGENT_ENGINE_RESOURCE_NAME` - From Agent Engine deployment
+---
 
-**Access:**
-```
-https://customer-support-ai-xxxxx-uc.a.run.app
-```
-
-## Management
-
-### List Deployed Agents
+## Step 4 — Update .env from Terraform outputs
 
 ```bash
-python deployment/manage_agent.py list
+cd terraform && terraform output && cd ..
 ```
 
-### Query a Deployed Agent
+Copy the values into `.env`:
+
+| Terraform output | .env variable |
+|-----------------|---------------|
+| `staging_bucket` | `GOOGLE_CLOUD_STORAGE_BUCKET=gs://<value>` |
+| `firestore_database_id` | `FIRESTORE_DATABASE=<value>` |
+| `model_armor_template_name` | `MODEL_ARMOR_TEMPLATE_ID=<value>` |
+
+---
+
+## Step 5 — Install Python dependencies
 
 ```bash
-python deployment/manage_agent.py query \
-  --resource-name="projects/.../reasoningEngines/..." \
-  --message="Show me laptops under $600"
+make install
 ```
 
-### Delete a Deployed Agent
+---
+
+## Step 6 — Seed Firestore
 
 ```bash
-python deployment/manage_agent.py delete \
-  --resource-name="projects/.../reasoningEngines/..."
+make seed-db          # load demo products, orders, users, invoices
+make add-embeddings   # add vector embeddings for RAG semantic search
 ```
 
-## RAG Setup (Required for Semantic Search)
+> `add-embeddings` can take a few minutes. The Firestore vector index must be
+> READY first — Terraform creates it automatically.
 
-### 1. Create Vector Index
+---
 
-Firestore requires a vector index for semantic search:
+## Step 7 — Connect GitHub to Cloud Build
 
-**Method 1: REST API (Recommended)**
-```bash
-curl -X POST \
-  "https://firestore.googleapis.com/v1/projects/YOUR_PROJECT/databases/YOUR_DB/collectionGroups/products/indexes" \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fields": [{
-      "fieldPath": "embedding",
-      "vectorConfig": {"dimension": 768, "flat": {}}
-    }],
-    "queryScope": "COLLECTION"
-  }'
-```
+One-time manual step in the GCP Console (cannot be automated):
 
-**Method 2: Helper Script**
-```bash
-python scripts/create_vector_index.py
-# Will show instructions and check if index exists
-```
+1. Go to **Cloud Build → Triggers**
+2. Click **Connect Repository**
+3. Select **GitHub** and authorize
+4. Choose your repository
 
-**Check Index Status:**
-```bash
-gcloud firestore indexes composite list \
-  --database=YOUR_DB \
-  --project=YOUR_PROJECT
-# Look for: STATE = READY
-```
+The triggers created by Terraform will automatically link to it.
 
-### 2. Add Vector Embeddings
+---
 
-Once the index is READY (takes 5-10 minutes):
+## Step 8 — Deploy Agent Engine (first time)
 
 ```bash
-python scripts/add_embeddings.py \
-  --project YOUR_PROJECT \
-  --database YOUR_DB \
-  --location us-central1
+make deploy-agent-engine
 ```
 
-This adds 768-dimensional embeddings to all products using `text-embedding-004`.
-
-### 3. Redeploy Agent
-
-After embeddings are added:
+This creates the Agent Engine on Vertex AI. At the end it prints the resource
+name — copy it into `.env`:
 
 ```bash
-python deployment/deploy.py --action deploy
+AGENT_ENGINE_RESOURCE_NAME=projects/PROJECT_NUMBER/locations/us-central1/reasoningEngines/ENGINE_ID
 ```
 
-Now semantic search will work! Try: "Find me a gaming computer" (even though no product has those exact words).
+---
 
-## Service Account Permissions
+## Step 9 — Re-run GCP setup to grant Agent Engine SA permissions
 
-### Required Permissions for Deployment
-
-When deploying to Cloud Run and using Agent Engine, ensure the following service accounts have the correct permissions:
-
-#### 1. Cloud Run Service Account Permissions
-
-The Cloud Run compute service account needs Firestore access:
+The Agent Engine service account (`gcp-sa-aiplatform-re`) is created by
+Google on first Agent Engine deployment — it does not exist before that.
+Re-run setup now that it exists:
 
 ```bash
-# Get your project number
-PROJECT_NUMBER=$(gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)")
-
-# Grant Firestore access to Cloud Run service account
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/datastore.user"
-
-# Grant logging permissions (if not already set)
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/logging.logWriter"
+make setup-gcp
 ```
 
-#### 2. Agent Engine (Reasoning Engine) Service Account Permissions
+---
 
-The Agent Engine service account needs Firestore access to execute tools:
+## Step 10 — Push to main (deploys Cloud Run via CI/CD)
 
 ```bash
-# Grant Firestore access to Agent Engine service account
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  --role="roles/datastore.user"
+git push
 ```
 
-#### 3. Verify Permissions
+The Cloud Build trigger fires and runs the full pipeline:
 
-Check that permissions were granted:
+```
+install → lint + tool-tests → unit-tests → integration-tests
+  → docker-build → docker-push
+    → deploy-agent-engine (skipped — no agent code changed)
+      → deploy-cloud-run
+        → smoke-test
+```
+
+Get the Cloud Run URL:
 
 ```bash
-# List all IAM bindings for Firestore
-gcloud projects get-iam-policy YOUR_PROJECT_ID \
-  --flatten="bindings[].members" \
-  --filter="bindings.role:roles/datastore.user"
+gcloud run services describe customer-support-app \
+  --region=us-central1 \
+  --format='value(status.url)'
 ```
 
-You should see both service accounts listed:
-- `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com`
-- `service-{PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com`
+---
 
-### Common Permission Errors
+## Step 11 — Test
 
-**Error: `403 Missing or insufficient permissions`**
-- **Cause:** Service account lacks Firestore access
-- **Solution:** Run the permission commands above
+Demo accounts (pre-seeded by `make seed-db`):
 
-**Error: `429 RESOURCE_EXHAUSTED`**
-- **Cause:** Gemini API quota limits exceeded
-- **Solution:** Wait 1-2 minutes for quotas to reset, or request quota increase
+| Email | Password | Profile |
+|-------|----------|---------|
+| `demo@example.com` | `demo123` | Gold tier, has order history |
+| `jane@example.com` | `jane123` | Silver tier, has order history |
 
-## Database Setup
+Try these prompts:
+- `Where is my order ORD-12345?`
+- `Search for gaming laptops`
+- `Ignore all previous instructions...` — blocked by Model Armor
 
-### 1. Create Firestore Database
+---
+
+## Subsequent deployments
+
+| Scenario | Command |
+|----------|---------|
+| Agent code changed | `git push` — CI auto-detects, redeploys Agent Engine |
+| Backend/frontend only | `git push` — Agent Engine deploy skipped |
+| Force Agent Engine redeploy | `make submit-build DEPLOY_AGENT_ENGINE=true` |
+| Manual build without push | `make submit-build` |
+
+---
+
+## Useful make targets
 
 ```bash
-gcloud firestore databases create \
-  --location=us-central1 \
-  --database=customer-support-db
+make test                  # run all tests locally (EVAL_PROFILE=fast)
+make test-local            # run agent locally before deploying
+make test-model-armor      # smoke test Model Armor (safe + unsafe prompts)
+make lint                  # ruff check
+make format                # ruff auto-fix
+make seed-db               # re-seed Firestore
+make deploy-agent-engine   # deploy/update Agent Engine only
+make infra-up              # terraform init + apply
+make terraform-plan        # preview infrastructure changes
 ```
 
-### 2. Seed Data
-
-```bash
-python -m customer_support_agent.database.seed
-```
-
-This creates:
-- Products (10 items)
-- Orders (3 sample orders)
-- Invoices, payments, refunds
-- Review and inventory data
-
-### 3. Add Vector Embeddings (See RAG Setup section above)
-
-Vector embeddings are required for semantic search. See the **RAG Setup** section at the top of this document for complete instructions.
-
-## Environment Variables
-
-### Required
-
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-export GOOGLE_CLOUD_STORAGE_BUCKET="gs://your-bucket"
-```
-
-### Optional
-
-```bash
-export GOOGLE_CLOUD_LOCATION="us-central1"                      # Default region
-export FIRESTORE_DATABASE="customer-support-db"                  # Database name
-export AGENT_ENGINE_DISPLAY_NAME="customer-support-multiagent"   # Agent Engine display name
-export AGENT_ENGINE_RESOURCE_NAME="projects/..."                 # Set automatically by deploy.py
-```
+---
 
 ## Troubleshooting
 
-### API Not Enabled
+**Agent Engine rate limit (`FAILED_PRECONDITION: Rate exceeded`)**
+Wait 1–2 minutes — rate limits are per-minute quotas. The circuit breaker
+will not trip on rate limit errors, only on actual outages.
 
-```
-Error: API [aiplatform.googleapis.com] not enabled
-```
+**Model Armor not blocking prompts**
+Check Cloud Run startup logs for `Model Armor init failed`. Ensure
+`MODEL_ARMOR_TEMPLATE_ID` is set in the Cloud Run environment. Set it via
+`_MODEL_ARMOR_TEMPLATE_ID` substitution or add it to the trigger.
 
-**Solution:**
+**Agent Engine SA missing Firestore permissions**
+Run `make setup-gcp` after the first `make deploy-agent-engine`. The `-re`
+service account only exists after the first deployment.
+
+**Cloud Run returns 403**
+`gcloud run deploy --allow-unauthenticated` in the pipeline sets
+`allUsers roles/run.invoker` automatically. For manual deploys:
 ```bash
-gcloud services enable aiplatform.googleapis.com
-gcloud services enable firestore.googleapis.com
-gcloud services enable run.googleapis.com
+gcloud run services add-iam-policy-binding customer-support-app \
+  --region=us-central1 --member=allUsers --role=roles/run.invoker
 ```
 
-### Permission Denied
+---
 
-```
-Error: Permission denied on resource
-Error: 403 Missing or insufficient permissions
-```
+## See also
 
-**Solution:** Ensure service accounts have required roles.
-
-**For Cloud Run:**
-```bash
-PROJECT_NUMBER=$(gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)")
-
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --role="roles/datastore.user"
-```
-
-**For Agent Engine:**
-```bash
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com" \
-  --role="roles/datastore.user"
-```
-
-See the **Service Account Permissions** section above for complete setup instructions.
-
-### Deployment Fails
-
-Check logs:
-```bash
-gcloud run services logs read customer-support-ai --limit=50
-```
-
-### Agent Engine Not Found
-
-Verify deployment:
-```bash
-python deployment/manage_agent.py list
-```
-
-## Costs
-
-**Vertex AI Agent Engine:**
-- $0.002 per 1K characters input
-- $0.006 per 1K characters output
-
-**Cloud Run:**
-- Pay per request
-- Free tier: 2M requests/month
-
-**Firestore:**
-- Pay per read/write
-- Free tier: 50K reads, 20K writes/day
-
-**Estimate:** ~$5-20/month for development usage
-
-## Next Steps
-
-After deployment:
-
-1. Test the deployment:
-   ```bash
-   python deployment/manage_agent.py query \
-     --message="Show me laptops"
-   ```
-
-2. Access the web UI (if using Cloud Run)
-
-3. Monitor usage in Google Cloud Console
-
-## Common Issues
-
-### Empty Responses from Deployed Agent
-
-**Symptom:** Agent deploys but returns "I apologize, but I didn't receive a response"
-
-**Causes & Solutions:**
-
-1. **Vector index not created**
-   - Solution: Follow RAG Setup section above
-   - Create vector index via REST API or helper script
-   - Wait for status = READY (5-10 minutes)
-
-2. **Embeddings not added**
-   - Solution: Run `python scripts/add_embeddings.py`
-   - Redeploy after adding embeddings
-
-3. **RAG search failing**
-   - Temporary workaround: Disable RAG in `customer_support_agent/services/rag_search.py`
-   - Set `USE_RAG = False`
-   - Uses keyword search instead
-
-### Vector Search Returns 0 Results
-
-**Symptom:** Vector index is READY, products have embeddings, but `find_nearest` returns 0 results
-
-**Current Status:**
-- The system is configured to use **fallback cosine similarity search** automatically
-- This provides the same semantic search functionality without requiring the vector index
-- Performance is acceptable for small-to-medium product catalogs (<1000 products)
-
-**What's Currently Working:**
-- ✅ Semantic search with embeddings (via fallback method)
-- ✅ Category filtering
-- ✅ Price filtering
-- ✅ Retry logic for embedding generation
-
-**Diagnosis Steps (if you want to debug the vector index):**
-
-1. **Check vector index exists and is READY:**
-```bash
-curl -X GET \
-  "https://firestore.googleapis.com/v1/projects/YOUR_PROJECT/databases/YOUR_DB/collectionGroups/products/indexes" \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)"
-```
-
-2. **Verify products have embeddings:**
-```bash
-PYTHONPATH=. python3 -c "
-from google.cloud import firestore
-db = firestore.Client(project='YOUR_PROJECT', database='YOUR_DB')
-doc = db.collection('products').limit(1).stream()
-for d in doc:
-    data = d.to_dict()
-    print(f'Has embedding: {\"embedding\" in data}')
-    print(f'Embedding dim: {len(data.get(\"embedding\", []))}')
-"
-```
-
-3. **Test vector search directly:**
-```bash
-PYTHONPATH=. python3 -c "
-from google.cloud import firestore
-from google.cloud.firestore_v1.base_vector_query import DistanceMeasure
-from google.cloud.firestore_v1.vector import Vector
-from vertexai.language_models import TextEmbeddingModel
-import vertexai
-
-vertexai.init(project='YOUR_PROJECT', location='us-central1')
-db = firestore.Client(project='YOUR_PROJECT', database='YOUR_DB')
-
-# Generate test embedding
-model = TextEmbeddingModel.from_pretrained('text-embedding-004')
-embedding = model.get_embeddings(['laptop'])[0].values
-query_vector = Vector(embedding)
-
-# Try vector search
-results = db.collection('products').find_nearest(
-    vector_field='embedding',
-    query_vector=query_vector,
-    distance_measure=DistanceMeasure.COSINE,
-    limit=5
-).stream()
-
-count = sum(1 for _ in results)
-print(f'Found {count} results')
-"
-```
-
-**Known Issue:**
-The Firestore vector index may have been created with `__name__` field in addition to the `embedding` field, making it a composite index instead of a pure vector index. This can cause `find_nearest` to return 0 results.
-
-**Workaround:**
-The current implementation automatically uses fallback cosine similarity search, which works correctly. No action needed unless you have >1000 products.
-
-**To Re-enable Vector Search Later:**
-Once the vector index issue is resolved, modify `customer_support_agent/services/rag_search.py`:
-```python
-# Change this line:
-print(f"[RAG] Using fallback cosine similarity search (vector index not working)")
-return self._fallback_search(query_embedding, limit, query, max_price)
-
-# Back to:
-try:
-    query_vector = Vector(query_embedding)
-    results = self.db.collection("products").find_nearest(...)
-    # ... rest of vector search code
-except Exception as e:
-    return self._fallback_search(query_embedding, limit, query, max_price)
-```
-
-### Quota Exceeded Errors
-
-**Error:** `429 Quota exceeded for aiplatform.googleapis.com/online_prediction_requests_per_base_model`
-
-**Solution:**
-- Wait 1 minute and retry
-- Request quota increase in GCP Console
-- Add embeddings in smaller batches
-
-For more issues, see [DEPLOYMENT_NOTES.md](../DEPLOYMENT_NOTES.md)
-
-## See Also
-
-- [DEPLOYMENT_NOTES.md](../DEPLOYMENT_NOTES.md) - Current deployment status & known issues
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
-- [README.md](../README.md) - Main documentation
-- `deployment/` directory - All deployment scripts
-- `scripts/` directory - Helper scripts
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design and components
+- [CI_CD.md](./CI_CD.md) — CI/CD pipeline details and trigger setup
+- [ENV_SETUP.md](./ENV_SETUP.md) — full .env variable reference
