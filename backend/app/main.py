@@ -415,7 +415,7 @@ async def chat(
                     logger.warning("Model Armor blocked user prompt", violations=str(violations))
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Request blocked by safety policy: {violations}",
+                        detail="I'm sorry, I can't process this request as it violates our safety policy. Please contact support if you need assistance.",
                     )
             except HTTPException:
                 raise
