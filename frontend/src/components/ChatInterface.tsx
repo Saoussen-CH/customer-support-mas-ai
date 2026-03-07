@@ -164,7 +164,7 @@ export default function ChatInterface({ currentSessionId, onSessionCreated }: Ch
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: errorMsg,
           timestamp: new Date(),
         };
 
