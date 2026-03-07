@@ -202,6 +202,7 @@ echo -e "  Cloud Run SA: ${BLUE}$CLOUD_RUN_SA${NC}"
 CLOUD_RUN_ROLES=(
     "roles/aiplatform.user"              # Access Vertex AI Agent Engine
     "roles/datastore.user"               # Access Firestore database
+    "roles/modelarmor.user"              # Call Model Armor API (prompt screening)
 )
 
 for role in "${CLOUD_RUN_ROLES[@]}"; do

@@ -66,6 +66,7 @@ fi
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
 AGENT_ENGINE_SA="service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
 VERTEX_SA="service-${PROJECT_NUMBER}@gcp-sa-aiplatform.iam.gserviceaccount.com"
+CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 
 echo "======================================================================"
 echo "  Model Armor Setup"
@@ -86,10 +87,19 @@ echo "  ✓ modelarmor.googleapis.com enabled"
 echo ""
 
 # ==============================================================================
-# 2. Grant IAM roles to Vertex AI service accounts
+# 2. Grant IAM roles to service accounts
 # ==============================================================================
-echo "[2/4] Granting modelarmor.user to Vertex AI service accounts..."
+echo "[2/4] Granting modelarmor.user to service accounts..."
 
+# Cloud Run SA calls the Model Armor API directly from the FastAPI backend
+echo "  Granting roles/modelarmor.user to Cloud Run SA ($CLOUD_RUN_SA)..."
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${CLOUD_RUN_SA}" \
+  --role="roles/modelarmor.user" \
+  --condition=None \
+  --quiet 2>/dev/null && echo "    ✓ Granted" || echo "    ⚠ Already granted or SA not yet provisioned"
+
+# Vertex AI service agents (Agent Engine + platform) for floor settings enforcement
 for SA in "$AGENT_ENGINE_SA" "$VERTEX_SA"; do
   echo "  Granting roles/modelarmor.user to $SA..."
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
