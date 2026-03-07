@@ -57,7 +57,7 @@ echo ""
 # 1. Enable Required APIs
 # ============================================================================
 
-echo -e "${YELLOW}[1/5] Enabling Required APIs...${NC}"
+echo -e "${YELLOW}[1/6] Enabling Required APIs...${NC}"
 echo ""
 
 APIS=(
@@ -72,6 +72,8 @@ APIS=(
     "logging.googleapis.com"              # Cloud Logging
     "monitoring.googleapis.com"           # Cloud Monitoring
     "telemetry.googleapis.com"            # Tracing for Agent Engine (LoggingPlugin)
+    "modelarmor.googleapis.com"           # Model Armor (prompt safety screening)
+    "dlp.googleapis.com"                  # Cloud DLP (used by Model Armor for PII detection)
 )
 
 for api in "${APIS[@]}"; do
@@ -148,7 +150,7 @@ echo ""
 # 2. Grant IAM Roles to Agent Engine Service Account
 # ============================================================================
 
-echo -e "${YELLOW}[2/5] Granting IAM Roles to Agent Engine Service Account...${NC}"
+echo -e "${YELLOW}[2/6] Granting IAM Roles to Agent Engine Service Account...${NC}"
 echo ""
 
 # Get numeric project ID
@@ -192,7 +194,7 @@ echo ""
 # 3. Grant IAM Roles to Cloud Run Default Compute Service Account
 # ============================================================================
 
-echo -e "${YELLOW}[3/5] Granting IAM Roles to Cloud Run Service Account...${NC}"
+echo -e "${YELLOW}[3/6] Granting IAM Roles to Cloud Run Service Account...${NC}"
 echo ""
 
 CLOUD_RUN_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
@@ -224,7 +226,7 @@ echo ""
 # 4. Grant Permissions to Current User
 # ============================================================================
 
-echo -e "${YELLOW}[4/5] Granting Permissions to Current User...${NC}"
+echo -e "${YELLOW}[4/6] Granting Permissions to Current User...${NC}"
 echo ""
 
 CURRENT_USER=$(gcloud config get-value account 2>/dev/null)
@@ -262,7 +264,7 @@ echo ""
 # 5. Create GCS Bucket (if needed)
 # ============================================================================
 
-echo -e "${YELLOW}[5/5] Setting up GCS Bucket...${NC}"
+echo -e "${YELLOW}[5/6] Setting up GCS Bucket...${NC}"
 echo ""
 
 if [ -z "$BUCKET_NAME" ]; then
@@ -286,6 +288,31 @@ fi
 echo -e "  Granting bucket access to Cloud Run service account..."
 gsutil iam ch "serviceAccount:$CLOUD_RUN_SA:roles/storage.objectAdmin" "gs://$BUCKET_NAME" 2>/dev/null || true
 echo -e "  ${GREEN}✓${NC} Bucket permissions configured"
+
+echo ""
+
+# ============================================================================
+# 6. Model Armor Setup (if MODEL_ARMOR_ENABLED=true in .env)
+# ============================================================================
+
+echo -e "${YELLOW}[6/6] Model Armor Setup...${NC}"
+echo ""
+
+MODEL_ARMOR_ENABLED=${MODEL_ARMOR_ENABLED:-false}
+
+if [ "$MODEL_ARMOR_ENABLED" = "true" ]; then
+    echo -e "  MODEL_ARMOR_ENABLED=true — running Model Armor setup..."
+    echo ""
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if bash "$SCRIPT_DIR/setup_model_armor.sh"; then
+        echo -e "  ${GREEN}✓${NC} Model Armor setup complete"
+    else
+        echo -e "  ${YELLOW}⚠${NC} Model Armor setup encountered errors — check output above"
+    fi
+else
+    echo -e "  ${YELLOW}⚠${NC} MODEL_ARMOR_ENABLED is not 'true' in .env — skipping Model Armor setup"
+    echo -e "     To enable: set MODEL_ARMOR_ENABLED=true in .env and re-run setup"
+fi
 
 echo ""
 
