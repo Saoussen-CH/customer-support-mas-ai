@@ -125,11 +125,12 @@ resource "google_cloudbuild_trigger" "nightly" {
   description     = "Full eval + optional post-deploy eval (nightly / manual dispatch)"
   service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
-  repository_event_config {
+  # No repository_event_config — manual trigger only (no automatic webhook event).
+  # Fired by Cloud Scheduler or manually via gcloud / console.
+  source_to_build {
     repository = local.repo_resource
-    push {
-      branch = "^main$"
-    }
+    ref        = "refs/heads/main"
+    repo_type  = "GITHUB"
   }
 
   filename = "cloudbuild/cloudbuild-nightly.yaml"
