@@ -43,8 +43,17 @@ resource "google_project_iam_member" "vertex_sa" {
 # ------------------------------------------------------------------------------
 resource "google_project_iam_member" "cloud_run_sa" {
   for_each = toset([
-    "roles/aiplatform.user", # Call Agent Engine
-    "roles/datastore.user",  # Read/write sessions and messages
+    # Cloud Run (FastAPI backend) roles
+    "roles/aiplatform.user",              # Call Agent Engine
+    "roles/datastore.user",               # Read/write sessions and messages
+    # CI/CD roles — compute SA is also used as the 2nd gen Cloud Build trigger SA
+    # (Google-managed @cloudbuild SA is rejected by 2nd gen builds)
+    "roles/aiplatform.admin",             # Deploy to Agent Engine
+    "roles/artifactregistry.writer",      # Push Docker images
+    "roles/run.admin",                    # Deploy Cloud Run service
+    "roles/secretmanager.secretAccessor", # Read staging-bucket secret
+    "roles/cloudbuild.builds.editor",     # Invoke Cloud Build triggers (Cloud Scheduler)
+    "roles/iam.serviceAccountUser",       # Act as itself during Cloud Run deploy
   ])
 
   project = var.project_id
@@ -56,15 +65,6 @@ resource "google_project_iam_member" "cloud_run_sa" {
 
 # Cloud Run SA also needs access to the staging bucket at the bucket level
 # (granted in infrastructure.tf on the bucket resource itself)
-
-# Cloud Run SA needs to invoke Cloud Build triggers (used by Cloud Scheduler)
-resource "google_project_iam_member" "cloud_run_sa_cloudbuild" {
-  project = var.project_id
-  role    = "roles/cloudbuild.builds.editor"
-  member  = "serviceAccount:${local.cloud_run_sa}"
-
-  depends_on = [google_project_service.apis]
-}
 
 # ------------------------------------------------------------------------------
 # Cloud Build service account

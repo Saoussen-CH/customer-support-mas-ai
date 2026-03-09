@@ -28,7 +28,7 @@ resource "google_cloudbuild_trigger" "pr_checks" {
   location        = var.region
   name            = "ci-pull-request"
   description     = "PR checks: fast eval + lint + ruff format (EVAL_PROFILE=fast)"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_build_sa}"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
   repository_event_config {
     repository = local.repo_resource
@@ -58,7 +58,7 @@ resource "google_cloudbuild_trigger" "push_develop" {
   location        = var.region
   name            = "ci-push-develop"
   description     = "CI: standard eval on push to develop (EVAL_PROFILE=standard)"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_build_sa}"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
   repository_event_config {
     repository = local.repo_resource
@@ -88,7 +88,7 @@ resource "google_cloudbuild_trigger" "push_main" {
   location        = var.region
   name            = "ci-cd-push-main"
   description     = "CI + CD: standard eval + deploy to Cloud Run on push to main"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_build_sa}"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
   repository_event_config {
     repository = local.repo_resource
@@ -123,7 +123,7 @@ resource "google_cloudbuild_trigger" "nightly" {
   location        = var.region
   name            = "ci-manual"
   description     = "Full eval + optional post-deploy eval (nightly / manual dispatch)"
-  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_build_sa}"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
   repository_event_config {
     repository = local.repo_resource
@@ -168,6 +168,6 @@ resource "google_cloud_scheduler_job" "nightly_eval" {
   depends_on = [
     google_project_service.apis,
     google_cloudbuild_trigger.nightly,
-    google_project_iam_member.cloud_run_sa_cloudbuild,
+    google_project_iam_member.cloud_run_sa,
   ]
 }
