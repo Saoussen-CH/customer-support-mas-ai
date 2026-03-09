@@ -54,7 +54,7 @@ variable "cloud_run_service_name" {
 variable "github_repo" {
   description = "GitHub repository name."
   type        = string
-  default     = "customer-support-mas-kaggle"
+  default     = "customer-support-mas-ai"
 }
 
 variable "model_armor_enabled" {

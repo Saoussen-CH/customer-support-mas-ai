@@ -22,8 +22,8 @@ Install these tools before starting:
 gcloud auth login
 gcloud auth application-default login
 
-git clone https://github.com/YOUR_ORG/customer-support-mas-kaggle.git
-cd customer-support-mas-kaggle
+git clone https://github.com/Saoussen-CH/customer-support-mas-ai.git
+cd customer-support-mas-ai
 ```
 
 ---

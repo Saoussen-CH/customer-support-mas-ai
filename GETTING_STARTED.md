@@ -30,8 +30,8 @@ Complete this checklist to deploy the Customer Support Multi-Agent System.
 
 - [ ] **Clone repository**
   ```bash
-  git clone https://github.com/your-repo/customer-support-mas-kaggle.git
-  cd customer-support-mas-kaggle
+  git clone https://github.com/Saoussen-CH/customer-support-mas-ai.git
+  cd customer-support-mas-ai
   ```
 
 - [ ] **Install dependencies** (uses `uv` — installs Python 3.11 automatically)
