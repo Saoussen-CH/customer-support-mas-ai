@@ -69,6 +69,12 @@ variable "github_connected" {
   default     = false
 }
 
+variable "agent_engine_resource_name" {
+  description = "Full resource name of the deployed Agent Engine (projects/P/locations/L/reasoningEngines/ID). Set after first deploy."
+  type        = string
+  default     = ""
+}
+
 variable "cloudbuild_connection_name" {
   description = "Name of the 2nd gen Cloud Build host connection (created manually in Cloud Build → Repositories → Create host connection)."
   type        = string

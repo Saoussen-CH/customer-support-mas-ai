@@ -100,14 +100,15 @@ resource "google_cloudbuild_trigger" "push_main" {
   filename = "cloudbuild/cloudbuild-deploy.yaml"
 
   substitutions = {
-    _EVAL_PROFILE            = "standard"
-    _GOOGLE_CLOUD_LOCATION   = var.region
-    _REGION                  = var.region
-    _FIRESTORE_DATABASE      = var.firestore_database_id
-    _SERVICE_NAME            = var.cloud_run_service_name
-    _AR_REPO                 = var.ar_repo_name
-    _MODEL_ARMOR_ENABLED     = tostring(var.model_armor_enabled)
-    _MODEL_ARMOR_TEMPLATE_ID = ""
+    _EVAL_PROFILE                = "standard"
+    _GOOGLE_CLOUD_LOCATION       = var.region
+    _REGION                      = var.region
+    _FIRESTORE_DATABASE          = var.firestore_database_id
+    _SERVICE_NAME                = var.cloud_run_service_name
+    _AR_REPO                     = var.ar_repo_name
+    _MODEL_ARMOR_ENABLED         = tostring(var.model_armor_enabled)
+    _MODEL_ARMOR_TEMPLATE_ID     = ""
+    _AGENT_ENGINE_RESOURCE_NAME  = var.agent_engine_resource_name
   }
 
   depends_on = [google_project_service.apis]

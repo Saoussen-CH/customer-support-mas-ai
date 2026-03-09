@@ -10,6 +10,7 @@ staging_bucket_name = "your-project-id-staging"   # must be globally unique
 github_owner        = "your-github-username-or-org"
 
 # Optional — defaults shown
+# agent_engine_resource_name  = "projects/PROJECT_NUMBER/locations/REGION/reasoningEngines/ID"  # Set after first: make deploy-agent-engine
 # google_managed_sas_exist    = false              # Set true after first: make deploy-agent-engine
 # github_connected             = false              # Set true after creating 2nd gen connection
 # cloudbuild_connection_name   = "github-connection"              # Name given to the 2nd gen host connection
