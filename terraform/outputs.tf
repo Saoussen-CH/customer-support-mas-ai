@@ -65,11 +65,8 @@ output "next_steps" {
     4. Build and deploy the backend to Cloud Run:
          make deploy-cloud-run
 
-    5. Set AGENT_ENGINE_RESOURCE_NAME in .env (repo root), then redeploy Cloud Run.
-
-    6. (If model_armor_enabled=true) Set MODEL_ARMOR_TEMPLATE_ID to the
-       model_armor_template_name output value in .env and Cloud Run env vars,
-       then set MODEL_ARMOR_ENABLED=true.
+    5. Set AGENT_ENGINE_RESOURCE_NAME in .env (repo root) and in terraform.tfvars,
+       then run: make infra-up && make deploy-cloud-run
 
     Artifact Registry URL: ${local.ar_base_url}
     Firestore database:    ${var.firestore_database_id}

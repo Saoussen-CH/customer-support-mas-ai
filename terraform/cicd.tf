@@ -107,7 +107,7 @@ resource "google_cloudbuild_trigger" "push_main" {
     _SERVICE_NAME                = var.cloud_run_service_name
     _AR_REPO                     = var.ar_repo_name
     _MODEL_ARMOR_ENABLED         = tostring(var.model_armor_enabled)
-    _MODEL_ARMOR_TEMPLATE_ID     = ""
+    _MODEL_ARMOR_TEMPLATE_ID     = var.model_armor_enabled ? google_model_armor_template.customer_support_policy[0].name : ""
     _AGENT_ENGINE_RESOURCE_NAME  = var.agent_engine_resource_name
   }
 
