@@ -78,10 +78,7 @@ presentations/
 eval_report.html
 ENTRY.md
 file.md
-docs/DATA_MODEL.md
-docs/EVAL_ARCHITECTURE.md
 docs/EVAL_PROMOTION_STRATEGY.md
-docs/EVAL_STRATEGY.md
 docs/EVALSET_DATA_QUALITY.md
 docs/MEMORY_BANK.md
 docs/PRODUCTION_READINESS.md
