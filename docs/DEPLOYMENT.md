@@ -117,28 +117,30 @@ make add-embeddings   # add vector embeddings for RAG semantic search
 
 ---
 
-## Step 7 — Connect GitHub to Cloud Build
+## Step 7 — Connect GitHub to Cloud Build (2nd gen)
 
 One-time manual step in the GCP Console (cannot be automated):
 
-1. Go to **Cloud Build → Triggers**
-2. Click **Connect Repository**
-3. Select **GitHub** and authorize
-4. Choose your repository (`Saoussen-CH/customer-support-mas-ai`)
-5. Click **Done** (do not create a trigger from the wizard)
+1. Go to **Cloud Build → Repositories (2nd gen)**
+2. Click **Create host connection** → select **GitHub** → authorize → name it `github-connection` (region: `us-central1`)
+3. Click **Link Repository** → select `Saoussen-CH/customer-support-mas-ai` → click **Link**
+4. Confirm the linked repo name: `gcloud builds repositories list --connection=github-connection --region=us-central1 --project=YOUR_PROJECT_ID`
+   (Cloud Build slugifies the name, e.g. `Saoussen-CH-customer-support-mas-ai`)
 
 Then enable trigger creation in Terraform:
 
 ```bash
 # In terraform/terraform.tfvars, set:
-github_connected = true
+github_connected           = true
+cloudbuild_connection_name = "github-connection"
+cloudbuild_repo_name       = "Saoussen-CH-customer-support-mas-ai"  # from step 4
 ```
 
 ```bash
 make infra-up
 ```
 
-This creates all 4 CI/CD triggers linked to your repository.
+This creates all 4 CI/CD triggers. **Note:** Cloud Build 2nd gen triggers require `service_account` — this is set automatically by Terraform to the Cloud Build SA.
 
 ---
 

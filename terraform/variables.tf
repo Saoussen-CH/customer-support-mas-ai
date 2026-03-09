@@ -64,9 +64,21 @@ variable "google_managed_sas_exist" {
 }
 
 variable "github_connected" {
-  description = "Set to true after connecting the GitHub repository in Cloud Build console (Cloud Build → Triggers → Connect Repository). Required for CI/CD trigger creation."
+  description = "Set to true after creating a 2nd gen host connection and linking the repository in Cloud Build console. Required for CI/CD trigger creation."
   type        = bool
   default     = false
+}
+
+variable "cloudbuild_connection_name" {
+  description = "Name of the 2nd gen Cloud Build host connection (created manually in Cloud Build → Repositories → Create host connection)."
+  type        = string
+  default     = ""
+}
+
+variable "cloudbuild_repo_name" {
+  description = "Repository name as shown in Cloud Build 2nd gen (usually Owner-repo-name, e.g. Saoussen-CH-customer-support-mas-ai). Run: gcloud builds repositories list --connection=<name> --region=<region>"
+  type        = string
+  default     = ""
 }
 
 variable "model_armor_enabled" {

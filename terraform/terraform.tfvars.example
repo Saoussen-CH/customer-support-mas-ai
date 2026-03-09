@@ -10,8 +10,10 @@ staging_bucket_name = "your-project-id-staging"   # must be globally unique
 github_owner        = "your-github-username-or-org"
 
 # Optional — defaults shown
-# google_managed_sas_exist = false   # Set true after first: make deploy-agent-engine
-# github_connected         = false   # Set true after: Cloud Build → Connect Repository
+# google_managed_sas_exist    = false              # Set true after first: make deploy-agent-engine
+# github_connected             = false              # Set true after creating 2nd gen connection
+# cloudbuild_connection_name   = "github-connection"              # Name given to the 2nd gen host connection
+# cloudbuild_repo_name         = "Saoussen-CH-customer-support-mas-ai"  # From: gcloud builds repositories list --connection=<name> --region=<region>
 # region                = "us-central1"
 # firestore_location    = "nam5"            # nam5=US multi-region, eur3=Europe multi-region
 # firestore_database_id = "customer-support-db"

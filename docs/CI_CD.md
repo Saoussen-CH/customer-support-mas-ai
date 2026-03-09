@@ -162,7 +162,10 @@ $EDITOR terraform/terraform.tfvars
 make infra-up    # terraform init + apply
 
 # 3. Connect GitHub repo (one-time, browser OAuth — cannot be automated)
-#    Cloud Console → Cloud Build → Triggers → Connect Repository → GitHub
+#    Cloud Console → Cloud Build → Repositories (2nd gen) → Create host connection → GitHub
+#    Then: Link Repository → select your repo
+#    Then set github_connected=true, cloudbuild_connection_name, cloudbuild_repo_name in terraform.tfvars
+#    Then: make infra-up
 
 # 4. Seed Firestore and deploy
 make seed-db
@@ -203,29 +206,29 @@ No service account key file is needed — Cloud Build runs natively on GCP with 
 ### Creating Triggers
 
 > **Prerequisites**
-> 1. Connect your GitHub repo: Cloud Console → Cloud Build → Triggers → **Connect Repository** → GitHub → select `customer-support-mas-ai`
-> 2. Note your project number (`gcloud projects describe YOUR_PROJECT_ID --format="value(projectNumber)"`)
+> 1. Create a 2nd gen host connection: Cloud Console → Cloud Build → **Repositories (2nd gen)** → **Create host connection** → GitHub → name it `github-connection`
+> 2. Link the repository: **Link Repository** → select `Saoussen-CH/customer-support-mas-ai`
+> 3. Get the slugified repo name: `gcloud builds repositories list --connection=github-connection --region=us-central1`
+> 4. Set `github_connected=true`, `cloudbuild_connection_name`, and `cloudbuild_repo_name` in `terraform/terraform.tfvars`, then run `make infra-up`
+>
+> **Important:** Cloud Build 2nd gen triggers require `service_account` in the API request — omitting it causes a silent `400 INVALID_ARGUMENT`. Terraform handles this automatically.
 
 #### Cloud Console — quick reference
 
 For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in the fields below → **Save**.
 
-| Field | ci-branch-push | ci-push-develop | ci-cd-push-main | ci-manual |
+| Field | ci-pull-request | ci-push-develop | ci-cd-push-main | ci-manual |
 |---|---|---|---|---|
-| **Name** | `ci-branch-push` | `ci-push-develop` | `ci-cd-push-main` | `ci-manual` |
+| **Name** | `ci-pull-request` | `ci-push-develop` | `ci-cd-push-main` | `ci-manual` |
 | **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **Event** | Push to branch | Push to branch | Push to branch | Manual invocation |
-| **Source (2nd gen)** | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` | `customer-support-mas-ai` |
+| **Event** | Pull request | Push to branch | Push to branch | Manual invocation |
+| **Repository (2nd gen)** | `Saoussen-CH-customer-support-mas-ai` | same | same | same |
 | **Branch** | `^main$` | `^develop$` | `^main$` | `main` |
-| **Invert regex** | Yes | No | No | — |
-| **Included/Ignored files** | — | — | — | — |
 | **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` |
-| **Service account** | `PROJECT_NUMBER-compute@developer.gserviceaccount.com` | same | same | same |
+| **Service account** | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` | same | same | same |
 | **_EVAL_PROFILE** | — | `standard` | `standard` | `full` |
 | **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **_DEPLOY_AGENT_ENGINE** | — | — | `false` (auto-detected at runtime) | — |
 | **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
-| **_AGENT_ENGINE_DISPLAY_NAME** | — | — | `customer-support-multiagent` | — |
 | **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | — |
 
 Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
