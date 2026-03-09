@@ -71,14 +71,14 @@ APIS=(
     "iam.googleapis.com"                  # IAM
     "logging.googleapis.com"              # Cloud Logging
     "monitoring.googleapis.com"           # Cloud Monitoring
-    "telemetry.googleapis.com"            # Tracing for Agent Engine (LoggingPlugin)
+    "cloudtrace.googleapis.com"           # Tracing for Agent Engine (LoggingPlugin)
     "modelarmor.googleapis.com"           # Model Armor (prompt safety screening)
     "dlp.googleapis.com"                  # Cloud DLP (used by Model Armor for PII detection)
 )
 
 for api in "${APIS[@]}"; do
     echo -e "  Enabling ${BLUE}$api${NC}..."
-    if gcloud services enable "$api" --project="$PROJECT_ID" 2>/dev/null; then
+    if gcloud services enable "$api" --project="$PROJECT_ID" &>/dev/null; then
         echo -e "    ${GREEN}✓${NC} Enabled"
     else
         echo -e "    ${YELLOW}⚠${NC} Already enabled or error"

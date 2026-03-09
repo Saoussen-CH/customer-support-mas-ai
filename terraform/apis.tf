@@ -19,6 +19,7 @@ locals {
     "monitoring.googleapis.com",           # Cloud Monitoring
     "secretmanager.googleapis.com",        # Secret Manager (staging bucket secret)
     "cloudscheduler.googleapis.com",       # Cloud Scheduler (nightly eval trigger)
+    "cloudtrace.googleapis.com",           # Cloud Trace (Agent Engine LoggingPlugin)
   ]
 
   model_armor_apis = var.model_armor_enabled ? [
