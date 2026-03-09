@@ -124,9 +124,21 @@ One-time manual step in the GCP Console (cannot be automated):
 1. Go to **Cloud Build → Triggers**
 2. Click **Connect Repository**
 3. Select **GitHub** and authorize
-4. Choose your repository
+4. Choose your repository (`Saoussen-CH/customer-support-mas-ai`)
+5. Click **Done** (do not create a trigger from the wizard)
 
-The triggers created by Terraform will automatically link to it.
+Then enable trigger creation in Terraform:
+
+```bash
+# In terraform/terraform.tfvars, set:
+github_connected = true
+```
+
+```bash
+make infra-up
+```
+
+This creates all 4 CI/CD triggers linked to your repository.
 
 ---
 

@@ -14,6 +14,7 @@
 # Includes ruff format check to mirror .pre-commit-config.yaml.
 # ------------------------------------------------------------------------------
 resource "google_cloudbuild_trigger" "pr_checks" {
+  count       = var.github_connected ? 1 : 0
   project     = var.project_id
   location    = "global"
   name        = "ci-pull-request"
@@ -43,6 +44,7 @@ resource "google_cloudbuild_trigger" "pr_checks" {
 # CI only, no deployment.
 # ------------------------------------------------------------------------------
 resource "google_cloudbuild_trigger" "push_develop" {
+  count       = var.github_connected ? 1 : 0
   project     = var.project_id
   location    = "global"
   name        = "ci-push-develop"
@@ -72,6 +74,7 @@ resource "google_cloudbuild_trigger" "push_develop" {
 # Full CI pipeline followed by Docker build and Cloud Run deploy.
 # ------------------------------------------------------------------------------
 resource "google_cloudbuild_trigger" "push_main" {
+  count       = var.github_connected ? 1 : 0
   project     = var.project_id
   location    = "global"
   name        = "ci-cd-push-main"
@@ -106,6 +109,7 @@ resource "google_cloudbuild_trigger" "push_main" {
 # Triggered by Cloud Scheduler (see below) or manually from the console.
 # ------------------------------------------------------------------------------
 resource "google_cloudbuild_trigger" "nightly" {
+  count       = var.github_connected ? 1 : 0
   project     = var.project_id
   location    = "global"
   name        = "ci-manual"
@@ -140,6 +144,7 @@ resource "google_cloudbuild_trigger" "nightly" {
 # to call the Cloud Build REST API.
 # ------------------------------------------------------------------------------
 resource "google_cloud_scheduler_job" "nightly_eval" {
+  count       = var.github_connected ? 1 : 0
   project     = var.project_id
   region      = var.region
   name        = "nightly-full-eval"
@@ -149,7 +154,7 @@ resource "google_cloud_scheduler_job" "nightly_eval" {
 
   http_target {
     http_method = "POST"
-    uri         = "https://cloudbuild.googleapis.com/v1/projects/${var.project_id}/locations/global/triggers/${google_cloudbuild_trigger.nightly.trigger_id}:run"
+    uri         = "https://cloudbuild.googleapis.com/v1/projects/${var.project_id}/locations/global/triggers/${google_cloudbuild_trigger.nightly[0].trigger_id}:run"
     body        = base64encode(jsonencode({ branchName = "main" }))
 
     oauth_token {

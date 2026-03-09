@@ -34,8 +34,8 @@ output "cloud_run_sa" {
 }
 
 output "nightly_trigger_id" {
-  description = "Cloud Build nightly trigger ID (used by Cloud Scheduler and for manual runs)."
-  value       = google_cloudbuild_trigger.nightly.trigger_id
+  description = "Cloud Build nightly trigger ID (used by Cloud Scheduler and for manual runs). Empty until github_connected=true."
+  value       = var.github_connected ? google_cloudbuild_trigger.nightly[0].trigger_id : ""
 }
 
 output "model_armor_enabled" {
@@ -65,7 +65,7 @@ output "next_steps" {
     4. Build and deploy the backend to Cloud Run:
          make deploy-cloud-run
 
-    5. Set AGENT_ENGINE_RESOURCE_NAME in backend/.env, then redeploy Cloud Run.
+    5. Set AGENT_ENGINE_RESOURCE_NAME in .env (repo root), then redeploy Cloud Run.
 
     6. (If model_armor_enabled=true) Set MODEL_ARMOR_TEMPLATE_ID to the
        model_armor_template_name output value in .env and Cloud Run env vars,

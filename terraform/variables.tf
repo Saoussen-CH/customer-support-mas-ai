@@ -57,6 +57,18 @@ variable "github_repo" {
   default     = "customer-support-mas-ai"
 }
 
+variable "google_managed_sas_exist" {
+  description = "Set to true after first Agent Engine deployment to grant IAM to Google-managed Vertex AI SAs (gcp-sa-aiplatform-re and gcp-sa-aiplatform). These SAs are created by Google and do not exist until first use."
+  type        = bool
+  default     = false
+}
+
+variable "github_connected" {
+  description = "Set to true after connecting the GitHub repository in Cloud Build console (Cloud Build → Triggers → Connect Repository). Required for CI/CD trigger creation."
+  type        = bool
+  default     = false
+}
+
 variable "model_armor_enabled" {
   description = "Enable Model Armor: grants IAM, enables API, and configures floor settings."
   type        = bool

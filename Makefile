@@ -110,15 +110,18 @@ test-model-armor: ## Smoke test Model Armor API (safe + unsafe prompts)
 	PYTHONPATH=. $(PYTHON) scripts/test_model_armor.py
 
 seed-db: ## Seed Firestore with sample products, orders, invoices, users
-	PYTHONPATH=. $(PYTHON) -m customer_support_agent.database.seed \
+	set -a && . ./.env && set +a && PYTHONPATH=. $(PYTHON) -m customer_support_agent.database.seed \
 		--project $(shell grep GOOGLE_CLOUD_PROJECT .env | cut -d= -f2) \
 		--database $(shell grep FIRESTORE_DATABASE .env | cut -d= -f2 || echo customer-support-db)
 
 add-embeddings: ## Add vector embeddings to Firestore products (for RAG)
-	PYTHONPATH=. $(PYTHON) scripts/add_embeddings.py
+	set -a && . ./.env && set +a && PYTHONPATH=. $(PYTHON) scripts/add_embeddings.py \
+		--project $(shell grep GOOGLE_CLOUD_PROJECT .env | cut -d= -f2) \
+		--database $(shell grep FIRESTORE_DATABASE .env | cut -d= -f2 || echo customer-support-db) \
+		--location $(shell grep GOOGLE_CLOUD_LOCATION .env | cut -d= -f2 || echo us-central1)
 
 vector-index: ## Create Firestore vector index for semantic search
-	PYTHONPATH=. $(PYTHON) scripts/create_vector_index.py
+	set -a && . ./.env && set +a && PYTHONPATH=. $(PYTHON) scripts/create_vector_index.py
 
 # ==============================================================================
 # LINT & FORMAT

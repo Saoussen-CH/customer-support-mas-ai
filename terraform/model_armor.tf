@@ -85,7 +85,11 @@ resource "google_model_armor_template" "customer_support_policy" {
       }
       rai_filters {
         filter_type      = "HATE_SPEECH"
-        confidence_level = "MEDIUM_AND_ABOVE"
+        confidence_level = "LOW_AND_ABOVE"
+      }
+      rai_filters {
+        filter_type      = "SEXUALLY_EXPLICIT"
+        confidence_level = "LOW_AND_ABOVE"
       }
       rai_filters {
         filter_type      = "DANGEROUS"
@@ -116,9 +120,9 @@ resource "google_model_armor_template" "customer_support_policy" {
 # Model Armor floor settings (project-level — applies to all Gemini calls)
 # ==============================================================================
 
-resource "google_model_armor_floor_setting" "default" {
+resource "google_model_armor_floorsetting" "default" {
   count    = var.model_armor_enabled ? 1 : 0
-  project  = var.project_id
+  parent   = "projects/${var.project_id}"
   location = "global"
 
   # Reject requests and responses that violate thresholds.

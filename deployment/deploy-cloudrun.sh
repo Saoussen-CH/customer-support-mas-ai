@@ -18,12 +18,12 @@ AGENT_ENGINE_RESOURCE_NAME="${AGENT_ENGINE_RESOURCE_NAME}"
 
 # Validate required variables
 if [ -z "$PROJECT_ID" ]; then
-  echo "ERROR: GOOGLE_CLOUD_PROJECT not set. Please set it in backend/.env"
+  echo "ERROR: GOOGLE_CLOUD_PROJECT not set. Please set it in .env (repo root)"
   exit 1
 fi
 
 if [ -z "$AGENT_ENGINE_RESOURCE_NAME" ]; then
-  echo "ERROR: AGENT_ENGINE_RESOURCE_NAME not set. Please set it in backend/.env"
+  echo "ERROR: AGENT_ENGINE_RESOURCE_NAME not set. Please set it in .env (repo root)"
   exit 1
 fi
 

@@ -7,11 +7,11 @@
 # Runs deployed agents; needs Firestore to call tools and Vertex AI for Gemini.
 # ------------------------------------------------------------------------------
 resource "google_project_iam_member" "agent_engine_sa" {
-  for_each = toset([
+  for_each = var.google_managed_sas_exist ? toset([
     "roles/datastore.user",       # Read/write Firestore (tool calls)
     "roles/aiplatform.user",      # Call Gemini / Vertex AI APIs
     "roles/storage.objectViewer", # Read staging bucket artifacts
-  ])
+  ]) : toset([])
 
   project = var.project_id
   role    = each.key
@@ -25,10 +25,10 @@ resource "google_project_iam_member" "agent_engine_sa" {
 # Used for embeddings and direct generateContent calls.
 # ------------------------------------------------------------------------------
 resource "google_project_iam_member" "vertex_sa" {
-  for_each = toset([
+  for_each = var.google_managed_sas_exist ? toset([
     "roles/datastore.user",  # Firestore vector search for RAG
     "roles/aiplatform.user",
-  ])
+  ]) : toset([])
 
   project = var.project_id
   role    = each.key
@@ -113,7 +113,7 @@ resource "google_project_iam_member" "model_armor_cloud_run" {
 }
 
 resource "google_project_iam_member" "model_armor_agent_engine" {
-  count = var.model_armor_enabled ? 1 : 0
+  count = var.model_armor_enabled && var.google_managed_sas_exist ? 1 : 0
 
   project = var.project_id
   role    = "roles/modelarmor.user"
@@ -123,7 +123,7 @@ resource "google_project_iam_member" "model_armor_agent_engine" {
 }
 
 resource "google_project_iam_member" "model_armor_vertex" {
-  count = var.model_armor_enabled ? 1 : 0
+  count = var.model_armor_enabled && var.google_managed_sas_exist ? 1 : 0
 
   project = var.project_id
   role    = "roles/modelarmor.user"

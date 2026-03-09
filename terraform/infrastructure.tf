@@ -30,7 +30,9 @@ resource "google_storage_bucket_iam_member" "cloud_run_staging" {
 }
 
 # Grant Agent Engine SA read access to the staging bucket
+# (skipped until first Agent Engine deployment creates the SA)
 resource "google_storage_bucket_iam_member" "agent_engine_staging" {
+  count  = var.google_managed_sas_exist ? 1 : 0
   bucket = google_storage_bucket.staging.name
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${local.agent_engine_sa}"
