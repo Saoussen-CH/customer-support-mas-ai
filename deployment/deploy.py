@@ -195,8 +195,8 @@ async def test_locally():
 
     for i, query in enumerate(test_queries):
         if i > 0:
-            print("  (waiting 5s to avoid rate limits...)")
-            await asyncio.sleep(5)
+            print("  (waiting 15s to avoid rate limits...)")
+            await asyncio.sleep(15)
 
         print(f"\n{'─' * 40}")
         print(f"USER: {query}")
