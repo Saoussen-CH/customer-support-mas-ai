@@ -262,7 +262,81 @@ uv run python tests/load/check_slos.py /tmp/load-results_stats.csv
 
 ---
 
-## Step 14 — Validate make switch-env works
+## Step 14 — Connect GitHub to Cloud Build and enable CI/CD triggers
+
+Cloud Build triggers require a 2nd-gen GitHub connection. This is a one-time OAuth
+step per GCP project — it cannot be automated by Terraform.
+
+### 14a — Create the connection in the GCP Console
+
+1. Open **Cloud Build → Repositories (2nd gen)** for the project
+   (`css-mas-dev`, `css-mas-staging`, or `css-mas-prod`)
+2. Click **Create host connection** → select **GitHub**
+3. Authenticate with GitHub and install the Google Cloud Build app on the repo
+4. Click **Link repository**, select `Saoussen-CH/customer-support-mas-ai`
+5. Note the connection name (default: `github-connection`) and the repository
+   resource name Cloud Build shows — it will look like:
+   ```
+   projects/css-mas-dev/locations/us-central1/connections/github-connection/repositories/Saoussen-CH-customer-support-mas-ai
+   ```
+
+### 14b — Or use gcloud (2nd-gen connection)
+
+```bash
+# Install the Cloud Build GitHub app first (browser OAuth), then:
+gcloud builds connections create github github-connection \
+  --region=us-central1 \
+  --project=css-mas-dev
+
+gcloud builds repositories create Saoussen-CH-customer-support-mas-ai \
+  --connection=github-connection \
+  --remote-uri=https://github.com/Saoussen-CH/customer-support-mas-ai.git \
+  --region=us-central1 \
+  --project=css-mas-dev
+```
+
+Repeat for `css-mas-staging` and `css-mas-prod`.
+
+### 14c — Enable triggers via Terraform
+
+Uncomment the GitHub variables in each `terraform/environments/<env>/terraform.tfvars`:
+
+```hcl
+github_connected           = true
+cloudbuild_connection_name = "github-connection"
+cloudbuild_repo_name       = "Saoussen-CH-customer-support-mas-ai"
+```
+
+Then re-apply Terraform to create the triggers:
+
+```bash
+make infra-up ENV=dev
+make infra-up ENV=staging
+make infra-up ENV=prod
+```
+
+**Expected triggers created per environment:**
+
+| Environment | Trigger name | Fires on |
+|---|---|---|
+| dev | `ci-pull-request` | PR targeting `develop` |
+| dev | `ci-cd-push-develop` | Push to `develop` |
+| staging | `ci-pull-request` | PR targeting `staging` |
+| staging | `ci-cd-push-staging` | Push to `staging` |
+| prod | `ci-pull-request` | PR targeting `main` |
+| prod | `ci-cd-push-main` | Push to `main` |
+| prod | `ci-manual` | Manual / nightly (Cloud Scheduler) |
+
+Verify in GCP Console: **Cloud Build → Triggers** — you should see 2 triggers for dev,
+2 for staging, and 3 for prod.
+
+> **Branch strategy:** `develop` → deploys to dev, `staging` → deploys to staging,
+> `main` → deploys to prod. Merge `feat/*` → `develop` → `staging` → `main` to
+> promote across environments.
+
+---
+
+## Step 15 — Validate make switch-env works
 
 ```bash
 make switch-env ENV=dev
@@ -297,6 +371,10 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 - [ ] `make switch-env ENV=dev` correctly switches `.env`
 - [ ] `make terraform-plan ENV=dev` shows expected plan (no errors)
 - [ ] `make infra-up ENV=dev` creates all resources without errors
+- [ ] GitHub connection created in Cloud Build console for each GCP project
+- [ ] `github_connected = true` uncommented in each `terraform.tfvars`
+- [ ] `make infra-up ENV=dev/staging/prod` creates Cloud Build triggers
+- [ ] Triggers visible in Cloud Build → Triggers (2 for dev, 2 for staging, 3 for prod)
 - [ ] `make test-tools` passes
 - [ ] `make test-unit` passes
 - [ ] `make test-integration` passes
@@ -315,7 +393,8 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 | `403 aiplatform.googleapis.com requires a quota project` | Run `gcloud auth application-default set-quota-project css-mas-dev` |
 | `terraform validate` fails | Check module path in `environments/dev/main.tf` → `source = "../../modules/core"` |
 | `google_managed_sas_exist = false` errors | Leave it `false` until after first Agent Engine deploy |
-| `github_connected = false` — triggers not created | Expected — connect GitHub in Cloud Build console first, then set `true` in tfvars |
+| No triggers in Cloud Build after `make infra-up` | `github_connected` is still `false` (default) — follow Step 14 to create the GitHub connection, then uncomment `github_connected = true` in tfvars and re-apply |
+| `github_connected = false` — triggers not created | Expected until you complete Step 14 — Cloud Build GitHub connection must be created manually (requires OAuth) before Terraform can create triggers |
 | Agent Engine deploy fails | Check `.env` has correct `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_STORAGE_BUCKET` |
 | `403 Missing or insufficient permissions` on tool calls | Set `google_managed_sas_exist = true` in `terraform.tfvars` and re-run `make infra-up ENV=dev` — the Agent Engine SA needs `roles/datastore.user` |
 | "violates our safety policy" on normal queries | Model Armor pi_and_jailbreak filter confidence was too low — re-run `make infra-up ENV=dev` to apply updated `MEDIUM_AND_ABOVE` thresholds |
