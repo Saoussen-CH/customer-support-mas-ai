@@ -144,7 +144,7 @@ make infra-up ENV=dev
 terraform -chdir=terraform/environments/dev output
 ```
 
-Copy `model_armor_template_id` into `.env.dev` → `MODEL_ARMOR_TEMPLATE_ID=...`
+Copy `model_armor_template_name` into `.env.dev` → `MODEL_ARMOR_TEMPLATE_ID=...`
 
 ---
 
@@ -305,4 +305,4 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 | `github_connected = false` — triggers not created | Expected — connect GitHub in Cloud Build console first, then set `true` in tfvars |
 | Agent Engine deploy fails | Check `.env` has correct `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_STORAGE_BUCKET` |
 | Smoke tests fail with 503 | Wait 2-3 min after deploy for cold start, then retry |
-| Model Armor template not found | Run `terraform output model_armor_template_id` and copy into `.env` |
+| Model Armor template not found | Run `terraform output model_armor_template_name` and copy into `.env` |
