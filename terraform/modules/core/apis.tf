@@ -13,6 +13,7 @@ locals {
     "secretmanager.googleapis.com",
     "cloudscheduler.googleapis.com",
     "cloudtrace.googleapis.com",
+    "telemetry.googleapis.com",
   ]
   model_armor_apis = var.model_armor_enabled ? [
     "modelarmor.googleapis.com",
