@@ -95,7 +95,22 @@ github_owner        = "Saoussen-CH"            # your GitHub username
 
 ---
 
-## Step 5 — Terraform plan (preview, no changes applied)
+## Step 5 — Bootstrap Cloud Resource Manager API
+
+On a fresh GCP project, Terraform cannot read project metadata until this API
+is enabled. Run this once before the first `terraform plan`:
+
+```bash
+make bootstrap-apis ENV=dev
+```
+
+Wait ~30 seconds for the API to propagate, then continue.
+
+> This only needs to be done once per new GCP project.
+
+---
+
+## Step 6 — Terraform plan (preview, no changes applied)
 
 ```bash
 cd terraform/environments/dev
@@ -109,17 +124,16 @@ terraform plan -var-file=terraform.tfvars
 
 ---
 
-## Step 6 — Apply dev infrastructure
+## Step 7 — Apply dev infrastructure
 
 ```bash
 terraform apply -var-file=terraform.tfvars
 # Type 'yes' to confirm
 ```
 
-Or via Makefile:
+Or via Makefile from the repo root:
 
 ```bash
-cd -   # back to repo root
 make infra-up ENV=dev
 ```
 
@@ -133,7 +147,7 @@ Copy `model_armor_template_id` into `.env.dev` → `MODEL_ARMOR_TEMPLATE_ID=...`
 
 ---
 
-## Step 7 — Authenticate and test GCP access
+## Step 8 — Authenticate and test GCP access
 
 ```bash
 make switch-env ENV=dev
@@ -151,7 +165,7 @@ make add-embeddings
 
 ---
 
-## Step 8 — Test local agent (no deployment needed)
+## Step 9 — Test local agent (no deployment needed)
 
 ```bash
 make test-local
@@ -161,7 +175,7 @@ make test-local
 
 ---
 
-## Step 9 — Run unit and integration tests
+## Step 10 — Run unit and integration tests
 
 ```bash
 make test-tools
@@ -173,7 +187,7 @@ make test-integration
 
 ---
 
-## Step 10 — Deploy to dev (optional — requires GCP project set up)
+## Step 11 — Deploy to dev (optional — requires GCP project set up)
 
 ```bash
 make deploy-agent-engine
@@ -197,7 +211,7 @@ make deploy-cloud-run
 
 ---
 
-## Step 11 — Run smoke tests against dev
+## Step 12 — Run smoke tests against dev
 
 After Cloud Run is deployed:
 
@@ -213,7 +227,7 @@ CLOUD_RUN_URL=$CLOUD_RUN_URL uv run pytest tests/smoke/ -v
 
 ---
 
-## Step 12 — Run load tests against staging (staging only)
+## Step 13 — Run load tests against staging (staging only)
 
 After deploying to staging (`make switch-env ENV=staging` + repeat steps 4-10):
 
@@ -235,7 +249,7 @@ uv run python tests/load/check_slos.py /tmp/load-results_stats.csv
 
 ---
 
-## Step 13 — Validate make switch-env works
+## Step 14 — Validate make switch-env works
 
 ```bash
 make switch-env ENV=dev
@@ -253,7 +267,7 @@ make switch-env ENV=qa           # → Error: .env.qa not found
 
 ---
 
-## Step 14 — Validate Terraform targets in Makefile
+## Step 15 — Validate Terraform targets in Makefile
 
 ```bash
 make terraform-plan ENV=dev      # runs plan in terraform/environments/dev
@@ -266,8 +280,9 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 ## Checklist
 
 - [ ] `terraform validate` passes for dev, staging, prod
+- [ ] `make bootstrap-apis ENV=dev` runs without error (fresh project only)
 - [ ] `make switch-env ENV=dev` correctly switches `.env`
-- [ ] `make terraform-plan ENV=dev` shows expected plan
+- [ ] `make terraform-plan ENV=dev` shows expected plan (no errors)
 - [ ] `make infra-up ENV=dev` creates all resources without errors
 - [ ] `make test-tools` passes
 - [ ] `make test-unit` passes
@@ -283,6 +298,7 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 
 | Symptom | Fix |
 |---|---|
+| `Error 403: Cloud Resource Manager API not enabled` | Run `make bootstrap-apis ENV=dev`, wait 30s, retry |
 | `terraform validate` fails | Check module path in `environments/dev/main.tf` → `source = "../../modules/core"` |
 | `google_managed_sas_exist = false` errors | Leave it `false` until after first Agent Engine deploy |
 | `github_connected = false` — triggers not created | Expected — connect GitHub in Cloud Build console first, then set `true` in tfvars |

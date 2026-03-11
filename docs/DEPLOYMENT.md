@@ -78,6 +78,8 @@ Run from the project root:
 
 ```bash
 cd ../../..    # back to project root
+make bootstrap-apis ENV=prod   # enable Cloud Resource Manager API — once per new project
+# wait ~30 seconds
 make infra-up  # terraform init + apply (defaults to terraform/environments/prod)
 ```
 
@@ -290,14 +292,19 @@ Per-environment differences:
 ### Bootstrapping dev or staging
 
 Follow the same steps as prod but target the appropriate environment directory
-and pass `ENV=dev` or `ENV=staging` to make targets:
+and pass `ENV=dev` or `ENV=staging` to make targets.
+
+On a fresh GCP project, enable the Cloud Resource Manager API first (required
+before Terraform can read project metadata):
 
 ```bash
 # Bootstrap dev
 cd terraform/environments/dev
 cp terraform.tfvars.example terraform.tfvars
-# fill in terraform.tfvars
+# fill in terraform.tfvars (project_id, staging_bucket_name, github_owner)
 cd ../../..
+make bootstrap-apis ENV=dev   # enable Cloud Resource Manager API — once per new project
+# wait ~30 seconds
 make infra-up ENV=dev
 
 # Bootstrap staging
@@ -305,6 +312,8 @@ cd terraform/environments/staging
 cp terraform.tfvars.example terraform.tfvars
 # fill in terraform.tfvars
 cd ../../..
+make bootstrap-apis ENV=staging
+# wait ~30 seconds
 make infra-up ENV=staging
 ```
 
@@ -337,10 +346,11 @@ make format                # ruff auto-fix
 make seed-db               # re-seed Firestore
 make deploy-agent-engine   # deploy/update Agent Engine only
 make deploy-cloud-run      # deploy Cloud Run directly
-make infra-up              # terraform init + apply (prod by default)
-make infra-up ENV=staging  # apply staging environment
-make infra-up ENV=dev      # apply dev environment
-make terraform-plan        # preview infrastructure changes
+make bootstrap-apis ENV=dev  # enable Cloud Resource Manager API (fresh project only)
+make infra-up                # terraform init + apply (prod by default)
+make infra-up ENV=staging    # apply staging environment
+make infra-up ENV=dev        # apply dev environment
+make terraform-plan          # preview infrastructure changes
 ```
 
 ---

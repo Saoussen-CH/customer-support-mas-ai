@@ -226,6 +226,12 @@ switch-env: ## Switch active .env to ENV (e.g. make switch-env ENV=dev)
 	@echo "Switched to $(ENV) environment (css-mas-$(ENV))"
 	@grep "GOOGLE_CLOUD_PROJECT" .env
 
+bootstrap-apis: ## Enable Cloud Resource Manager API (required before first terraform run)
+	@PROJECT_ID=$$(grep '^project_id' $(TF_DIR)/terraform.tfvars | cut -d'"' -f2); \
+	echo "Enabling cloudresourcemanager API on $$PROJECT_ID..."; \
+	gcloud services enable cloudresourcemanager.googleapis.com --project=$$PROJECT_ID; \
+	echo "Done. Wait ~30s then run: make infra-up ENV=$(ENV)"
+
 terraform-init: ## Initialize Terraform for ENV (default: prod)
 	cd $(TF_DIR) && terraform init
 
