@@ -204,22 +204,43 @@ eval-post-deploy: ## Evaluate deployed Agent Engine (AGENT_ENGINE_ID or AGENT_EN
 # ==============================================================================
 # TERRAFORM — Infrastructure as Code
 # ==============================================================================
+# ENV controls which environment to target (default: prod).
+# Usage:
+#   make infra-up              # → terraform/environments/prod
+#   make infra-up ENV=staging  # → terraform/environments/staging
+#   make infra-up ENV=dev      # → terraform/environments/dev
+#
+# Each environment needs a terraform.tfvars file:
+#   cd terraform/environments/prod
+#   cp terraform.tfvars.example terraform.tfvars  # then fill in values
 
-terraform-init: ## Initialize Terraform (run once, or after adding providers)
-	cd terraform && terraform init
+ENV ?= prod
+TF_DIR = terraform/environments/$(ENV)
 
-terraform-plan: ## Preview infrastructure changes (requires terraform.tfvars)
-	cd terraform && terraform plan -var-file=terraform.tfvars
+switch-env: ## Switch active .env to ENV (e.g. make switch-env ENV=dev)
+	@if [ ! -f .env.$(ENV) ]; then \
+		echo "Error: .env.$(ENV) not found. Copy .env.$(ENV).example and fill in values first."; \
+		exit 1; \
+	fi
+	cp .env.$(ENV) .env
+	@echo "Switched to $(ENV) environment (css-mas-$(ENV))"
+	@grep "GOOGLE_CLOUD_PROJECT" .env
 
-terraform-apply: ## Apply infrastructure changes
-	cd terraform && terraform apply -var-file=terraform.tfvars
+terraform-init: ## Initialize Terraform for ENV (default: prod)
+	cd $(TF_DIR) && terraform init
 
-terraform-destroy: ## Destroy all Terraform-managed infrastructure (DESTRUCTIVE)
-	@echo "WARNING: This will destroy the Firestore database, GCS bucket, AR repo, and all IAM bindings."
+terraform-plan: ## Preview infrastructure changes for ENV
+	cd $(TF_DIR) && terraform plan -var-file=terraform.tfvars
+
+terraform-apply: ## Apply infrastructure changes for ENV
+	cd $(TF_DIR) && terraform apply -var-file=terraform.tfvars
+
+terraform-destroy: ## Destroy infrastructure for ENV (DESTRUCTIVE)
+	@echo "WARNING: This will destroy all infrastructure in the $(ENV) environment."
 	@read -p "Type 'yes' to confirm: " confirm && [ "$$confirm" = "yes" ]
-	cd terraform && terraform destroy -var-file=terraform.tfvars
+	cd $(TF_DIR) && terraform destroy -var-file=terraform.tfvars
 
-infra-up: terraform-init terraform-apply ## Bootstrap: initialize and apply Terraform (first-time setup)
+infra-up: terraform-init terraform-apply ## Bootstrap: initialize and apply Terraform (default: prod)
 
 # ==============================================================================
 # FRONTEND

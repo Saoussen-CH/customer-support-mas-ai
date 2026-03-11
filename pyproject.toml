@@ -41,6 +41,12 @@ dev = [
     "google-adk[eval]>=1.19.0",
 ]
 
+# Load test dependencies (installed with: uv sync --group load-test)
+# Kept separate — locust pulls in gevent + web UI which aren't needed for unit/integration tests
+load-test = [
+    "locust>=2.20.0",
+]
+
 # ==============================================================================
 # Ruff configuration
 # ==============================================================================

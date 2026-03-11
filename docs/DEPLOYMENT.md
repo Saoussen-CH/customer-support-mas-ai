@@ -48,10 +48,21 @@ Leave `GOOGLE_CLOUD_STORAGE_BUCKET`, `AGENT_ENGINE_RESOURCE_NAME`, and
 
 ---
 
-## Step 3 — Terraform (infrastructure bootstrap)
+## Step 3 — Bootstrap GCP project
 
 ```bash
-cd terraform
+make setup-gcp
+```
+
+This enables required APIs and grants IAM roles to the Cloud Run and Cloud Build
+service accounts.
+
+---
+
+## Step 4 — Terraform (infrastructure bootstrap)
+
+```bash
+cd terraform/environments/prod
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -63,11 +74,11 @@ staging_bucket_name = "your-project-id-staging"   # must be globally unique
 github_owner        = "your-github-username-or-org"
 ```
 
-Run:
+Run from the project root:
 
 ```bash
-cd ..          # back to project root
-make infra-up  # terraform init + apply
+cd ../../..    # back to project root
+make infra-up  # terraform init + apply (defaults to terraform/environments/prod)
 ```
 
 Terraform creates:
@@ -81,10 +92,10 @@ Terraform creates:
 
 ---
 
-## Step 4 — Update .env from Terraform outputs
+## Step 5 — Update .env from Terraform outputs
 
 ```bash
-cd terraform && terraform output && cd ..
+cd terraform/environments/prod && terraform output && cd ../../..
 ```
 
 Copy the values into `.env`:
@@ -97,17 +108,10 @@ Copy the values into `.env`:
 
 ---
 
-## Step 5 — Install Python dependencies
+## Step 6 — Install Python dependencies, seed Firestore, add embeddings
 
 ```bash
 make install
-```
-
----
-
-## Step 6 — Seed Firestore
-
-```bash
 make seed-db          # load demo products, orders, users, invoices
 make add-embeddings   # add vector embeddings for RAG semantic search
 ```
@@ -124,23 +128,28 @@ One-time manual step in the GCP Console (cannot be automated):
 1. Go to **Cloud Build → Repositories (2nd gen)**
 2. Click **Create host connection** → select **GitHub** → authorize → name it `github-connection` (region: `us-central1`)
 3. Click **Link Repository** → select `Saoussen-CH/customer-support-mas-ai` → click **Link**
-4. Confirm the linked repo name: `gcloud builds repositories list --connection=github-connection --region=us-central1 --project=YOUR_PROJECT_ID`
-   (Cloud Build slugifies the name, e.g. `Saoussen-CH-customer-support-mas-ai`)
+4. Confirm the linked repo name:
+   ```bash
+   gcloud builds repositories list --connection=github-connection \
+     --region=us-central1 --project=YOUR_PROJECT_ID
+   ```
+   Cloud Build slugifies the name, e.g. `Saoussen-CH-customer-support-mas-ai`
 
 Then enable trigger creation in Terraform:
 
-```bash
-# In terraform/terraform.tfvars, set:
+```hcl
+# In terraform/environments/prod/terraform.tfvars:
 github_connected           = true
 cloudbuild_connection_name = "github-connection"
-cloudbuild_repo_name       = "Saoussen-CH-customer-support-mas-ai"  # from step 4
+cloudbuild_repo_name       = "Saoussen-CH-customer-support-mas-ai"  # from step above
 ```
 
 ```bash
 make infra-up
 ```
 
-This creates all 4 CI/CD triggers. **Note:** Cloud Build 2nd gen triggers require `service_account` — this is set automatically by Terraform to the Cloud Build SA.
+This creates all CI/CD triggers. **Note:** Cloud Build 2nd gen triggers require
+`service_account` — this is set automatically by Terraform to the Cloud Build SA.
 
 ---
 
@@ -151,27 +160,51 @@ make deploy-agent-engine
 ```
 
 This creates the Agent Engine on Vertex AI. At the end it prints the resource
-name — copy it into `.env`:
+name — copy it into both `.env` and `terraform/environments/prod/terraform.tfvars`:
 
+**.env:**
 ```bash
 AGENT_ENGINE_RESOURCE_NAME=projects/PROJECT_NUMBER/locations/us-central1/reasoningEngines/ENGINE_ID
 ```
 
+**terraform/environments/prod/terraform.tfvars:**
+```hcl
+agent_engine_resource_name = "projects/PROJECT_NUMBER/locations/us-central1/reasoningEngines/ENGINE_ID"
+```
+
+Then re-apply Terraform so the Cloud Run service picks up the new value:
+
+```bash
+make infra-up
+```
+
 ---
 
-## Step 9 — Re-run GCP setup to grant Agent Engine SA permissions
+## Step 9 — Grant Agent Engine SA permissions
 
-The Agent Engine service account (`gcp-sa-aiplatform-re`) is created by
-Google on first Agent Engine deployment — it does not exist before that.
-Re-run setup now that it exists:
+The Agent Engine service account (`gcp-sa-aiplatform-re`) is created by Google
+on first Agent Engine deployment — it does not exist before that. Re-run setup
+now that it exists, then set `google_managed_sas_exist = true` and re-apply:
 
 ```bash
 make setup-gcp
 ```
 
+In `terraform/environments/prod/terraform.tfvars`:
+
+```hcl
+google_managed_sas_exist = true
+```
+
+```bash
+make infra-up
+```
+
 ---
 
-## Step 10 — Push to main (deploys Cloud Run via CI/CD)
+## Step 10 — Deploy
+
+Push to `main` and let the CI/CD pipeline handle the deployment:
 
 ```bash
 git push
@@ -184,7 +217,14 @@ install → lint + tool-tests → unit-tests → integration-tests
   → docker-build → docker-push
     → deploy-agent-engine (skipped — no agent code changed)
       → deploy-cloud-run
-        → smoke-test
+        → get-service-url
+          → smoke-test
+```
+
+Alternatively, deploy Cloud Run directly without CI/CD:
+
+```bash
+make deploy-cloud-run
 ```
 
 Get the Cloud Run URL:
@@ -197,7 +237,19 @@ gcloud run services describe customer-support-app \
 
 ---
 
-## Step 11 — Test
+## Step 11 — Verify with smoke tests
+
+```bash
+uv sync --group dev
+CLOUD_RUN_URL=https://your-cloud-run-url pytest tests/smoke/ -v
+```
+
+The smoke suite runs 6 checks: health endpoint, agent responds, product tool,
+order tool, Model Armor filtering, and session continuity.
+
+---
+
+## Step 12 — Try it
 
 Demo accounts (pre-seeded by `make seed-db`):
 
@@ -213,6 +265,53 @@ Try these prompts:
 
 ---
 
+## Multi-environment setup
+
+The project supports three environments backed by separate GCP projects and
+Terraform state. Each environment has its own directory under
+`terraform/environments/`.
+
+| Environment | Directory | Branch | Model Armor | Load tests |
+|-------------|-----------|--------|-------------|------------|
+| `dev` | `terraform/environments/dev` | `develop` | INSPECT_ONLY | No |
+| `staging` | `terraform/environments/staging` | `staging` | INSPECT_AND_BLOCK | Yes |
+| `prod` | `terraform/environments/prod` | `main` | INSPECT_AND_BLOCK | No |
+
+Per-environment differences:
+
+| Setting | dev | staging | prod |
+|---------|-----|---------|------|
+| Model Armor mode | INSPECT_ONLY | INSPECT_AND_BLOCK | INSPECT_AND_BLOCK |
+| Firestore delete protection | disabled | enabled | enabled |
+| GCS force_destroy | true | false | false |
+| Nightly scheduler | No | No | Yes |
+| Load tests in CI | No | Yes | No |
+
+### Bootstrapping dev or staging
+
+Follow the same steps as prod but target the appropriate environment directory
+and pass `ENV=dev` or `ENV=staging` to make targets:
+
+```bash
+# Bootstrap dev
+cd terraform/environments/dev
+cp terraform.tfvars.example terraform.tfvars
+# fill in terraform.tfvars
+cd ../../..
+make infra-up ENV=dev
+
+# Bootstrap staging
+cd terraform/environments/staging
+cp terraform.tfvars.example terraform.tfvars
+# fill in terraform.tfvars
+cd ../../..
+make infra-up ENV=staging
+```
+
+Shared infrastructure code lives in `terraform/modules/core/`.
+
+---
+
 ## Subsequent deployments
 
 | Scenario | Command |
@@ -221,6 +320,9 @@ Try these prompts:
 | Backend/frontend only | `git push` — Agent Engine deploy skipped |
 | Force Agent Engine redeploy | `make submit-build DEPLOY_AGENT_ENGINE=true` |
 | Manual build without push | `make submit-build` |
+| Deploy to dev | Push to `develop` branch |
+| Deploy to staging | Push to `staging` branch |
+| Deploy to prod | Push to `main` branch |
 
 ---
 
@@ -234,7 +336,10 @@ make lint                  # ruff check
 make format                # ruff auto-fix
 make seed-db               # re-seed Firestore
 make deploy-agent-engine   # deploy/update Agent Engine only
-make infra-up              # terraform init + apply
+make deploy-cloud-run      # deploy Cloud Run directly
+make infra-up              # terraform init + apply (prod by default)
+make infra-up ENV=staging  # apply staging environment
+make infra-up ENV=dev      # apply dev environment
 make terraform-plan        # preview infrastructure changes
 ```
 
@@ -253,7 +358,8 @@ Check Cloud Run startup logs for `Model Armor init failed`. Ensure
 
 **Agent Engine SA missing Firestore permissions**
 Run `make setup-gcp` after the first `make deploy-agent-engine`. The `-re`
-service account only exists after the first deployment.
+service account only exists after the first deployment. Then set
+`google_managed_sas_exist = true` in `terraform.tfvars` and run `make infra-up`.
 
 **Cloud Run returns 403**
 `gcloud run deploy --allow-unauthenticated` in the pipeline sets
@@ -261,6 +367,15 @@ service account only exists after the first deployment.
 ```bash
 gcloud run services add-iam-policy-binding customer-support-app \
   --region=us-central1 --member=allUsers --role=roles/run.invoker
+```
+
+**Smoke tests failing after deploy**
+Get the Cloud Run URL and run tests manually to see the failure:
+```bash
+CLOUD_RUN_URL=$(gcloud run services describe customer-support-app \
+  --region=us-central1 --format='value(status.url)')
+uv sync --group dev
+CLOUD_RUN_URL=$CLOUD_RUN_URL pytest tests/smoke/ -v
 ```
 
 ---
