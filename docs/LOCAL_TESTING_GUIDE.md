@@ -101,6 +101,7 @@ On a fresh GCP project, Terraform cannot read project metadata until this API
 is enabled. Run this once before the first `terraform plan`:
 
 ```bash
+cd ../../..   # back to repo root
 make bootstrap-apis ENV=dev
 ```
 

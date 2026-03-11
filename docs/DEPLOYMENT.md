@@ -302,8 +302,8 @@ before Terraform can read project metadata):
 cd terraform/environments/dev
 cp terraform.tfvars.example terraform.tfvars
 # fill in terraform.tfvars (project_id, staging_bucket_name, github_owner)
-cd ../../..
-make bootstrap-apis ENV=dev   # enable Cloud Resource Manager API — once per new project
+cd ../../..                         # back to repo root
+make bootstrap-apis ENV=dev         # enable Cloud Resource Manager API — once per new project
 # wait ~30 seconds
 make infra-up ENV=dev
 
@@ -311,7 +311,7 @@ make infra-up ENV=dev
 cd terraform/environments/staging
 cp terraform.tfvars.example terraform.tfvars
 # fill in terraform.tfvars
-cd ../../..
+cd ../../..                         # back to repo root
 make bootstrap-apis ENV=staging
 # wait ~30 seconds
 make infra-up ENV=staging
