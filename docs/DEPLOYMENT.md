@@ -21,6 +21,7 @@ Install these tools before starting:
 ```bash
 gcloud auth login
 gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 
 git clone https://github.com/Saoussen-CH/customer-support-mas-ai.git
 cd customer-support-mas-ai

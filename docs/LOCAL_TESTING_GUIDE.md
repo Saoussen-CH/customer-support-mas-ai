@@ -154,6 +154,7 @@ Copy `model_armor_template_name` into `.env.dev` → `MODEL_ARMOR_TEMPLATE_ID=..
 make switch-env ENV=dev
 gcloud config set project css-mas-dev
 gcloud auth application-default login
+gcloud auth application-default set-quota-project css-mas-dev
 ```
 
 Test Firestore and APIs are working:
@@ -300,6 +301,7 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 | Symptom | Fix |
 |---|---|
 | `Error 403: Cloud Resource Manager API not enabled` | Run `make bootstrap-apis ENV=dev`, wait 30s, retry |
+| `403 aiplatform.googleapis.com requires a quota project` | Run `gcloud auth application-default set-quota-project css-mas-dev` |
 | `terraform validate` fails | Check module path in `environments/dev/main.tf` → `source = "../../modules/core"` |
 | `google_managed_sas_exist = false` errors | Leave it `false` until after first Agent Engine deploy |
 | `github_connected = false` — triggers not created | Expected — connect GitHub in Cloud Build console first, then set `true` in tfvars |
