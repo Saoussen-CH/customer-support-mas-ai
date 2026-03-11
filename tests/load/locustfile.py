@@ -51,16 +51,14 @@ class CustomerSupportUser(HttpUser):
     def on_start(self):
         self.user_id = f"load-test-{id(self)}"
         self.session_id = None
+        self.headers = {"X-User-Id": self.user_id}
 
     @task(4)
     def product_search(self):
         self.client.post(
             "/api/chat",
-            json={
-                "message": random.choice(PRODUCT_QUERIES),
-                "user_id": self.user_id,
-                "session_id": self.session_id,
-            },
+            headers=self.headers,
+            json={"message": random.choice(PRODUCT_QUERIES), "session_id": self.session_id},
             timeout=60,
             name="/api/chat [product]",
         )
@@ -69,11 +67,8 @@ class CustomerSupportUser(HttpUser):
     def order_tracking(self):
         self.client.post(
             "/api/chat",
-            json={
-                "message": random.choice(ORDER_QUERIES),
-                "user_id": self.user_id,
-                "session_id": self.session_id,
-            },
+            headers=self.headers,
+            json={"message": random.choice(ORDER_QUERIES), "session_id": self.session_id},
             timeout=60,
             name="/api/chat [order]",
         )
@@ -82,11 +77,8 @@ class CustomerSupportUser(HttpUser):
     def billing_query(self):
         self.client.post(
             "/api/chat",
-            json={
-                "message": random.choice(BILLING_QUERIES),
-                "user_id": self.user_id,
-                "session_id": self.session_id,
-            },
+            headers=self.headers,
+            json={"message": random.choice(BILLING_QUERIES), "session_id": self.session_id},
             timeout=60,
             name="/api/chat [billing]",
         )
@@ -95,11 +87,8 @@ class CustomerSupportUser(HttpUser):
     def general_query(self):
         self.client.post(
             "/api/chat",
-            json={
-                "message": random.choice(GENERAL_QUERIES),
-                "user_id": self.user_id,
-                "session_id": self.session_id,
-            },
+            headers=self.headers,
+            json={"message": random.choice(GENERAL_QUERIES), "session_id": self.session_id},
             timeout=60,
             name="/api/chat [general]",
         )

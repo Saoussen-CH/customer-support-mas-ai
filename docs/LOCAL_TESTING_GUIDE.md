@@ -192,23 +192,34 @@ make test-integration
 ## Step 11 — Deploy to dev (optional — requires GCP project set up)
 
 ```bash
+make switch-env ENV=dev
 make deploy-agent-engine
 ```
 
 After deploy completes, copy the resource name printed at the end into:
 - `.env.dev` → `AGENT_ENGINE_RESOURCE_NAME=projects/.../reasoningEngines/...`
-- `terraform/environments/dev/terraform.tfvars` → uncomment `agent_engine_resource_name = "..."`
+- `terraform/environments/dev/terraform.tfvars`:
+  ```hcl
+  google_managed_sas_exist   = true   # ← uncomment this
+  agent_engine_resource_name = "projects/.../reasoningEngines/..."  # ← and this
+  ```
 
-Then re-apply Terraform to wire the resource name into Cloud Run:
+**Re-apply Terraform** — this is required to grant Firestore permissions to the two
+Agent Engine service accounts that Google creates on first deploy:
 
 ```bash
 make infra-up ENV=dev
 ```
 
+> Without this re-apply, tool calls (`search_products`, `track_order`, etc.) will
+> fail with `403 Missing or insufficient permissions` because the Agent Engine SA
+> (`service-PROJ_NUM@gcp-sa-aiplatform-re.iam.gserviceaccount.com`) won't yet have
+> `roles/datastore.user`.
+
 Deploy Cloud Run:
 
 ```bash
-make deploy-cloud-run
+make deploy-cloud-run ENV=dev
 ```
 
 ---
@@ -218,10 +229,7 @@ make deploy-cloud-run
 After Cloud Run is deployed:
 
 ```bash
-export CLOUD_RUN_URL=$(gcloud run services describe customer-support-app \
-  --region us-central1 --project css-mas-dev \
-  --format="value(status.url)")
-
+export CLOUD_RUN_URL=$(gcloud run services describe customer-support-ai --region us-central1 --project css-mas-dev --format="value(status.url)")
 CLOUD_RUN_URL=$CLOUD_RUN_URL uv run pytest tests/smoke/ -v
 ```
 
@@ -234,9 +242,7 @@ CLOUD_RUN_URL=$CLOUD_RUN_URL uv run pytest tests/smoke/ -v
 After deploying to staging (`make switch-env ENV=staging` + repeat steps 4-10):
 
 ```bash
-export CLOUD_RUN_URL=$(gcloud run services describe customer-support-app \
-  --region us-central1 --project css-mas-staging \
-  --format="value(status.url)")
+export CLOUD_RUN_URL=$(gcloud run services describe customer-support-ai --region us-central1 --project css-mas-staging --format="value(status.url)")
 
 uv run locust -f tests/load/locustfile.py \
   --headless --users 5 --spawn-rate 1 --run-time 2m \
@@ -248,6 +254,11 @@ uv run python tests/load/check_slos.py /tmp/load-results_stats.csv
 ```
 
 **Expected:** Locust finishes, SLO checker exits 0 (all SLOs met).
+
+> Note: Latency is dominated by LLM inference and is not a useful SLO for AI systems.
+> The checker validates: error_rate < 5%, at least 1 request completed per endpoint,
+> and p99 < 270s (well within Cloud Run's 300s hard timeout).
+> Response correctness is validated separately via `make eval-post-deploy`.
 
 ---
 
@@ -306,5 +317,8 @@ make terraform-plan ENV=prod     # runs plan in terraform/environments/prod
 | `google_managed_sas_exist = false` errors | Leave it `false` until after first Agent Engine deploy |
 | `github_connected = false` — triggers not created | Expected — connect GitHub in Cloud Build console first, then set `true` in tfvars |
 | Agent Engine deploy fails | Check `.env` has correct `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_STORAGE_BUCKET` |
+| `403 Missing or insufficient permissions` on tool calls | Set `google_managed_sas_exist = true` in `terraform.tfvars` and re-run `make infra-up ENV=dev` — the Agent Engine SA needs `roles/datastore.user` |
+| "violates our safety policy" on normal queries | Model Armor pi_and_jailbreak filter confidence was too low — re-run `make infra-up ENV=dev` to apply updated `MEDIUM_AND_ABOVE` thresholds |
+| `No response text extracted` in Cloud Run logs | Check Agent Engine logs: `gcloud logging read 'resource.type="aiplatform.googleapis.com/ReasoningEngine"' --project=PROJECT_ID --limit=20` |
 | Smoke tests fail with 503 | Wait 2-3 min after deploy for cold start, then retry |
-| Model Armor template not found | Run `terraform output model_armor_template_name` and copy into `.env` |
+| Model Armor template not found | Run `terraform output model_armor_template_name` and copy into `.env.dev` |

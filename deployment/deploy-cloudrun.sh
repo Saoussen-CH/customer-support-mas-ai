@@ -2,10 +2,27 @@
 
 set -e
 
-# Load configuration from .env file if it exists
-if [ -f .env ]; then
-  echo "Loading configuration from .env..."
-  export $(cat .env | grep -v '^#' | xargs)
+# Determine which .env file to load based on ENV argument (default: .env)
+ENV="${1:-}"
+if [ -n "$ENV" ] && [ -f ".env.$ENV" ]; then
+  ENV_FILE=".env.$ENV"
+elif [ -f ".env" ]; then
+  ENV_FILE=".env"
+else
+  ENV_FILE=""
+fi
+
+# Load configuration from env file
+if [ -n "$ENV_FILE" ]; then
+  echo "Loading configuration from $ENV_FILE..."
+  while IFS='=' read -r key value; do
+    # Skip blank lines and comment-only lines
+    [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+    # Strip inline comments and trailing whitespace from value
+    value="${value%%#*}"
+    value="${value%"${value##*[![:space:]]}"}"
+    export "$key=$value"
+  done < "$ENV_FILE"
 fi
 
 # Configuration - Use env vars or defaults
@@ -79,12 +96,27 @@ docker push $IMAGE_URL:latest
 # Step 4: Deploy to Cloud Run
 echo ""
 echo "Step 4: Deploying to Cloud Run..."
+
+# Build env vars string from the loaded env file — pass all relevant vars
+CLOUD_RUN_ENV_VARS="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
+CLOUD_RUN_ENV_VARS+=",GOOGLE_CLOUD_LOCATION=${REGION}"
+CLOUD_RUN_ENV_VARS+=",AGENT_ENGINE_RESOURCE_NAME=${AGENT_ENGINE_RESOURCE_NAME}"
+CLOUD_RUN_ENV_VARS+=",FRONTEND_URL=https://${SERVICE_NAME}-${REGION}.run.app"
+CLOUD_RUN_ENV_VARS+=",FIRESTORE_DATABASE=${FIRESTORE_DATABASE:-customer-support-db}"
+CLOUD_RUN_ENV_VARS+=",MODEL_ARMOR_ENABLED=${MODEL_ARMOR_ENABLED:-false}"
+CLOUD_RUN_ENV_VARS+=",MODEL_ARMOR_MODE=${MODEL_ARMOR_MODE:-INSPECT_AND_BLOCK}"
+CLOUD_RUN_ENV_VARS+=",ENV=${ENV:-production}"
+# Only include MODEL_ARMOR_TEMPLATE_ID if set
+if [ -n "${MODEL_ARMOR_TEMPLATE_ID}" ]; then
+  CLOUD_RUN_ENV_VARS+=",MODEL_ARMOR_TEMPLATE_ID=${MODEL_ARMOR_TEMPLATE_ID}"
+fi
+
 gcloud run deploy $SERVICE_NAME \
   --image=$IMAGE_URL:latest \
   --region=$REGION \
   --platform=managed \
   --allow-unauthenticated \
-  --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=$REGION,AGENT_ENGINE_RESOURCE_NAME=$AGENT_ENGINE_RESOURCE_NAME,FRONTEND_URL=https://$SERVICE_NAME-$REGION.run.app" \
+  --set-env-vars="$CLOUD_RUN_ENV_VARS" \
   --memory=512Mi \
   --cpu=1 \
   --timeout=300 \

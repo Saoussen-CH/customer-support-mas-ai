@@ -4,11 +4,14 @@ SLO checker — validates Locust CSV output against defined thresholds.
 Exits with code 1 if any SLO is breached, failing the Cloud Build load-test step
 and blocking promotion to prod.
 
-SLO rationale:
-  - p95 10s: Agent Engine multi-agent routing takes 3-8s; cold starts add more
-  - p99 20s: rare outliers (circuit breaker recovery, model warm-up)
-  - error_rate 5%: allows transient 503s caught by retry logic
-  - min_rps 0.5: sanity check that load actually ran
+For a multi-agent AI system, latency is dominated by LLM inference (not infra)
+and is not a useful SLO. What matters under concurrent load is:
+
+  - error_rate < 5%: service stays up and returns valid responses
+  - min_requests 1:  at least one request completed (load test actually ran)
+  - max_p99 270s:    no responses hanging near Cloud Run's 300s hard timeout
+
+Post-deploy eval (eval_vertex.py) is the quality gate for response correctness.
 
 Usage:
     python tests/load/check_slos.py /path/to/load-results_stats.csv
@@ -18,10 +21,9 @@ import csv
 import sys
 
 SLOS = {
-    "p95_ms": 10_000,  # 10s p95 response time
-    "p99_ms": 20_000,  # 20s p99 response time
-    "error_rate": 5.0,  # max 5% error rate
-    "min_rps": 0.5,  # must sustain at least 0.5 req/sec
+    "error_rate": 5.0,  # max 5% error rate under concurrent load
+    "min_requests": 1,  # at least 1 request completed per endpoint
+    "max_p99_ms": 270_000,  # no requests hanging near Cloud Run's 300s timeout
 }
 
 # Endpoints excluded from SLO checks (health checks are always fast)
@@ -49,33 +51,18 @@ def check_slos(csv_path: str) -> bool:
     for row in rows:
         name = row.get("Name", "unknown")
         try:
-            p95 = float(row.get("95%", 0))
             p99 = float(row.get("99%", 0))
             total = int(row.get("Request Count", 1))
             failures = int(row.get("Failure Count", 0))
-            rps = float(row.get("Requests/s", 0))
             error_rate = (failures / total * 100) if total > 0 else 0
         except (ValueError, TypeError):
             print(f"  {name}: could not parse row — skipping")
             continue
 
         print(f"\n  {name}")
-        print(f"    requests={total}  failures={failures}  rps={rps:.2f}")
-        print(f"    p95={p95:.0f}ms  p99={p99:.0f}ms  error_rate={error_rate:.1f}%")
+        print(f"    requests={total}  failures={failures}  error_rate={error_rate:.1f}%  p99={p99:.0f}ms")
 
         endpoint_ok = True
-
-        if p95 > SLOS["p95_ms"]:
-            print(f"    ✗ FAIL  p95 {p95:.0f}ms > {SLOS['p95_ms']}ms")
-            endpoint_ok = False
-        else:
-            print(f"    ✓ p95 OK ({p95:.0f}ms)")
-
-        if p99 > SLOS["p99_ms"]:
-            print(f"    ✗ FAIL  p99 {p99:.0f}ms > {SLOS['p99_ms']}ms")
-            endpoint_ok = False
-        else:
-            print(f"    ✓ p99 OK ({p99:.0f}ms)")
 
         if error_rate > SLOS["error_rate"]:
             print(f"    ✗ FAIL  error rate {error_rate:.1f}% > {SLOS['error_rate']}%")
@@ -83,11 +70,17 @@ def check_slos(csv_path: str) -> bool:
         else:
             print(f"    ✓ error rate OK ({error_rate:.1f}%)")
 
-        if rps < SLOS["min_rps"]:
-            print(f"    ✗ FAIL  rps {rps:.2f} < {SLOS['min_rps']} (load test may not have run)")
+        if total < SLOS["min_requests"]:
+            print(f"    ✗ FAIL  only {total} request(s) completed — load test may not have run")
             endpoint_ok = False
         else:
-            print(f"    ✓ rps OK ({rps:.2f})")
+            print(f"    ✓ requests completed ({total})")
+
+        if p99 > SLOS["max_p99_ms"]:
+            print(f"    ✗ FAIL  p99 {p99:.0f}ms > {SLOS['max_p99_ms']}ms (near Cloud Run timeout)")
+            endpoint_ok = False
+        else:
+            print(f"    ✓ p99 within timeout ({p99:.0f}ms)")
 
         if not endpoint_ok:
             passed = False

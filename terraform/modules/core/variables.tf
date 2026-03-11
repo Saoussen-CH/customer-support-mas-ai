@@ -52,7 +52,7 @@ variable "ar_repo_name" {
 
 variable "cloud_run_service_name" {
   type    = string
-  default = "customer-support-app"
+  default = "customer-support-ai"
 }
 
 variable "github_repo" {

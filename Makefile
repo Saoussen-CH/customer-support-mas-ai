@@ -271,8 +271,8 @@ test-local: ## Run agent locally to verify before deploying
 deploy-agent-engine: ## Deploy agent to Vertex AI Agent Engine
 	PYTHONPATH=. $(PYTHON) deployment/deploy.py --action deploy
 
-deploy-cloud-run: ## Build and deploy backend to Cloud Run
-	bash deployment/deploy-cloudrun.sh
+deploy-cloud-run: ## Build and deploy backend to Cloud Run (ENV=dev|prod selects .env.<ENV>)
+	bash deployment/deploy-cloudrun.sh $(ENV)
 
 nightly: ## Trigger ci-manual Cloud Build with selective step flags
 	@# Defaults: all steps on, post-deploy off. Override with RUN_LINT=false, RUN_UNIT_TESTS=false, etc.
