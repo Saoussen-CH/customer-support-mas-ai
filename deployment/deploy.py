@@ -183,7 +183,7 @@ async def test_locally():
         plugins=build_plugins(),
     )
 
-    session = await app.async_create_session(user_id="test_user_001")
+    session = await app.async_create_session(user_id="demo-user-001")
     print(f"\n✓ Created local session: {session.id}")
 
     test_queries = [
@@ -204,7 +204,7 @@ async def test_locally():
 
         try:
             async for event in app.async_stream_query(
-                user_id="test_user_001",
+                user_id="demo-user-001",
                 session_id=session.id,
                 message=query,
             ):
