@@ -1,0 +1,80 @@
+# Terraform Apply — runs on every merge to automatically apply infrastructure changes
+#
+# Triggered per environment — one trigger in each GCP project (dev/staging/prod).
+# Fires on push to the environment's deploy branch (develop/staging/main), in parallel
+# with the app deploy trigger (cloudbuild-deploy.yaml). Infrastructure is applied first
+# and independently — app code doesn't need to wait for it.
+#
+# New GCP services, IAM changes, or Firestore indexes added to terraform/modules/core/
+# are automatically propagated to each environment as PRs are promoted through the
+# develop → staging → main branch promotion flow.
+#
+# tfvars are stored in GCS alongside state (uploaded once during bootstrap):
+#   gs://{_TF_STATE_BUCKET}/tfvars/terraform.tfvars
+#
+# Substitutions (set in Cloud Build trigger config per environment):
+#   _ENV_DIRECTORY   — path to environment dir, e.g. terraform/environments/dev
+#   _ENVIRONMENT     — environment name, e.g. dev
+#   _TF_STATE_BUCKET — GCS bucket for remote state + tfvars, e.g. css-mas-dev-tf-state
+#                      Defaults to $PROJECT_ID-tf-state if not set.
+
+substitutions:
+  _ENV_DIRECTORY: "terraform/environments/dev"
+  _ENVIRONMENT: "dev"
+  _TF_STATE_BUCKET: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # ===========================================================================
+  # Init — download tfvars from GCS, configure remote backend
+  # ===========================================================================
+  - id: "terraform-init"
+    name: "hashicorp/terraform:1.9"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        BUCKET="${_TF_STATE_BUCKET:-$PROJECT_ID-tf-state}"
+        echo "State bucket: $$BUCKET"
+        echo "Environment:  ${_ENVIRONMENT}"
+        echo "Directory:    ${_ENV_DIRECTORY}"
+
+        # Download tfvars stored in GCS during bootstrap
+        gsutil cp gs://$$BUCKET/tfvars/terraform.tfvars ${_ENV_DIRECTORY}/terraform.tfvars
+
+        cd ${_ENV_DIRECTORY}
+        terraform init \
+          -backend-config="bucket=$$BUCKET" \
+          -backend-config="prefix=customer-support-mas/${_ENVIRONMENT}" \
+          -input=false \
+          -no-color
+    waitFor: ["-"]
+
+  # ===========================================================================
+  # Apply — auto-approve (plan was reviewed on the PR)
+  # ===========================================================================
+  - id: "terraform-apply"
+    name: "hashicorp/terraform:1.9"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        cd ${_ENV_DIRECTORY}
+        echo "============================================================"
+        echo "  Terraform Apply — ${_ENVIRONMENT} (project: $PROJECT_ID)"
+        echo "============================================================"
+
+        terraform apply \
+          -var-file=terraform.tfvars \
+          -input=false \
+          -auto-approve \
+          -no-color
+
+        echo ""
+        echo "Apply complete."
+        terraform output -no-color || true
+    waitFor: ["terraform-init"]
+
+timeout: "1800s"

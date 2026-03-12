@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "customer_support_agent"
-version = "0.1.0"
+version = "1.0.0"
 description = "Customer Support Multi-Agent System"
 requires-python = ">=3.11"
 dependencies = [
@@ -39,6 +39,12 @@ dev = [
     "pytest-asyncio>=0.23",
     "pre-commit>=3.0",
     "google-adk[eval]>=1.19.0",
+]
+
+# Load test dependencies (installed with: uv sync --group load-test)
+# Kept separate — locust pulls in gevent + web UI which aren't needed for unit/integration tests
+load-test = [
+    "locust>=2.20.0",
 ]
 
 # ==============================================================================

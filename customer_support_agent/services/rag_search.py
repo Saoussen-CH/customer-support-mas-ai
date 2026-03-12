@@ -23,9 +23,8 @@ from typing import Dict, List, Optional
 from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
-import vertexai  # noqa: E402
+from google import genai  # noqa: E402
 from google.api_core import exceptions, retry  # noqa: E402
-from vertexai.language_models import TextEmbeddingModel  # noqa: E402
 
 # Configure retry policy for transient errors
 # Handles: Rate limits (429), Server errors (500), Service unavailable (503), Gateway timeout (504)
@@ -51,14 +50,11 @@ class RAGProductSearch:
         self.database_id = database_id
         self.location = location
 
-        # Initialize Vertex AI (uses ADC for project)
-        vertexai.init(location=location)
-
         # Initialize Firestore (uses ADC for project)
         self.db = firestore.Client(database=database_id)
 
-        # Load embedding model
-        self.embedding_model = TextEmbeddingModel.from_pretrained("text-embedding-004")
+        # Initialize genai client for embeddings
+        self._genai_client = genai.Client(vertexai=True, location=location)
 
     def _generate_embedding_with_retry(self, text: str) -> List[float]:
         """
@@ -79,7 +75,8 @@ class RAGProductSearch:
 
         @RETRY_POLICY
         def _generate():
-            return self.embedding_model.get_embeddings([text])[0].values
+            result = self._genai_client.models.embed_content(model="text-embedding-004", contents=[text])
+            return result.embeddings[0].values
 
         try:
             return _generate()

@@ -442,17 +442,12 @@ def add_embeddings_to_products(db, location: str = "us-central1"):
         location: GCP location for Vertex AI
     """
     try:
-        import vertexai
-        from vertexai.language_models import TextEmbeddingModel
+        from google import genai
 
         print("\n📊 Adding vector embeddings for RAG search...")
 
-        # Initialize Vertex AI
-        vertexai.init(location=location)
-
-        # Load embedding model
-        print("   Loading embedding model (text-embedding-004)...")
-        model = TextEmbeddingModel.from_pretrained("text-embedding-004")
+        # Initialize genai client
+        genai_client = genai.Client(vertexai=True, location=location)
 
         # Get all products
         products = list(db.collection("products").stream())
@@ -471,8 +466,8 @@ def add_embeddings_to_products(db, location: str = "us-central1"):
             search_text = " ".join(search_text_parts)
 
             # Generate embedding
-            embeddings_response = model.get_embeddings([search_text])
-            embedding_vector = embeddings_response[0].values
+            embeddings_response = genai_client.models.embed_content(model="text-embedding-004", contents=[search_text])
+            embedding_vector = embeddings_response.embeddings[0].values
 
             # Update product with embedding
             doc.reference.update({"embedding": embedding_vector, "search_text": search_text})
