@@ -51,57 +51,64 @@ Leave `GOOGLE_CLOUD_STORAGE_BUCKET`, `AGENT_ENGINE_RESOURCE_NAME`, and
 
 ## Step 3 — Bootstrap GCP project
 
-```bash
-make setup-gcp
-```
-
-This enables required APIs and grants IAM roles to the Cloud Run and Cloud Build
-service accounts.
-
----
-
-## Step 4 — Terraform (infrastructure bootstrap)
+The project uses a **multi-environment Terraform layout** — one GCP project per environment (dev/staging/prod), each with its own state and config. All infrastructure is defined once in `terraform/modules/core/` and deployed to each environment independently.
 
 ```bash
-cd terraform/environments/prod
-cp terraform.tfvars.example terraform.tfvars
+cp terraform/environments/dev/terraform.tfvars.example \
+   terraform/environments/dev/terraform.tfvars
 ```
 
-Edit `terraform.tfvars` — the three required fields:
+Edit the three required fields:
 
 ```hcl
-project_id          = "your-gcp-project-id"
-staging_bucket_name = "your-project-id-staging"   # must be globally unique
-github_owner        = "your-github-username-or-org"
+project_id          = "css-mas-dev"
+staging_bucket_name = "css-mas-dev-staging"   # must be globally unique
+github_owner        = "your-github-username"
 ```
 
-Run from the project root:
+**Create the GCS state bucket** (once per environment — stores remote Terraform state and tfvars for CI):
 
 ```bash
-cd ../../..    # back to project root
-make bootstrap-apis ENV=prod   # enable Cloud Resource Manager API — once per new project
-# wait ~30 seconds
-make infra-up  # terraform init + apply (defaults to terraform/environments/prod)
+make bootstrap-tfstate ENV=dev
+```
+
+**Apply infrastructure:**
+
+```bash
+make infra-up ENV=dev   # terraform init + apply
 ```
 
 Terraform creates:
-- GCS staging bucket
+- GCS staging bucket (Agent Engine artifacts)
 - Artifact Registry repository
-- Firestore database
-- Cloud Build triggers (push-to-main + nightly)
+- Firestore database + vector index
+- Cloud Build triggers (app CI/CD + terraform plan/apply)
 - All IAM bindings (Cloud Run SA, Agent Engine SA, Cloud Build SA)
-- Model Armor template + floor settings (if `model_armor_enabled = true`)
-- Cloud Scheduler nightly job
+- Model Armor template + floor settings
+- Cloud Scheduler nightly job (prod only)
+
+Repeat for staging and prod:
+
+```bash
+make bootstrap-tfstate ENV=staging && make infra-up ENV=staging
+make bootstrap-tfstate ENV=prod    && make infra-up ENV=prod
+```
+
+> After any local tfvars change (e.g. adding `agent_engine_resource_name` after first deploy),
+> sync it back to GCS so CI picks it up:
+> ```bash
+> make sync-tfvars ENV=dev
+> ```
 
 ---
 
 ## Step 5 — Update .env from Terraform outputs
 
 ```bash
-cd terraform/environments/prod && terraform output && cd ../../..
+terraform -chdir=terraform/environments/dev output
 ```
 
-Copy the values into `.env`:
+Copy the values into `.env.dev` (or `.env` for single-env setups):
 
 | Terraform output | .env variable |
 |-----------------|---------------|
@@ -353,6 +360,51 @@ make infra-up ENV=staging    # apply staging environment
 make infra-up ENV=dev        # apply dev environment
 make terraform-plan          # preview infrastructure changes
 ```
+
+---
+
+## Creating a release
+
+Once code is merged to `main` and verified, tag the commit to trigger the release pipeline:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The `release` Cloud Build trigger fires automatically on the prod project. It:
+
+1. Runs lint + unit tests (`standard` eval profile)
+2. Builds and pushes a Docker image tagged **`v1.0.0`**, `$COMMIT_SHA`, and `latest`
+3. Deploys Agent Engine with display name `customer-support-multiagent-v1.0.0`
+4. Deploys Cloud Run pinned to `image:v1.0.0`
+5. Runs smoke tests to confirm the release is live
+
+### Rollback a release
+
+No rebuild needed — Cloud Run is pinned to the version tag:
+
+```bash
+gcloud run deploy customer-support-app \
+  --image=us-central1-docker.pkg.dev/css-mas-prod/customer-support/customer-support-app:v0.0.9 \
+  --region=us-central1 \
+  --project=css-mas-prod
+```
+
+### Update pyproject.toml version before tagging
+
+Keep the version in `pyproject.toml` in sync with the git tag:
+
+```bash
+# Edit pyproject.toml: version = "1.0.0"
+git add pyproject.toml
+git commit -m "chore: bump version to 1.0.0"
+git push origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+See [CI_CD.md](./CI_CD.md#agent-engine-versioning-strategy) for a full explanation of the versioning strategy and why one-resource-per-version was not chosen.
 
 ---
 

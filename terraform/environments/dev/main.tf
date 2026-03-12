@@ -2,9 +2,8 @@
 # DEV environment — watches develop branch, deploys to dev GCP project
 # ==============================================================================
 # Usage:
-#   cd terraform/environments/dev
-#   terraform init -backend-config=backend.hcl
-#   terraform apply -var-file=terraform.tfvars
+#   make bootstrap-tfstate ENV=dev   # one-time: create GCS bucket + upload tfvars
+#   make infra-up ENV=dev            # terraform init + apply
 
 terraform {
   required_version = ">= 1.5"
@@ -14,11 +13,8 @@ terraform {
       version = "~> 6.0"
     }
   }
-  # Remote state — create the GCS bucket first, then uncomment and run terraform init
-  # backend "gcs" {
-  #   bucket = "YOUR_DEV_PROJECT_ID-tf-state"
-  #   prefix = "customer-support-mas/dev"
-  # }
+  # Remote state — bucket + prefix injected via -backend-config at init time
+  backend "gcs" {}
 }
 
 provider "google" {
@@ -53,4 +49,5 @@ module "core" {
   cloudbuild_repo_name       = var.cloudbuild_repo_name
   model_armor_enabled        = var.model_armor_enabled
   model_armor_floor_mode     = var.model_armor_floor_mode
+  tfstate_bucket_name        = var.tfstate_bucket_name
 }

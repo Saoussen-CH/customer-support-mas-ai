@@ -94,3 +94,9 @@ variable "model_armor_floor_mode" {
     error_message = "model_armor_floor_mode must be INSPECT_AND_BLOCK or INSPECT_ONLY."
   }
 }
+
+variable "tfstate_bucket_name" {
+  description = "GCS bucket for remote Terraform state and tfvars. Defaults to {project_id}-tf-state if empty."
+  type        = string
+  default     = ""
+}

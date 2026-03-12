@@ -2,18 +2,28 @@
 # CI/CD — Cloud Build triggers (2nd gen) + Cloud Scheduler nightly job
 # ==============================================================================
 # Trigger strategy by environment:
-#   dev  — PR checks target develop; push to develop → full CI+CD deploy to dev project
-#   prod — PR checks target main;    push to main    → full CI+CD deploy to prod project
-#          Nightly trigger + Cloud Scheduler only in prod.
+#   dev     — PR checks + terraform plan on PRs to develop
+#             push to develop → terraform apply + app deploy
+#   staging — same, targeting staging branch and css-mas-staging project
+#   prod    — same, targeting main branch and css-mas-prod project
+#             Also: nightly eval + Cloud Scheduler + release trigger (tag push)
 
 locals {
   repo_resource = "projects/${var.project_id}/locations/${var.region}/connections/${var.cloudbuild_connection_name}/repositories/${var.cloudbuild_repo_name}"
   is_dev        = var.environment == "dev"
   is_staging    = var.environment == "staging"
   is_prod       = var.environment == "prod"
-  # Which branch each environment's PR checks and deploy trigger watch
+
+  # Which branch each environment watches
   deploy_branch = local.is_prod ? "^main$" : (local.is_staging ? "^staging$" : "^develop$")
-  # Shared deploy substitutions — same across dev/staging/prod
+
+  # Terraform state bucket — use explicit var or fall back to convention
+  tfstate_bucket = var.tfstate_bucket_name != "" ? var.tfstate_bucket_name : "${var.project_id}-tf-state"
+
+  # Environment directory used by terraform-plan and terraform-apply triggers
+  env_directory = "terraform/environments/${var.environment}"
+
+  # Shared deploy substitutions for app deploy triggers
   deploy_substitutions = {
     _EVAL_PROFILE               = "standard"
     _GOOGLE_CLOUD_LOCATION      = var.region
@@ -27,7 +37,18 @@ locals {
     _AGENT_ENGINE_RESOURCE_NAME = var.agent_engine_resource_name
     _RUN_LOAD_TESTS             = tostring(local.is_staging)
   }
+
+  # Shared terraform substitutions for plan and apply triggers
+  terraform_substitutions = {
+    _ENV_DIRECTORY   = local.env_directory
+    _ENVIRONMENT     = var.environment
+    _TF_STATE_BUCKET = local.tfstate_bucket
+  }
 }
+
+# ==============================================================================
+# APP CI/CD TRIGGERS
+# ==============================================================================
 
 # PR checks — fast eval + lint on every PR targeting the environment's deploy branch
 resource "google_cloudbuild_trigger" "pr_checks" {
@@ -108,12 +129,97 @@ resource "google_cloudbuild_trigger" "push_main" {
     push { branch = "^main$" }
   }
 
-  filename    = "cloudbuild/cloudbuild-deploy.yaml"
+  filename      = "cloudbuild/cloudbuild-deploy.yaml"
   substitutions = local.deploy_substitutions
-  depends_on  = [google_project_service.apis]
+  depends_on    = [google_project_service.apis]
 }
 
-# Nightly manual trigger — prod only
+# ==============================================================================
+# TERRAFORM CI/CD TRIGGERS
+# ==============================================================================
+
+# Terraform Plan — PR to env branch shows infra diff before merge
+resource "google_cloudbuild_trigger" "terraform_plan" {
+  count           = var.github_connected ? 1 : 0
+  project         = var.project_id
+  location        = var.region
+  name            = "terraform-plan"
+  description     = "Terraform plan: show infra diff on PR to ${var.environment} [${var.environment}]"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
+
+  repository_event_config {
+    repository = local.repo_resource
+    pull_request {
+      branch          = local.deploy_branch
+      comment_control = "COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY"
+    }
+  }
+
+  filename      = "cloudbuild/terraform-plan.yaml"
+  substitutions = local.terraform_substitutions
+  depends_on    = [google_project_service.apis]
+}
+
+# Terraform Apply — push to env branch auto-applies infra changes after merge
+resource "google_cloudbuild_trigger" "terraform_apply" {
+  count           = var.github_connected ? 1 : 0
+  project         = var.project_id
+  location        = var.region
+  name            = "terraform-apply"
+  description     = "Terraform apply: auto-apply infra on push to ${var.environment} branch [${var.environment}]"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
+
+  repository_event_config {
+    repository = local.repo_resource
+    push { branch = local.deploy_branch }
+  }
+
+  filename      = "cloudbuild/terraform-apply.yaml"
+  substitutions = local.terraform_substitutions
+  depends_on    = [google_project_service.apis]
+}
+
+# ==============================================================================
+# RELEASE TRIGGER — prod only
+# ==============================================================================
+
+# Release: git tag push (v*) → versioned deploy to prod
+resource "google_cloudbuild_trigger" "release" {
+  count           = var.github_connected && local.is_prod ? 1 : 0
+  project         = var.project_id
+  location        = var.region
+  name            = "release"
+  description     = "Release: build + tag Docker image + deploy Agent Engine + Cloud Run on git tag push (v*) [prod]"
+  service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
+
+  repository_event_config {
+    repository = local.repo_resource
+    push {
+      tag = "^v[0-9]+\\.[0-9]+\\.[0-9]+"
+    }
+  }
+
+  filename = "cloudbuild/release.yaml"
+
+  substitutions = {
+    _GOOGLE_CLOUD_LOCATION      = var.region
+    _REGION                     = var.region
+    _FIRESTORE_DATABASE         = var.firestore_database_id
+    _SERVICE_NAME               = var.cloud_run_service_name
+    _AR_REPO                    = var.ar_repo_name
+    _STAGING_BUCKET             = var.staging_bucket_name
+    _MODEL_ARMOR_ENABLED        = tostring(var.model_armor_enabled)
+    _MODEL_ARMOR_TEMPLATE_ID    = var.model_armor_enabled ? google_model_armor_template.customer_support_policy[0].name : ""
+    _AGENT_ENGINE_RESOURCE_NAME = var.agent_engine_resource_name
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+# ==============================================================================
+# NIGHTLY EVAL — prod only
+# ==============================================================================
+
 resource "google_cloudbuild_trigger" "nightly" {
   count           = var.github_connected && local.is_prod ? 1 : 0
   project         = var.project_id

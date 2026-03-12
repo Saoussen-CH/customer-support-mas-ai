@@ -1,19 +1,22 @@
 # CI/CD with Google Cloud Build
 
-The project uses **Google Cloud Build** for continuous integration and deployment. Three pipeline configs are active across four triggers, with eval profile selection per trigger type.
+The project uses **Google Cloud Build** for continuous integration and deployment. Seven pipeline configs handle different scenarios across three environments (dev/staging/prod).
 
 ## Pipeline Overview
 
 ```
-cloudbuild/pr-checks.yaml          PR checks (pull requests against deploy branches)
-cloudbuild/cloudbuild-deploy.yaml  CI + CD (deploy on push) — auto-detects agent changes
+cloudbuild/pr-checks.yaml          App CI: fast eval + lint on every PR
+cloudbuild/cloudbuild.yaml         App CI only (develop push, no deploy)
+cloudbuild/cloudbuild-deploy.yaml  App CI + CD on branch push — auto-detects agent changes
 cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
+cloudbuild/release.yaml            Versioned release on git tag push (v*) — prod only
+cloudbuild/terraform-plan.yaml     Infra: show plan diff on every PR — runs per env in parallel with pr-checks
+cloudbuild/terraform-apply.yaml    Infra: auto-apply on merge — runs per env in parallel with deploy
 ```
 
-> **Note:** `cloudbuild/cloudbuild.yaml` is a CI-only config that is no longer used by any
-> active trigger. It is retained for reference but is not wired to any Cloud Build trigger.
+**Key design principle:** Terraform is fully decoupled from the app deploy. Infrastructure changes propagate automatically — add a resource to `terraform/modules/core/`, open a PR (plan shows the diff), merge (apply runs automatically), promote through `develop → staging → main`.
 
-### Job Dependency Graph
+### Job Dependency Graph — cloudbuild-deploy.yaml
 
 ```
 detect-agent-changes
@@ -31,24 +34,176 @@ detect-agent-changes
                                         └── load-test  ← staging only (_RUN_LOAD_TESTS=true)
 ```
 
-`lint` and `tool-tests` run in parallel after `install-deps`. CD steps only start after **all**
-CI steps pass. `deploy-agent-engine` must complete before `deploy-cloud-run` so Cloud Run always
-talks to the already-updated agent.
+### Job Dependency Graph — release.yaml
 
----
+```
+install-deps
+├── lint ───────────────────────────┐
+└── unit-tests (standard profile)  │
+    └── docker-build ◄─────────────┘  (tagged: $TAG_NAME + $COMMIT_SHA + latest)
+        └── docker-push
+            └── deploy-agent-engine  ← always deploys (display name: customer-support-multiagent-vX.Y.Z)
+                └── deploy-cloud-run ← uses $TAG_NAME image (not $COMMIT_SHA)
+                    └── smoke-test
+```
 
-## Trigger Strategy
-
-| Trigger | Environment | Branch | Config | Deploy | Load tests |
-|---------|-------------|--------|--------|--------|------------|
-| `ci-pull-request` | all | PR → deploy branch | `pr-checks.yaml` | No | No |
-| `ci-cd-push-develop` | dev | develop | `cloudbuild-deploy.yaml` | Yes (dev) | No |
-| `ci-cd-push-staging` | staging | staging | `cloudbuild-deploy.yaml` | Yes (staging) | Yes |
-| `ci-cd-push-main` | prod | main | `cloudbuild-deploy.yaml` | Yes (prod) | No |
-| `ci-manual` | prod | main (manual) | `cloudbuild-nightly.yaml` | No | No |
+`lint` and `unit-tests` run in parallel after `install-deps`. CD steps only start after **all** CI steps pass. `deploy-agent-engine` must complete before `deploy-cloud-run` so Cloud Run always talks to the already-updated agent.
 
 `ci-pull-request` targets the deploy branch of each environment (develop, staging, or main) as
 the base — it fires when a PR is opened or updated against any of those branches.
+
+### App triggers (per environment)
+
+| Trigger | Event | Envs | Config | `_EVAL_PROFILE` | Agent Engine deploy |
+|---------|-------|------|--------|-----------------|---------------------|
+| `ci-pull-request` | PR to env branch | dev/staging/prod | `cloudbuild/pr-checks.yaml` | `fast` | — |
+| `ci-cd-push-develop` | Push to `develop` | dev | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
+| `ci-cd-push-staging` | Push to `staging` | staging | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
+| `ci-cd-push-main` | Push to `main` | prod | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
+| `ci-manual` | Manual / nightly | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
+| Cloud Scheduler | Midnight UTC | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
+| `release` | Git tag `v*.*.*` | prod | `cloudbuild/release.yaml` | `standard` | always |
+
+### Terraform triggers (per environment, run in parallel with app triggers)
+
+| Trigger | Event | Envs | Config |
+|---------|-------|------|--------|
+| `terraform-plan` | PR to env branch | dev/staging/prod | `cloudbuild/terraform-plan.yaml` |
+| `terraform-apply` | Push to env branch | dev/staging/prod | `cloudbuild/terraform-apply.yaml` |
+
+**Total triggers per project:** dev=4, staging=4, prod=6
+
+### Full event → trigger mapping
+
+| Event | Triggers that fire |
+|---|---|
+| PR → `develop` | `ci-pull-request` (fast eval) + `terraform-plan` (infra diff) |
+| Merge → `develop` | `ci-cd-push-develop` (deploy to dev) + `terraform-apply` (infra apply to dev) |
+| PR → `staging` | `ci-pull-request` + `terraform-plan` |
+| Merge → `staging` | `ci-cd-push-staging` (deploy to staging) + `terraform-apply` (infra apply to staging) |
+| PR → `main` | `ci-pull-request` + `terraform-plan` |
+| Merge → `main` | `ci-cd-push-main` (deploy to prod) + `terraform-apply` (infra apply to prod) |
+| Git tag `v*` | `release` (versioned deploy to prod) |
+
+## Terraform CI/CD
+
+Infrastructure changes are managed separately from app code and propagate automatically through the environment promotion flow.
+
+### How it works
+
+1. Add or modify a resource in `terraform/modules/core/` (shared across all envs)
+2. Open a PR → `terraform-plan` fires in the target env's project and posts the diff to build logs
+3. Reviewer approves the plan, merges the PR
+4. `terraform-apply` fires automatically and applies the changes to that environment
+5. Promote `develop → staging → main` to apply the same change to staging and prod
+
+**Result:** A new Cloud Run service, IAM binding, Firestore index, or any other GCP resource added once to the module lands in all three environments without any manual `terraform apply`.
+
+### Remote state
+
+Terraform state is stored in GCS (not local files) so Cloud Build can read and write it:
+
+```
+gs://{project_id}-tf-state/customer-support-mas/{env}/   ← state files
+gs://{project_id}-tf-state/tfvars/terraform.tfvars       ← env config (gitignored locally)
+```
+
+Bootstrap the state bucket once per environment (one-time manual step):
+
+```bash
+make bootstrap-tfstate ENV=dev      # creates bucket + uploads tfvars
+make bootstrap-tfstate ENV=staging
+make bootstrap-tfstate ENV=prod
+```
+
+After any local tfvars change (e.g. adding `agent_engine_resource_name`), sync it back to GCS so CI picks it up:
+
+```bash
+make sync-tfvars ENV=dev
+```
+
+### Substitution variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `_ENV_DIRECTORY` | Path to environment dir | `terraform/environments/dev` |
+| `_ENVIRONMENT` | Environment name | `dev` |
+| `_TF_STATE_BUCKET` | GCS bucket for state + tfvars | `css-mas-dev-tf-state` |
+
+`_TF_STATE_BUCKET` defaults to `{PROJECT_ID}-tf-state` if not set in the trigger.
+
+---
+
+## Release Pipeline
+
+### Creating a release
+
+Tag the commit you want to release and push the tag. Cloud Build fires automatically on the prod project (`css-mas-prod`):
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The `release` trigger (`cloudbuild/release.yaml`) runs:
+
+1. Lint + unit tests at `standard` eval profile (stronger gate than regular CI)
+2. Docker image built and pushed with **three tags**: `v1.0.0`, `$COMMIT_SHA`, `latest`
+3. Agent Engine deployed — display name set to `customer-support-multiagent-v1.0.0`
+4. Cloud Run deployed using the **versioned image tag** (`v1.0.0`, not `$COMMIT_SHA`)
+5. Smoke tests run against the live Cloud Run URL
+
+### Rollback
+
+Because Cloud Run is pinned to the versioned image tag, rollback is a single `gcloud` command — no rebuild required:
+
+```bash
+gcloud run deploy customer-support-app \
+  --image=us-central1-docker.pkg.dev/css-mas-prod/customer-support/customer-support-app:v0.0.9 \
+  --region=us-central1 \
+  --project=css-mas-prod
+```
+
+---
+
+## Agent Engine Versioning Strategy
+
+Vertex AI Agent Engine (Reasoning Engine) has no native concept of tags or versions — each deployment either creates a new resource or updates the existing one. Three strategies exist:
+
+### Option 1 — Display name label (metadata only)
+
+Set the display name to include the version: `customer-support-multiagent-v1.0.0`. Visible in the GCP Console and in Cloud Logging, but not enforceable. The resource name stays stable, so Cloud Run needs no change on updates.
+
+### Option 2 — One resource per major version
+
+Deploy a new reasoning engine per release tag, keep the old one running:
+
+- `reasoningEngines/111` = `v1.0.0`
+- `reasoningEngines/222` = `v2.0.0`
+
+**Pros:** Instant rollback by pointing Cloud Run's `AGENT_ENGINE_RESOURCE_NAME` env var to the old resource name. No redeploy needed.
+
+**Cons:** Each idle reasoning engine incurs ongoing compute and storage costs. Managing the lifecycle (which versions to keep, when to delete old ones) adds operational overhead. For a system deployed across dev/staging/prod, this multiplies the idle cost across all environments.
+
+**Why we didn't choose this:** The cost-to-benefit ratio is poor for this project. Cloud Run rollback (Option 3) achieves the same outcome for the app layer at zero extra cost. Agent Engine changes are also relatively infrequent — most releases only change the Cloud Run image (backend/frontend). When the agent code does change, the display name captures the version for traceability.
+
+### Option 3 — Git tag + versioned Docker image (chosen)
+
+The real versioning lives in **git tags** and **Artifact Registry image tags**. This is what `release.yaml` implements:
+
+- Git tag `v1.0.0` → Docker image tagged `v1.0.0` in Artifact Registry
+- Agent Engine display name set to `customer-support-multiagent-v1.0.0` (traceability)
+- Cloud Run deployed with `image:v1.0.0` (not `image:latest`)
+- Rollback = redeploy the previous tagged Cloud Run image (see above)
+
+**Full version traceability per deployment:**
+
+| Artifact | Version identifier |
+|---|---|
+| Git source | Tag `v1.0.0` + commit SHA |
+| Docker image | `customer-support-app:v1.0.0` in Artifact Registry |
+| Agent Engine | Display name `customer-support-multiagent-v1.0.0` |
+| Cloud Run | Image pinned to `v1.0.0` |
 
 ---
 
@@ -130,12 +285,12 @@ git commit -m "[skip ci] fix typo in README"
 
 | Scenario | Mechanism |
 |----------|-----------|
-| Working on a feature branch | Push normally → `ci-pull-request` fires on PR |
-| Merging to `develop` | Push normally → `ci-cd-push-develop` deploys to dev |
-| Merging to `staging` | Push normally → `ci-cd-push-staging` deploys to staging + runs load tests |
+| Working on a feature branch | Push normally → `ci-pull-request` fires (fast checks + terraform plan) |
+| Merging to `develop` | Push normally → `ci-cd-push-develop` + `terraform-apply` fire in parallel |
 | Agent logic changed, merging to `main` | Push normally → auto-detects agent change → deploys Agent Engine + Cloud Run |
 | Non-agent code, merging to `main` | Push normally → no agent change detected → deploys Cloud Run only |
-| Docs / Terraform / CI config only | Add `[skip ci]` to commit message → no build runs |
+| New Terraform resource added | Push normally → plan on PR, apply on merge — propagates to all envs via promotion |
+| Docs / CI config only | Add `[skip ci]` to commit message → no build runs |
 
 ---
 
@@ -245,32 +400,45 @@ gcloud builds triggers run ci-manual \
 
 ### Quick Start (Terraform — recommended)
 
-All infrastructure (APIs, IAM, Firestore, GCS, Artifact Registry, Cloud Build triggers, Cloud
-Scheduler) is managed by Terraform. Each environment has its own directory.
+All infrastructure is managed by Terraform in `terraform/modules/core/` (shared module) with per-environment configs in `terraform/environments/{dev,staging,prod}/`. State is stored remotely in GCS.
 
 ```bash
-# 1. Copy and fill in your values (shown for prod — repeat for dev/staging as needed)
-cd terraform/environments/prod
-cp terraform.tfvars.example terraform.tfvars
-$EDITOR terraform.tfvars
+# 1. Copy and fill in your values for each environment
+cp terraform/environments/dev/terraform.tfvars.example \
+   terraform/environments/dev/terraform.tfvars
+$EDITOR terraform/environments/dev/terraform.tfvars
 
-# 2. Bootstrap infrastructure
-cd ../../..
-make infra-up    # terraform init + apply (prod by default)
+# 2. Create GCS state bucket (once per env — stores state + tfvars for CI)
+make bootstrap-tfstate ENV=dev
 
-# 3. Connect GitHub repo (one-time, browser OAuth — cannot be automated)
+# 3. Bootstrap infrastructure
+make infra-up ENV=dev   # terraform init + apply
+
+# 4. Connect GitHub repo (one-time, browser OAuth — cannot be automated)
 #    Cloud Console → Cloud Build → Repositories (2nd gen) → Create host connection → GitHub
 #    Then: Link Repository → select your repo
-#    Then set github_connected=true, cloudbuild_connection_name, cloudbuild_repo_name
-#    in terraform/environments/prod/terraform.tfvars, then: make infra-up
+#    Then set github_connected=true, cloudbuild_connection_name, cloudbuild_repo_name in terraform.tfvars
+#    Then: make sync-tfvars ENV=dev && make infra-up ENV=dev
 
-# 4. Seed Firestore and deploy
+# 5. Seed Firestore and deploy
 make seed-db
 make deploy-agent-engine
 make deploy-cloud-run
 ```
 
-See `terraform/modules/core/` for the shared Terraform module used by all environments.
+See [../terraform/](../terraform/) for full Terraform configuration and [DEPLOYMENT.md](./DEPLOYMENT.md) for the complete multi-environment setup walkthrough.
+
+### Alternative: Shell Scripts
+
+```bash
+./scripts/setup-cloud-build.sh YOUR_PROJECT_ID us-central1 YOUR_STAGING_BUCKET
+```
+
+This script:
+1. Grants IAM roles to the Cloud Build service account
+2. Creates the Artifact Registry repository
+3. Enables required APIs
+4. Prints trigger creation commands
 
 ### IAM Roles Required
 
@@ -284,9 +452,10 @@ The Cloud Build service account (`PROJECT_NUMBER@cloudbuild.gserviceaccount.com`
 | `roles/artifactregistry.writer` | Push Docker images |
 | `roles/run.admin` | Cloud Run deployment |
 | `roles/iam.serviceAccountUser` | Act as Cloud Run service account |
-| `roles/storage.objectAdmin` | Staging bucket access |
+| `roles/storage.objectAdmin` | Staging bucket + tfstate bucket access |
+| `roles/editor` (or targeted) | `terraform-apply` — create/update GCP resources |
 
-No service account key file is needed — Cloud Build runs natively on GCP with IAM.
+All roles are granted by Terraform (`terraform/modules/core/iam.tf`). No service account key file is needed — Cloud Build runs natively on GCP with IAM.
 
 ### Creating Triggers
 
@@ -302,17 +471,21 @@ No service account key file is needed — Cloud Build runs natively on GCP with 
 
 For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in the fields below → **Save**.
 
-| Field | ci-pull-request | ci-cd-push-develop | ci-cd-push-staging | ci-cd-push-main | ci-manual |
+| Field | ci-pull-request | ci-push-develop | ci-cd-push-main | ci-manual | release |
 |---|---|---|---|---|---|
-| **Name** | `ci-pull-request` | `ci-cd-push-develop` | `ci-cd-push-staging` | `ci-cd-push-main` | `ci-manual` |
+| **Name** | `ci-pull-request` | `ci-push-develop` | `ci-cd-push-main` | `ci-manual` | `release` |
 | **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **Event** | Pull request | Push to branch | Push to branch | Push to branch | Manual invocation |
-| **Branch** | deploy branches | `^develop$` | `^staging$` | `^main$` | `main` |
-| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` |
-| **_EVAL_PROFILE** | — | `standard` | `standard` | `standard` | `full` |
-| **_RUN_LOAD_TESTS** | — | `false` | `true` | `false` | — |
-| **_STAGING_BUCKET** | — | `gs://YOUR_DEV_BUCKET` | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_PROD_BUCKET` | `gs://YOUR_PROD_BUCKET` |
-| **_AGENT_ENGINE_RESOURCE_NAME** | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` | — |
+| **Event** | Pull request | Push to branch | Push to branch | Manual invocation | Push tag |
+| **Repository (2nd gen)** | `Saoussen-CH-customer-support-mas-ai` | same | same | same | same |
+| **Branch / Tag** | `^main$` | `^develop$` | `^main$` | `main` | `^v[0-9]+\.[0-9]+\.[0-9]+` |
+| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` | `cloudbuild/release.yaml` |
+| **Service account** | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` | same | same | same | same |
+| **_EVAL_PROFILE** | — | `standard` | `standard` | `full` | `standard` |
+| **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
+| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
+| **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | — | `projects/.../reasoningEngines/ID` |
+
+Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
 
 #### Trigger — Push to `develop` (dev environment, CI + CD)
 
@@ -483,6 +656,9 @@ gcloud scheduler jobs create http nightly-full-eval \
 | `pr-checks.yaml` | 20 min | Fast profile only, quick feedback |
 | `cloudbuild-deploy.yaml` | 60 min | CI + Docker build + Agent Engine + Cloud Run + smoke/load tests |
 | `cloudbuild-nightly.yaml` | 60 min | Full eval with LLM judges is slow |
+| `release.yaml` | 60 min | Standard eval + Docker build + Agent Engine + Cloud Run + smoke tests |
+| `terraform-plan.yaml` | 20 min | Init + plan only, no apply |
+| `terraform-apply.yaml` | 30 min | Init + apply (resource creation can be slow on first run) |
 
 ---
 
