@@ -68,14 +68,18 @@ gcloud auth application-default login
 # 1. Install dependencies (uv + pre-commit hooks)
 make install
 
-# 2. Configure Terraform
-cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+# 2. Configure Terraform (repeat for staging/prod)
+cp terraform/environments/dev/terraform.tfvars.example \
+   terraform/environments/dev/terraform.tfvars
 # Edit terraform.tfvars — set project_id, staging_bucket_name, github_owner
 
-# 3. Apply all infrastructure (APIs, IAM, Firestore, GCS, AR, triggers)
-make infra-up
+# 3. Create GCS state bucket (once per environment)
+make bootstrap-tfstate ENV=dev
 
-# 4. Seed the database
+# 4. Apply all infrastructure (APIs, IAM, Firestore, GCS, AR, triggers)
+make infra-up ENV=dev
+
+# 5. Seed the database
 make seed-db
 ```
 
@@ -105,21 +109,26 @@ customer-support-mas/
 ├── Makefile                      # Developer shortcuts (make test, make lint, make deploy-*)
 ├── pyproject.toml                # Python project config and dependencies (uv)
 ├── terraform/                    # Infrastructure as Code (Terraform)
-│   ├── main.tf                   # Provider config, locals (service account emails)
-│   ├── variables.tf              # Input variables
-│   ├── outputs.tf                # Key outputs (bucket, AR URL, trigger IDs)
-│   ├── apis.tf                   # GCP API enablement
-│   ├── iam.tf                    # IAM bindings for all service accounts
-│   ├── infrastructure.tf         # Firestore, GCS bucket, Artifact Registry
-│   ├── secrets.tf                # Secret Manager (staging-bucket secret)
-│   ├── cicd.tf                   # Cloud Build triggers + Cloud Scheduler
-│   ├── model_armor.tf            # Model Armor floor settings
-│   └── terraform.tfvars.example  # Variable template (copy → terraform.tfvars)
+│   ├── modules/core/             # Shared module (all envs use this)
+│   │   ├── variables.tf          # Input variables
+│   │   ├── apis.tf               # GCP API enablement
+│   │   ├── iam.tf                # IAM bindings for all service accounts
+│   │   ├── infrastructure.tf     # Firestore, GCS bucket, Artifact Registry
+│   │   ├── secrets.tf            # Secret Manager (staging-bucket secret)
+│   │   ├── cicd.tf               # Cloud Build triggers + Cloud Scheduler
+│   │   └── model_armor.tf        # Model Armor floor settings
+│   └── environments/
+│       ├── dev/                  # Dev environment (develop branch, css-mas-dev)
+│       ├── staging/              # Staging environment (staging branch, css-mas-staging)
+│       └── prod/                 # Prod environment (main branch, css-mas-prod)
 ├── cloudbuild/
 │   ├── pr-checks.yaml            # PR checks (fast eval + ruff format)
 │   ├── cloudbuild.yaml           # CI pipeline (develop push)
-│   ├── cloudbuild-deploy.yaml    # CI + CD pipeline (main push)
-│   └── cloudbuild-nightly.yaml   # Full eval + post-deploy eval (nightly/manual)
+│   ├── cloudbuild-deploy.yaml    # CI + CD pipeline (branch push)
+│   ├── cloudbuild-nightly.yaml   # Full eval + post-deploy eval (nightly/manual)
+│   ├── terraform-plan.yaml       # Infra diff on every PR
+│   ├── terraform-apply.yaml      # Auto-apply infra on merge
+│   └── release.yaml              # Versioned release on git tag push (v*)
 ├── customer_support_agent/       # Core agent system
 │   ├── main.py                   # Entry point
 │   ├── config.py                 # Agent configurations
