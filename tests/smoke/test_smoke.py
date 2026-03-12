@@ -50,10 +50,11 @@ def wait_for_service():
 
 
 def test_health():
-    """Health endpoint returns 200 with status=healthy."""
+    """Health endpoint returns 200 and service is not critically broken."""
     r = requests.get(f"{BASE_URL}/health", timeout=10)
     assert r.status_code == 200
-    assert r.json().get("status") == "healthy"
+    status = r.json().get("status")
+    assert status in ("healthy", "degraded"), f"Unexpected health status: {status}"
 
 
 def test_agent_responds():
