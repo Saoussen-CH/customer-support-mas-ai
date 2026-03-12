@@ -31,17 +31,22 @@ def _anon_headers(user_id: str) -> dict:
 
 @pytest.fixture(scope="session", autouse=True)
 def wait_for_service():
-    """Wait up to 90s for the newly deployed revision to be healthy."""
-    for attempt in range(18):
+    """Wait for the newly deployed revision to be healthy.
+
+    Sleeps 20s first to let Cloud Run finish routing traffic to the new revision,
+    then polls /health for up to 120s.
+    """
+    time.sleep(20)
+    for attempt in range(24):
         try:
             r = requests.get(f"{BASE_URL}/health", timeout=10)
             if r.status_code == 200:
-                print(f"\nService healthy after {attempt * 5}s")
+                print(f"\nService healthy after {20 + attempt * 5}s")
                 return
         except requests.exceptions.RequestException:
             pass
         time.sleep(5)
-    pytest.fail("Service did not become healthy within 90 seconds")
+    pytest.fail("Service did not become healthy within 140 seconds")
 
 
 def test_health():
