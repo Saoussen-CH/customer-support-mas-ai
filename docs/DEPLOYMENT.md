@@ -72,6 +72,13 @@ github_owner        = "your-github-username"
 make bootstrap-tfstate ENV=dev
 ```
 
+> **Multiple Google accounts?** If your `gcloud auth application-default` account differs
+> from the account that created the bucket (e.g. you have separate accounts for infra and dev),
+> grant storage access to the ADC account:
+> ```bash
+> gsutil iam ch user:YOUR_ADC_ACCOUNT@gmail.com:roles/storage.admin gs://YOUR_PROJECT_ID-tf-state
+> ```
+
 **Apply infrastructure:**
 
 ```bash
@@ -87,7 +94,8 @@ Terraform creates:
 - Model Armor template + floor settings
 - Cloud Scheduler nightly job (prod only)
 
-Repeat for staging and prod:
+Repeat for staging and prod **before** merging PRs to those branches (the `terraform-apply`
+CI trigger needs the state bucket to exist):
 
 ```bash
 make bootstrap-tfstate ENV=staging && make infra-up ENV=staging
@@ -148,14 +156,15 @@ One-time manual step in the GCP Console (cannot be automated):
 Then enable trigger creation in Terraform:
 
 ```hcl
-# In terraform/environments/prod/terraform.tfvars:
+# In terraform/environments/dev/terraform.tfvars (repeat for staging/prod):
 github_connected           = true
 cloudbuild_connection_name = "github-connection"
 cloudbuild_repo_name       = "Saoussen-CH-customer-support-mas-ai"  # from step above
 ```
 
 ```bash
-make infra-up
+make sync-tfvars ENV=dev   # upload updated tfvars to GCS
+make infra-up ENV=dev
 ```
 
 This creates all CI/CD triggers. **Note:** Cloud Build 2nd gen triggers require
@@ -185,7 +194,8 @@ agent_engine_resource_name = "projects/PROJECT_NUMBER/locations/us-central1/reas
 Then re-apply Terraform so the Cloud Run service picks up the new value:
 
 ```bash
-make infra-up
+make sync-tfvars ENV=dev   # upload updated tfvars to GCS
+make infra-up ENV=dev
 ```
 
 ---
@@ -200,14 +210,15 @@ now that it exists, then set `google_managed_sas_exist = true` and re-apply:
 make setup-gcp
 ```
 
-In `terraform/environments/prod/terraform.tfvars`:
+In the relevant `terraform/environments/*/terraform.tfvars`:
 
 ```hcl
 google_managed_sas_exist = true
 ```
 
 ```bash
-make infra-up
+make sync-tfvars ENV=dev   # repeat for staging/prod
+make infra-up ENV=dev
 ```
 
 ---
@@ -297,33 +308,32 @@ Per-environment differences:
 | Nightly scheduler | No | No | Yes |
 | Load tests in CI | No | Yes | No |
 
-### Bootstrapping dev or staging
+### Bootstrapping each environment
 
-Follow the same steps as prod but target the appropriate environment directory
-and pass `ENV=dev` or `ENV=staging` to make targets.
-
-On a fresh GCP project, enable the Cloud Resource Manager API first (required
-before Terraform can read project metadata):
+All three environments follow the same steps. Run from the repo root:
 
 ```bash
-# Bootstrap dev
-cd terraform/environments/dev
-cp terraform.tfvars.example terraform.tfvars
-# fill in terraform.tfvars (project_id, staging_bucket_name, github_owner)
-cd ../../..                         # back to repo root
-make bootstrap-apis ENV=dev         # enable Cloud Resource Manager API — once per new project
-# wait ~30 seconds
-make infra-up ENV=dev
+# 1. Copy and fill in tfvars
+cp terraform/environments/dev/terraform.tfvars.example \
+   terraform/environments/dev/terraform.tfvars
+# Edit: project_id, staging_bucket_name, github_owner
 
-# Bootstrap staging
-cd terraform/environments/staging
-cp terraform.tfvars.example terraform.tfvars
-# fill in terraform.tfvars
-cd ../../..                         # back to repo root
-make bootstrap-apis ENV=staging
-# wait ~30 seconds
-make infra-up ENV=staging
+# 2. Create GCS state bucket (one-time per env)
+make bootstrap-tfstate ENV=dev
+
+# 3. Grant ADC account bucket access if it differs from the bucket creator
+gsutil iam ch user:YOUR_ADC_ACCOUNT@gmail.com:roles/storage.admin \
+  gs://YOUR_DEV_PROJECT_ID-tf-state
+
+# 4. Apply infrastructure
+make infra-up ENV=dev
 ```
+
+Repeat with `ENV=staging` and `ENV=prod`.
+
+> **Important:** Run `make bootstrap-tfstate` + `make infra-up` for **all three environments
+> before merging PRs** through the promotion flow. The `terraform-apply` CI trigger
+> requires the state bucket to exist before it can run.
 
 Shared infrastructure code lives in `terraform/modules/core/`.
 
@@ -354,11 +364,12 @@ make format                # ruff auto-fix
 make seed-db               # re-seed Firestore
 make deploy-agent-engine   # deploy/update Agent Engine only
 make deploy-cloud-run      # deploy Cloud Run directly
-make bootstrap-apis ENV=dev  # enable Cloud Resource Manager API (fresh project only)
-make infra-up                # terraform init + apply (prod by default)
-make infra-up ENV=staging    # apply staging environment
-make infra-up ENV=dev        # apply dev environment
-make terraform-plan          # preview infrastructure changes
+make bootstrap-tfstate ENV=dev   # create GCS state bucket (once per env)
+make sync-tfvars ENV=dev         # upload updated local tfvars to GCS
+make infra-up ENV=dev            # terraform init + apply for dev
+make infra-up ENV=staging        # terraform init + apply for staging
+make infra-up ENV=prod           # terraform init + apply for prod
+make terraform-plan ENV=dev      # preview infrastructure changes
 ```
 
 ---
