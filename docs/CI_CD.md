@@ -428,6 +428,24 @@ make deploy-cloud-run
 
 See [../terraform/](../terraform/) for full Terraform configuration and [DEPLOYMENT.md](./DEPLOYMENT.md) for the complete multi-environment setup walkthrough.
 
+### Branch Protection Rules
+
+Protect each deploy branch so a failing check blocks the merge button:
+
+**GitHub → repo → Settings → Branches → Add branch protection rule** — repeat for `develop`, `staging`, and `main`:
+
+| Setting | Value |
+|---|---|
+| Branch name pattern | `develop` / `staging` / `main` |
+| Require status checks to pass | ✓ |
+| Required checks | `ci-pull-request`, `terraform-plan` |
+| Require branches to be up to date | ✓ |
+| Do not allow bypassing (main only) | ✓ |
+
+> **Note:** GitHub only lists checks that have already run on a branch. If a check doesn't
+> appear in the search dropdown (e.g. on `main` before the first PR), type the name exactly
+> (`ci-pull-request`, `terraform-plan`) and press Enter — GitHub accepts manually typed names.
+
 ### Alternative: Shell Scripts
 
 ```bash
