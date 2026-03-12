@@ -28,6 +28,7 @@ substitutions:
   _AGENT_ENGINE_DISPLAY_NAME: "customer-support-multiagent"
   _MODEL_ARMOR_ENABLED: "false"
   _MODEL_ARMOR_TEMPLATE_ID: ""
+  _RUN_LOAD_TESTS: "false"   # set to "true" in staging trigger only
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -234,6 +235,70 @@ steps:
           --max-instances=10 \
           --port=8080
     waitFor: ["deploy-agent-engine"]
+
+  # ===========================================================================
+  # Get deployed Cloud Run URL — written to /workspace/service_url.txt
+  # Used by smoke and load test steps below.
+  # ===========================================================================
+  - id: "get-service-url"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        gcloud run services describe ${_SERVICE_NAME} \
+          --region="${_REGION}" \
+          --project="$PROJECT_ID" \
+          --format="value(status.url)" > /workspace/service_url.txt
+        echo "Service URL: $(cat /workspace/service_url.txt)"
+    waitFor: ["deploy-cloud-run"]
+
+  # ===========================================================================
+  # Smoke Tests — run after every deploy (dev / staging / prod)
+  # Fails the build immediately if any critical path is broken.
+  # ===========================================================================
+  - id: "smoke-test"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="/workspace/.venv/bin:$$PATH"
+        pip install requests --quiet
+        SERVICE_URL=$(cat /workspace/service_url.txt)
+        echo "Running smoke tests against: $$SERVICE_URL"
+        CLOUD_RUN_URL=$$SERVICE_URL pytest tests/smoke/ -v --tb=short
+    waitFor: ["get-service-url"]
+
+  # ===========================================================================
+  # Load Tests — staging only (_RUN_LOAD_TESTS=true)
+  # Runs Locust for 2 min with 5 concurrent users, then validates SLOs.
+  # A breach blocks promotion to prod.
+  # ===========================================================================
+  - id: "load-test"
+    name: "python:${_PYTHON_VERSION}-slim"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        if [ "${_RUN_LOAD_TESTS}" != "true" ]; then
+          echo "Skipping load tests (_RUN_LOAD_TESTS=false)"
+          exit 0
+        fi
+        pip install uv --quiet && uv sync --frozen --group load-test --quiet
+        export PATH="/workspace/.venv/bin:$$PATH"
+        SERVICE_URL=$(cat /workspace/service_url.txt)
+        echo "Running load tests against: $$SERVICE_URL"
+        locust -f tests/load/locustfile.py \
+          --headless \
+          --users 5 \
+          --spawn-rate 1 \
+          --run-time 2m \
+          --host $$SERVICE_URL \
+          --csv /workspace/load-results \
+          --exit-code-on-error 1
+        python tests/load/check_slos.py /workspace/load-results_stats.csv
+    waitFor: ["smoke-test"]
 
 images:
   - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE_NAME}:$COMMIT_SHA"

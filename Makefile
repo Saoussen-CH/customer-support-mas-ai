@@ -30,6 +30,9 @@ COMMON_ENV := GOOGLE_GENAI_USE_VERTEXAI=True
 # ------------------------------------------------------------------------------
 # Phony targets
 # ------------------------------------------------------------------------------
+# ENV — target environment for multi-env Terraform targets (dev | staging | prod)
+ENV ?= dev
+
 .PHONY: help \
         install setup-gcp setup-firestore setup-cloud-build \
         setup-model-armor create-model-armor-template test-model-armor \
@@ -40,7 +43,8 @@ COMMON_ENV := GOOGLE_GENAI_USE_VERTEXAI=True
         eval-post-deploy \
         frontend-install frontend-build frontend-dev \
         deploy-agent-engine test-local \
-        deploy-cloud-run submit-build nightly
+        deploy-cloud-run submit-build nightly \
+        bootstrap-tfstate terraform-init terraform-plan terraform-apply terraform-destroy infra-up
 
 # ==============================================================================
 # HELP
@@ -202,24 +206,62 @@ eval-post-deploy: ## Evaluate deployed Agent Engine (AGENT_ENGINE_ID or AGENT_EN
 # ==============================================================================
 
 # ==============================================================================
-# TERRAFORM — Infrastructure as Code
+# TERRAFORM — Infrastructure as Code (multi-environment)
 # ==============================================================================
+# Usage:
+#   make infra-up ENV=dev        # init + apply for dev
+#   make infra-up ENV=staging    # init + apply for staging
+#   make infra-up ENV=prod       # init + apply for prod
+#   make terraform-plan ENV=dev  # preview changes only
+#
+# First-time per environment — create the GCS state bucket:
+#   make bootstrap-tfstate ENV=dev
+#
+# State is stored in GCS: gs://{project_id}-tf-state/customer-support-mas/{env}/
+# tfvars are stored in GCS: gs://{project_id}-tf-state/tfvars/terraform.tfvars
+# (Cloud Build reads them from there; update GCS after any local tfvars change)
 
-terraform-init: ## Initialize Terraform (run once, or after adding providers)
-	cd terraform && terraform init
+_TF_DIR = terraform/environments/$(ENV)
+_TF_PROJECT = $(shell grep '^project_id' $(_TF_DIR)/terraform.tfvars 2>/dev/null | sed 's/.*= *"\([^"]*\)".*/\1/')
+_TF_STATE_BUCKET = $(shell grep '^tfstate_bucket_name' $(_TF_DIR)/terraform.tfvars 2>/dev/null | sed 's/.*= *"\([^"]*\)".*/\1/' | grep . || echo "$(_TF_PROJECT)-tf-state")
 
-terraform-plan: ## Preview infrastructure changes (requires terraform.tfvars)
-	cd terraform && terraform plan -var-file=terraform.tfvars
+bootstrap-tfstate: ## Create GCS state bucket + upload tfvars (once per env). Usage: make bootstrap-tfstate ENV=dev
+	@[ -n "$(_TF_PROJECT)" ] || (echo "ERROR: project_id not found in $(_TF_DIR)/terraform.tfvars"; exit 1)
+	@[ -f "$(_TF_DIR)/terraform.tfvars" ] || (echo "ERROR: $(_TF_DIR)/terraform.tfvars not found. Copy from terraform.tfvars.example."; exit 1)
+	@echo "Creating state bucket: $(_TF_STATE_BUCKET) in project $(_TF_PROJECT)"
+	gsutil mb -p $(_TF_PROJECT) -l us-central1 --pap=enforced gs://$(_TF_STATE_BUCKET) || true
+	gsutil versioning set on gs://$(_TF_STATE_BUCKET)
+	gsutil uniformbucketlevelaccess set on gs://$(_TF_STATE_BUCKET)
+	@echo "Uploading tfvars to GCS..."
+	gsutil cp $(_TF_DIR)/terraform.tfvars gs://$(_TF_STATE_BUCKET)/tfvars/terraform.tfvars
+	@echo ""
+	@echo "Done. Run: make infra-up ENV=$(ENV)"
 
-terraform-apply: ## Apply infrastructure changes
-	cd terraform && terraform apply -var-file=terraform.tfvars
+terraform-init: ## Initialize Terraform for ENV (e.g. make terraform-init ENV=dev)
+	@[ -f "$(_TF_DIR)/terraform.tfvars" ] || (echo "ERROR: $(_TF_DIR)/terraform.tfvars not found."; exit 1)
+	cd $(_TF_DIR) && terraform init \
+		-backend-config="bucket=$(_TF_STATE_BUCKET)" \
+		-backend-config="prefix=customer-support-mas/$(ENV)" \
+		-reconfigure \
+		-force-copy
 
-terraform-destroy: ## Destroy all Terraform-managed infrastructure (DESTRUCTIVE)
-	@echo "WARNING: This will destroy the Firestore database, GCS bucket, AR repo, and all IAM bindings."
-	@read -p "Type 'yes' to confirm: " confirm && [ "$$confirm" = "yes" ]
-	cd terraform && terraform destroy -var-file=terraform.tfvars
+terraform-plan: ## Preview infrastructure changes for ENV (e.g. make terraform-plan ENV=dev)
+	cd $(_TF_DIR) && terraform plan -var-file=terraform.tfvars -input=false
 
-infra-up: terraform-init terraform-apply ## Bootstrap: initialize and apply Terraform (first-time setup)
+terraform-apply: ## Apply infrastructure changes for ENV (e.g. make terraform-apply ENV=dev)
+	cd $(_TF_DIR) && terraform apply -var-file=terraform.tfvars -input=false
+
+terraform-destroy: ## Destroy all infrastructure for ENV — DESTRUCTIVE (e.g. make terraform-destroy ENV=dev)
+	@echo "WARNING: This will destroy ALL infrastructure for environment '$(ENV)' (project: $(_TF_PROJECT))."
+	@read -p "Type '$(ENV)' to confirm: " confirm && [ "$$confirm" = "$(ENV)" ]
+	cd $(_TF_DIR) && terraform destroy -var-file=terraform.tfvars -input=false
+
+infra-up: terraform-init terraform-apply ## Init + apply Terraform for ENV. Usage: make infra-up ENV=dev
+
+sync-tfvars: ## Upload updated local tfvars to GCS so CI picks up the changes. Usage: make sync-tfvars ENV=dev
+	@[ -f "$(_TF_DIR)/terraform.tfvars" ] || (echo "ERROR: $(_TF_DIR)/terraform.tfvars not found."; exit 1)
+	gsutil cp $(_TF_DIR)/terraform.tfvars gs://$(_TF_STATE_BUCKET)/tfvars/terraform.tfvars
+	@echo "Uploaded $(_TF_DIR)/terraform.tfvars → gs://$(_TF_STATE_BUCKET)/tfvars/terraform.tfvars"
 
 # ==============================================================================
 # FRONTEND
@@ -244,8 +286,8 @@ test-local: ## Run agent locally to verify before deploying
 deploy-agent-engine: ## Deploy agent to Vertex AI Agent Engine
 	PYTHONPATH=. $(PYTHON) deployment/deploy.py --action deploy
 
-deploy-cloud-run: ## Build and deploy backend to Cloud Run
-	bash deployment/deploy-cloudrun.sh
+deploy-cloud-run: ## Build and deploy backend to Cloud Run (ENV=dev|prod selects .env.<ENV>)
+	bash deployment/deploy-cloudrun.sh $(ENV)
 
 nightly: ## Trigger ci-manual Cloud Build with selective step flags
 	@# Defaults: all steps on, post-deploy off. Override with RUN_LINT=false, RUN_UNIT_TESTS=false, etc.

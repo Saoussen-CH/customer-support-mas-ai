@@ -38,6 +38,7 @@ logger = get_logger(__name__)
 # Model Armor (optional — only initialized when enabled)
 _MODEL_ARMOR_ENABLED = os.getenv("MODEL_ARMOR_ENABLED", "false").lower() == "true"
 _MODEL_ARMOR_TEMPLATE_ID = os.getenv("MODEL_ARMOR_TEMPLATE_ID", "")
+_MODEL_ARMOR_MODE = os.getenv("MODEL_ARMOR_MODE", "INSPECT_AND_BLOCK").upper()
 _model_armor_client = None
 _modelarmor_v1 = None
 _parse_ma_response = None
@@ -412,11 +413,16 @@ async def chat(
                 )
                 violations = _parse_ma_response(ma_response)
                 if violations:
-                    logger.warning("Model Armor blocked user prompt", violations=str(violations))
-                    raise HTTPException(
-                        status_code=400,
-                        detail="I'm sorry, I can't process this request as it violates our safety policy. Please contact support if you need assistance.",
-                    )
+                    if _MODEL_ARMOR_MODE == "INSPECT_AND_BLOCK":
+                        logger.warning("Model Armor blocked user prompt", violations=str(violations))
+                        raise HTTPException(
+                            status_code=400,
+                            detail="I'm sorry, I can't process this request as it violates our safety policy. Please contact support if you need assistance.",
+                        )
+                    else:
+                        logger.info(
+                            "Model Armor flagged user prompt (INSPECT_ONLY — not blocked)", violations=str(violations)
+                        )
             except HTTPException:
                 raise
             except Exception as ma_err:

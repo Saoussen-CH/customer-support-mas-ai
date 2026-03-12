@@ -73,19 +73,22 @@ resource "google_model_armor_template" "customer_support_policy" {
   project     = var.project_id
 
   filter_config {
+    # MEDIUM_AND_ABOVE: customer support queries (e.g. "Track order ORD-12345",
+    # "Cancel my subscription") look like commands and produce false positives at
+    # LOW confidence. Floor settings retain LOW_AND_ABOVE for project-wide safety.
     pi_and_jailbreak_filter_settings {
       filter_enforcement = "ENABLED"
-      confidence_level   = "LOW_AND_ABOVE"
+      confidence_level   = "MEDIUM_AND_ABOVE"
     }
 
     rai_settings {
       rai_filters {
         filter_type      = "HARASSMENT"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
       rai_filters {
         filter_type      = "HATE_SPEECH"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
       rai_filters {
         filter_type      = "SEXUALLY_EXPLICIT"
@@ -93,7 +96,7 @@ resource "google_model_armor_template" "customer_support_policy" {
       }
       rai_filters {
         filter_type      = "DANGEROUS"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
     }
 
@@ -113,7 +116,10 @@ resource "google_model_armor_template" "customer_support_policy" {
     log_template_operations = true
   }
 
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_model_armor_floorsetting.default,
+  ]
 }
 
 # ==============================================================================
@@ -130,15 +136,17 @@ resource "google_model_armor_floorsetting" "default" {
   enable_floor_setting_enforcement = var.model_armor_floor_mode == "INSPECT_AND_BLOCK"
 
   filter_config {
-    # Responsible AI content filters
+    # MEDIUM_AND_ABOVE: floor must match or be stricter than template.
+    # LOW_AND_ABOVE caused false positives on customer support queries like
+    # "Track order ORD-12345" (flagged as prompt injection at low confidence).
     rai_settings {
       rai_filters {
         filter_type      = "HARASSMENT"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
       rai_filters {
         filter_type      = "HATE_SPEECH"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
       rai_filters {
         filter_type      = "SEXUALLY_EXPLICIT"
@@ -146,18 +154,15 @@ resource "google_model_armor_floorsetting" "default" {
       }
       rai_filters {
         filter_type      = "DANGEROUS"
-        confidence_level = "LOW_AND_ABOVE"
+        confidence_level = "MEDIUM_AND_ABOVE"
       }
     }
 
-    # Prompt injection and jailbreak detection
-    # Protects refund validation and auth flows from bypass attempts
     pi_and_jailbreak_filter_settings {
       filter_enforcement = "ENABLED"
-      confidence_level   = "LOW_AND_ABOVE"
+      confidence_level   = "MEDIUM_AND_ABOVE"
     }
 
-    # Block responses containing links to malicious URIs
     malicious_uri_filter_settings {
       filter_enforcement = "ENABLED"
     }

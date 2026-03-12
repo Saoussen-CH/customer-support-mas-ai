@@ -33,7 +33,7 @@ from typing import Any, Dict
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
 if not PROJECT_ID:
     raise ValueError(
-        "GOOGLE_CLOUD_PROJECT environment variable must be set. " "Example: export GOOGLE_CLOUD_PROJECT=your-project-id"
+        "GOOGLE_CLOUD_PROJECT environment variable must be set. Example: export GOOGLE_CLOUD_PROJECT=your-project-id"
     )
 
 LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
@@ -322,7 +322,7 @@ def get_agent_config(agent_key: str) -> Dict[str, Any]:
     """
     if agent_key not in AGENT_CONFIGS:
         raise KeyError(
-            f"Agent '{agent_key}' not found in AGENT_CONFIGS. " f"Available agents: {list(AGENT_CONFIGS.keys())}"
+            f"Agent '{agent_key}' not found in AGENT_CONFIGS. Available agents: {list(AGENT_CONFIGS.keys())}"
         )
     return AGENT_CONFIGS[agent_key]
 
