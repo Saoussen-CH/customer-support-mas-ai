@@ -242,8 +242,8 @@ terraform-init: ## Initialize Terraform for ENV (e.g. make terraform-init ENV=de
 	cd $(_TF_DIR) && terraform init \
 		-backend-config="bucket=$(_TF_STATE_BUCKET)" \
 		-backend-config="prefix=customer-support-mas/$(ENV)" \
-		-input=false \
-		-reconfigure
+		-reconfigure \
+		-force-copy
 
 terraform-plan: ## Preview infrastructure changes for ENV (e.g. make terraform-plan ENV=dev)
 	cd $(_TF_DIR) && terraform plan -var-file=terraform.tfvars -input=false
