@@ -24,7 +24,21 @@ options:
 
 steps:
   # ===========================================================================
-  # Init — download tfvars from GCS, configure remote backend
+  # Download tfvars from GCS (Cloud SDK image has gsutil; terraform image does not)
+  # ===========================================================================
+  - id: "download-tfvars"
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        BUCKET="${_TF_STATE_BUCKET:-$PROJECT_ID-tf-state}"
+        echo "Downloading tfvars from gs://$$BUCKET/tfvars/terraform.tfvars"
+        gsutil cp gs://$$BUCKET/tfvars/terraform.tfvars ${_ENV_DIRECTORY}/terraform.tfvars
+    waitFor: ["-"]
+
+  # ===========================================================================
+  # Init — configure remote backend
   # ===========================================================================
   - id: "terraform-init"
     name: "hashicorp/terraform:1.9"
@@ -37,16 +51,13 @@ steps:
         echo "Environment:  ${_ENVIRONMENT}"
         echo "Directory:    ${_ENV_DIRECTORY}"
 
-        # Download tfvars stored in GCS during bootstrap
-        gsutil cp gs://$$BUCKET/tfvars/terraform.tfvars ${_ENV_DIRECTORY}/terraform.tfvars
-
         cd ${_ENV_DIRECTORY}
         terraform init \
           -backend-config="bucket=$$BUCKET" \
           -backend-config="prefix=customer-support-mas/${_ENVIRONMENT}" \
           -input=false \
           -no-color
-    waitFor: ["-"]
+    waitFor: ["download-tfvars"]
 
   # ===========================================================================
   # Plan — show what would change (exit 0=no-changes, 2=changes, 1=error)
