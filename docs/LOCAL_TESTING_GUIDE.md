@@ -354,7 +354,7 @@ make switch-env ENV=qa           # → Error: .env.qa not found
 
 ---
 
-## Step 15 — Validate Terraform targets in Makefile
+## Step 16 — Validate Terraform targets in Makefile
 
 ```bash
 make terraform-plan ENV=dev      # runs plan in terraform/environments/dev
