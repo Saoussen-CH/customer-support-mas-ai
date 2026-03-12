@@ -229,7 +229,7 @@ bootstrap-tfstate: ## Create GCS state bucket + upload tfvars (once per env). Us
 	@[ -n "$(_TF_PROJECT)" ] || (echo "ERROR: project_id not found in $(_TF_DIR)/terraform.tfvars"; exit 1)
 	@[ -f "$(_TF_DIR)/terraform.tfvars" ] || (echo "ERROR: $(_TF_DIR)/terraform.tfvars not found. Copy from terraform.tfvars.example."; exit 1)
 	@echo "Creating state bucket: $(_TF_STATE_BUCKET) in project $(_TF_PROJECT)"
-	gsutil mb -p $(_TF_PROJECT) -l us-central1 gs://$(_TF_STATE_BUCKET) || true
+	gsutil mb -p $(_TF_PROJECT) -l us-central1 --pap=enforced gs://$(_TF_STATE_BUCKET) || true
 	gsutil versioning set on gs://$(_TF_STATE_BUCKET)
 	gsutil uniformbucketlevelaccess set on gs://$(_TF_STATE_BUCKET)
 	@echo "Uploading tfvars to GCS..."
@@ -242,8 +242,8 @@ terraform-init: ## Initialize Terraform for ENV (e.g. make terraform-init ENV=de
 	cd $(_TF_DIR) && terraform init \
 		-backend-config="bucket=$(_TF_STATE_BUCKET)" \
 		-backend-config="prefix=customer-support-mas/$(ENV)" \
-		-input=false \
-		-reconfigure
+		-reconfigure \
+		-force-copy
 
 terraform-plan: ## Preview infrastructure changes for ENV (e.g. make terraform-plan ENV=dev)
 	cd $(_TF_DIR) && terraform plan -var-file=terraform.tfvars -input=false

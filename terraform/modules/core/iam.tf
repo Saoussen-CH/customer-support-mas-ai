@@ -88,6 +88,17 @@ resource "google_project_iam_member" "cloud_build_sa" {
   depends_on = [google_project_service.apis]
 }
 
+# Compute SA (used by Cloud Build triggers) needs read/write access to the
+# Terraform state bucket so terraform-plan and terraform-apply can run.
+resource "google_storage_bucket_iam_member" "compute_sa_tfstate" {
+  count  = var.github_connected ? 1 : 0
+  bucket = local.tfstate_bucket
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${local.cloud_run_sa}"
+
+  depends_on = [google_project_service.apis]
+}
+
 # Cloud Build SA needs to impersonate the Cloud Run compute SA when deploying
 resource "google_service_account_iam_member" "cloud_build_impersonate_compute" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
