@@ -2,15 +2,6 @@
 
 Complete guide for setting up GCP resources, APIs, IAM permissions, and dependencies before deploying the multi-agent customer support system.
 
-## Table of Contents
-
-1. [Required GCP APIs](#1-required-gcp-apis)
-2. [IAM Roles and Permissions](#2-iam-roles-and-permissions)
-3. [GCP Resources Setup](#3-gcp-resources-setup)
-4. [Quick Setup (Automated)](#4-quick-setup-automated)
-5. [Manual Setup](#5-manual-setup)
-6. [Verify Setup](#6-verify-setup)
-7. [Troubleshooting](#7-troubleshooting)
 
 ## 1. Required GCP APIs
 
@@ -323,113 +314,6 @@ python deployment/deploy.py --action test_local
 
 # Deploy to Agent Engine
 python deployment/deploy.py --action deploy
-```
-
-## 7. Troubleshooting
-
-### Error: "API not enabled"
-
-**Problem:**
-```
-ERROR: (gcloud.services.enable) FAILED_PRECONDITION: API [aiplatform.googleapis.com] not enabled
-```
-
-**Solution:**
-```bash
-gcloud services enable aiplatform.googleapis.com --project="$PROJECT_ID"
-```
-
-### Error: "Permission denied"
-
-**Problem:**
-```
-ERROR: (gcloud.projects.add-iam-policy-binding) PERMISSION_DENIED
-```
-
-**Solution:**
-1. Check you have `roles/resourcemanager.projectIamAdmin` role
-2. Or ask project owner to grant permissions
-
-```bash
-# Request from project owner
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="user:your-email@example.com" \
-  --role="roles/resourcemanager.projectIamAdmin"
-```
-
-### Error: "Quota exceeded"
-
-**Problem:**
-```
-ERROR: Quota exceeded for quota metric 'Queries' and limit 'Queries per minute'
-```
-
-**Solution:**
-1. Wait 1 minute and retry
-2. Request quota increase in GCP Console
-3. Use exponential backoff in code (already implemented)
-
-### Error: "Billing not enabled"
-
-**Problem:**
-```
-ERROR: Project requires billing to be enabled
-```
-
-**Solution:**
-1. Go to GCP Console → Billing
-2. Link project to billing account
-3. Verify: `gcloud beta billing projects describe $PROJECT_ID`
-
-### Error: "Firestore database already exists"
-
-**Problem:**
-```
-ERROR: Database [customer-support-db] already exists
-```
-
-**Solution:**
-This is expected if you've run setup before. Skip database creation and proceed to seeding:
-
-```bash
-PYTHONPATH=. python -m customer_support_agent.database.seed
-```
-
-### Error: "Service account not found"
-
-**Problem:**
-```
-ERROR: Service account not found: customer-support-agent@PROJECT_ID.iam.gserviceaccount.com
-```
-
-**Solution:**
-Create the service account:
-
-```bash
-gcloud iam service-accounts create customer-support-agent \
-  --display-name="Customer Support Agent" \
-  --project="$PROJECT_ID"
-```
-
-
-## Next Steps
-
-After completing prerequisites:
-
-1. ✅ APIs enabled
-2. ✅ IAM roles configured
-3. ✅ GCS bucket created
-4. ✅ Firestore database ready
-5. ✅ Service account configured
-
-**You're ready to deploy!**
-
-```bash
-# Deploy to Agent Engine
-python deployment/deploy.py
-
-# Deploy frontend + backend to Cloud Run
-./deployment/deploy-cloudrun.sh
 ```
 
 ## See Also

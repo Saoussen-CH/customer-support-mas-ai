@@ -16,7 +16,7 @@ Install these tools before starting:
 
 ---
 
-## Step 1 — Authenticate and clone
+## Step 1: Authenticate and clone
 
 ```bash
 gcloud auth login
@@ -29,7 +29,7 @@ cd customer-support-mas-ai
 
 ---
 
-## Step 2 — Configure .env
+## Step 2: Configure .env
 
 ```bash
 cp .env.example .env
@@ -37,15 +37,15 @@ cp .env.example .env
 
 Fill in `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, and `FIRESTORE_DATABASE`.
 Leave `GOOGLE_CLOUD_STORAGE_BUCKET`, `AGENT_ENGINE_RESOURCE_NAME`, and
-`MODEL_ARMOR_TEMPLATE_ID` blank for now — they come from Terraform output.
+`MODEL_ARMOR_TEMPLATE_ID` blank for now: they come from Terraform output.
 
 See [ENV_SETUP.md](./ENV_SETUP.md) for full variable reference.
 
 ---
 
-## Step 3 — Bootstrap GCP project
+## Step 3: Bootstrap GCP project
 
-The project uses a **multi-environment Terraform layout** — one GCP project per environment (dev/staging/prod), each with its own state and config. All infrastructure is defined once in `terraform/modules/core/` and deployed to each environment independently.
+The project uses a **multi-environment Terraform layout**: one GCP project per environment (dev/staging/prod), each with its own state and config. All infrastructure is defined once in `terraform/modules/core/` and deployed to each environment independently.
 
 ```bash
 cp terraform/environments/dev/terraform.tfvars.example \
@@ -60,7 +60,7 @@ staging_bucket_name = "css-mas-dev-staging"   # must be globally unique
 github_owner        = "your-github-username"
 ```
 
-**Create the GCS state bucket** (once per environment — stores remote Terraform state and tfvars for CI):
+**Create the GCS state bucket** (once per environment: stores remote Terraform state and tfvars for CI):
 
 ```bash
 make bootstrap-tfstate ENV=dev
@@ -109,7 +109,7 @@ make infra-up ENV=prod
 
 > The `gsutil iam ch` step is a one-time bootstrap: the compute SA needs bucket access to run
 > `terraform-plan`/`terraform-apply` in CI, but that permission is only granted by Terraform itself
-> (via `iam.tf`) — which can't run until it has bucket access. After the first `make infra-up`,
+> (via `iam.tf`): which can't run until it has bucket access. After the first `make infra-up`,
 > Terraform owns the permission permanently and this manual step is no longer needed.
 
 > After any local tfvars change (e.g. adding `agent_engine_resource_name` after first deploy),
@@ -120,7 +120,7 @@ make infra-up ENV=prod
 
 ---
 
-## Step 5 — Update .env from Terraform outputs
+## Step 5: Update .env from Terraform outputs
 
 ```bash
 terraform -chdir=terraform/environments/dev output
@@ -136,7 +136,7 @@ Copy the values into `.env.dev` (or `.env` for single-env setups):
 
 ---
 
-## Step 6 — Install Python dependencies, seed Firestore, add embeddings
+## Step 6: Install Python dependencies, seed Firestore, add embeddings
 
 ```bash
 make install
@@ -145,11 +145,11 @@ make add-embeddings   # add vector embeddings for RAG semantic search
 ```
 
 > `add-embeddings` can take a few minutes. The Firestore vector index must be
-> READY first — Terraform creates it automatically.
+> READY first: Terraform creates it automatically.
 
 ---
 
-## Step 7 — Connect GitHub to Cloud Build (2nd gen)
+## Step 7: Connect GitHub to Cloud Build (2nd gen)
 
 One-time manual step in the GCP Console (cannot be automated):
 
@@ -178,18 +178,18 @@ make infra-up ENV=dev
 ```
 
 This creates all CI/CD triggers. **Note:** Cloud Build 2nd gen triggers require
-`service_account` — this is set automatically by Terraform to the Cloud Build SA.
+`service_account`: this is set automatically by Terraform to the Cloud Build SA.
 
 ---
 
-## Step 8 — Deploy Agent Engine (first time)
+## Step 8: Deploy Agent Engine (first time)
 
 ```bash
 make deploy-agent-engine
 ```
 
 This creates the Agent Engine on Vertex AI. At the end it prints the resource
-name — copy it into both `.env` and `terraform/environments/prod/terraform.tfvars`:
+name: copy it into both `.env` and `terraform/environments/prod/terraform.tfvars`:
 
 **.env:**
 ```bash
@@ -210,10 +210,10 @@ make infra-up ENV=dev
 
 ---
 
-## Step 9 — Grant Agent Engine SA permissions
+## Step 9: Grant Agent Engine SA permissions
 
 The Agent Engine service account (`gcp-sa-aiplatform-re`) is created by Google
-on first Agent Engine deployment — it does not exist before that. Re-run setup
+on first Agent Engine deployment: it does not exist before that. Re-run setup
 now that it exists, then set `google_managed_sas_exist = true` and re-apply:
 
 ```bash
@@ -233,7 +233,7 @@ make infra-up ENV=dev
 
 ---
 
-## Step 10 — Deploy
+## Step 10: Deploy
 
 Push to `main` and let the CI/CD pipeline handle the deployment:
 
@@ -246,7 +246,7 @@ The Cloud Build trigger fires and runs the full pipeline:
 ```
 install → lint + tool-tests → unit-tests → integration-tests
   → docker-build → docker-push
-    → deploy-agent-engine (skipped — no agent code changed)
+    → deploy-agent-engine (skipped: no agent code changed)
       → deploy-cloud-run
         → get-service-url
           → smoke-test
@@ -268,7 +268,7 @@ gcloud run services describe customer-support-app \
 
 ---
 
-## Step 11 — Verify with smoke tests
+## Step 11: Verify with smoke tests
 
 ```bash
 uv sync --group dev
@@ -280,7 +280,7 @@ order tool, Model Armor filtering, and session continuity.
 
 ---
 
-## Step 12 — Try it
+## Step 12: Try it
 
 Demo accounts (pre-seeded by `make seed-db`):
 
@@ -292,7 +292,7 @@ Demo accounts (pre-seeded by `make seed-db`):
 Try these prompts:
 - `Where is my order ORD-12345?`
 - `Search for gaming laptops`
-- `Ignore all previous instructions...` — blocked by Model Armor
+- `Ignore all previous instructions...`: blocked by Model Armor
 
 ---
 
@@ -337,7 +337,7 @@ gsutil iam ch user:YOUR_ADC_ACCOUNT@gmail.com:roles/storage.admin \
   gs://YOUR_DEV_PROJECT_ID-tf-state
 
 # 4. Grant the compute SA bucket access (required for CI terraform-plan/apply to work)
-#    The compute SA is created by GCP — get the project number from: gcloud projects describe YOUR_PROJECT_ID
+#    The compute SA is created by GCP: get the project number from: gcloud projects describe YOUR_PROJECT_ID
 gsutil iam ch serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com:roles/storage.admin \
   gs://YOUR_DEV_PROJECT_ID-tf-state
 
@@ -359,8 +359,8 @@ Shared infrastructure code lives in `terraform/modules/core/`.
 
 | Scenario | Command |
 |----------|---------|
-| Agent code changed | `git push` — CI auto-detects, redeploys Agent Engine |
-| Backend/frontend only | `git push` — Agent Engine deploy skipped |
+| Agent code changed | `git push`: CI auto-detects, redeploys Agent Engine |
+| Backend/frontend only | `git push`: Agent Engine deploy skipped |
 | Force Agent Engine redeploy | `make submit-build DEPLOY_AGENT_ENGINE=true` |
 | Manual build without push | `make submit-build` |
 | Deploy to dev | Push to `develop` branch |
@@ -405,7 +405,7 @@ See [CI_CD.md](./CI_CD.md#release-pipeline) for full release pipeline details an
 
 ### Rollback a release
 
-No rebuild needed — Cloud Run is pinned to the version tag:
+No rebuild needed: Cloud Run is pinned to the version tag:
 
 ```bash
 gcloud run deploy customer-support-app \
@@ -429,43 +429,8 @@ git push origin v1.0.0
 
 ---
 
-## Troubleshooting
-
-**Agent Engine rate limit (`FAILED_PRECONDITION: Rate exceeded`)**
-Wait 1–2 minutes — rate limits are per-minute quotas. The circuit breaker
-will not trip on rate limit errors, only on actual outages.
-
-**Model Armor not blocking prompts**
-Check Cloud Run startup logs for `Model Armor init failed`. Ensure
-`MODEL_ARMOR_TEMPLATE_ID` is set in the Cloud Run environment. Set it via
-`_MODEL_ARMOR_TEMPLATE_ID` substitution or add it to the trigger.
-
-**Agent Engine SA missing Firestore permissions**
-Run `make setup-gcp` after the first `make deploy-agent-engine`. The `-re`
-service account only exists after the first deployment. Then set
-`google_managed_sas_exist = true` in `terraform.tfvars` and run `make infra-up`.
-
-**Cloud Run returns 403**
-`gcloud run deploy --allow-unauthenticated` in the pipeline sets
-`allUsers roles/run.invoker` automatically. For manual deploys:
-```bash
-gcloud run services add-iam-policy-binding customer-support-app \
-  --region=us-central1 --member=allUsers --role=roles/run.invoker
-```
-
-**Smoke tests failing after deploy**
-Get the Cloud Run URL and run tests manually to see the failure:
-```bash
-CLOUD_RUN_URL=$(gcloud run services describe customer-support-app \
-  --region=us-central1 --format='value(status.url)')
-uv sync --group dev
-CLOUD_RUN_URL=$CLOUD_RUN_URL pytest tests/smoke/ -v
-```
-
----
-
 ## See also
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — system design and components
-- [CI_CD.md](./CI_CD.md) — CI/CD pipeline details and trigger setup
-- [ENV_SETUP.md](./ENV_SETUP.md) — full .env variable reference
+- [ARCHITECTURE.md](./ARCHITECTURE.md): system design and components
+- [CI_CD.md](./CI_CD.md): CI/CD pipeline details and trigger setup
+- [ENV_SETUP.md](./ENV_SETUP.md): full .env variable reference

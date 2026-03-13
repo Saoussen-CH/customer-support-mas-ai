@@ -1,275 +1,347 @@
-# Getting Started — Setup Checklist
+# Getting Started
 
-## Which guide should I follow?
-
-| Scenario | Guide |
-|----------|-------|
-| First time setup (single dev environment) | **This guide** |
-| Multi-environment setup (dev/staging/prod) | [docs/DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md) |
-| GCP APIs and IAM roles reference | [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) |
-| Environment variables reference | [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) |
-| Python environment setup | [docs/PYTHON_SETUP.md](./docs/PYTHON_SETUP.md) |
-| CI/CD pipeline details | [docs/CI_CD.md](./docs/CI_CD.md) |
+This guide walks you through everything you need to understand and deploy this project: from zero to a running multi-agent AI system on Google Cloud.
 
 ---
 
-Complete this checklist to deploy the Customer Support Multi-Agent System.
+## What is this project?
 
-## Setup Checklist
+This is a **production-ready multi-agent AI customer support system** for a consumer electronics e-commerce store (think Best Buy / Newegg). It demonstrates how to build AI agents that actually work in production: not just a demo, but a fully deployable system with infrastructure-as-code, CI/CD pipelines, semantic search, memory, evaluation, and monitoring.
 
-### Step 1: Prerequisites (5 minutes)
+**The AI system handles four domains:**
 
-- [ ] **GCP Account**
-  - Create GCP account at [console.cloud.google.com](https://console.cloud.google.com)
-  - Enable billing on your account
+| Domain | What it does |
+|--------|-------------|
+| Products | Search catalog, retrieve product details, check inventory |
+| Orders | Track shipments, show order history, check delivery status |
+| Billing | Look up invoices, payment status, receipts |
+| Refunds | Validate return eligibility (30-day window), process refunds |
 
-- [ ] **Create GCP Project**
-  ```bash
-  gcloud projects create YOUR_PROJECT_ID --name="Customer Support Agent"
-  gcloud config set project YOUR_PROJECT_ID
-  ```
+---
 
-- [ ] **Install gcloud CLI**
-  - Download from [cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install)
-  - Verify: `gcloud --version`
+## How the system works
 
-- [ ] **Authenticate**
-  ```bash
-  gcloud auth login
-  gcloud auth application-default login
-  ```
+The system uses a **root agent** that routes each user request to the right specialist agent:
 
-### Step 2: Clone and Install Dependencies (2 minutes)
+```
+User message
+    └─► Root Agent (Gemini 2.5 Pro)
+            ├─► Product Agent  → search_products, get_product_details, get_inventory
+            ├─► Order Agent    → track_order, get_order_history
+            ├─► Billing Agent  → get_invoice, check_payment_status
+            └─► Refund Workflow (SequentialAgent)
+                    ├─► Step 1: Validate order
+                    ├─► Step 2: Check refund eligibility
+                    └─► Step 3: Process refund
+```
 
-- [ ] **Clone repository**
-  ```bash
-  git clone https://github.com/Saoussen-CH/customer-support-mas-ai.git
-  cd customer-support-mas-ai
-  ```
+**Key components:**
 
-- [ ] **Install dependencies** (uses `uv` — installs Python 3.11 automatically)
-  ```bash
-  make install
-  ```
+- **Google ADK** (Agent Development Kit): agent framework
+- **Vertex AI Agent Engine**: serverless, scalable agent hosting
+- **Gemini 2.5 Pro**: root agent model; **Gemini 2.5 Flash**: specialist agents (cost-optimized)
+- **Firestore**: product catalog, orders, invoices, users
+- **RAG / Vector Search**: semantic product search using `text-embedding-004` (finds "gaming laptop" when user says "gaming computer")
+- **Memory Bank**: remembers user preferences across sessions
+- **Cloud Run**: React frontend + FastAPI backend
+- **Model Armor**: prompt injection and jailbreak protection
+- **Terraform**: all GCP infrastructure as code (APIs, IAM, Firestore, Artifact Registry, Cloud Build triggers)
+- **Cloud Build**: automated CI/CD pipeline with evaluation gating
 
-  This installs all Python dependencies from `pyproject.toml` + sets up pre-commit hooks.
+For full architecture details: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
-### Step 3: GCP Resources Setup (5-10 minutes)
+---
 
-- [ ] **Enable APIs and configure IAM**
-  ```bash
-  bash scripts/setup_gcp.sh
-  ```
+## Repository structure
 
-  This script will:
-  - Enable 10+ required GCP APIs
-  - Create service account `customer-support-agent`
-  - Grant IAM roles to service account and your user
-  - Create GCS bucket for staging
+```
+customer-support-mas-ai/
+├── customer_support_agent/      # Core agent code
+│   ├── agents/                  # Root + specialist agents
+│   ├── tools/                   # Firestore tools (products, orders, billing)
+│   ├── database/                # Seed data and Firestore client
+│   └── evaluation/              # Custom eval metrics
+├── frontend/                    # React/TypeScript UI
+├── backend/                     # FastAPI backend (Cloud Run)
+├── terraform/
+│   ├── modules/core/            # Reusable Terraform module
+│   └── environments/
+│       ├── dev/                 # dev environment config
+│       ├── staging/             # staging environment config
+│       └── prod/                # prod environment config
+├── cloudbuild/                  # Cloud Build pipeline YAML files
+├── tests/
+│   ├── tools/                   # Layer 1: pure Python tool tests (no LLM)
+│   ├── unit/                    # Layer 2: single-agent eval
+│   ├── integration/             # Layer 3: multi-agent handoff eval
+│   ├── smoke/                   # Post-deploy smoke tests
+│   └── load/                    # Load tests (Locust)
+├── scripts/                     # Setup, deploy, eval helper scripts
+└── docs/                        # Full documentation
+```
 
-- [ ] **Setup Firestore database and seed data**
-  ```bash
-  make setup-firestore
-  ```
+---
 
-  This creates the Firestore database and seeds it with sample products, orders, invoices, and users.
+## Which setup path should I follow?
 
-**Manual alternative:** See [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) for manual setup steps.
+| Goal | Path |
+|------|------|
+| I want to explore the agent locally (no cloud deploy needed) | [Quick Local Setup](#quick-local-setup) |
+| I want to deploy to one GCP project | [Single Environment Deploy](#single-environment-deploy) |
+| I want dev / staging / prod environments with CI/CD | [Multi-Environment Setup](#multi-environment-setup) |
 
-### Step 4: Environment Configuration (2 minutes)
+---
 
-- [ ] **Copy .env template**
-  ```bash
-  cp .env.example .env
-  ```
+## Quick Local Setup
 
-- [ ] **Edit `.env` with your values**
-  ```bash
-  GOOGLE_CLOUD_PROJECT=your-project-id
-  GOOGLE_CLOUD_LOCATION=us-central1
-  GOOGLE_CLOUD_STORAGE_BUCKET=gs://your-bucket-name
-  FIRESTORE_DATABASE=customer-support-db
-  ```
+Run the agent on your machine. You still need a GCP project for Vertex AI (Gemini) and Firestore, but no Cloud Run or Agent Engine deployment required.
 
-**Help:** See [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) for full configuration details.
+### Step 1: Prerequisites
 
-### Step 5: Deploy to Vertex AI Agent Engine (5 minutes)
+- GCP account with billing enabled
+- `gcloud` CLI installed: [cloud.google.com/sdk/docs/install](https://cloud.google.com/sdk/docs/install)
+- `uv` installed (manages Python 3.11 automatically): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-- [ ] **Deploy agent** (two-stage: deploys AdkApp + configures Memory Bank)
-  ```bash
-  make deploy-agent-engine
-  ```
+```bash
+gcloud auth login
+gcloud auth application-default login
+```
 
-  Expected output:
-  ```
-  ✓ Agent deployed successfully!
-  Resource name: projects/123/locations/us-central1/reasoningEngines/456
-  ```
+### Step 2: Clone and install
 
-- [ ] **Copy resource name to .env**
-  ```bash
-  AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
-  ```
+```bash
+git clone https://github.com/Saoussen-CH/customer-support-mas-ai.git
+cd customer-support-mas-ai
+make install
+```
 
-**Help:** See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for deployment troubleshooting.
+### Step 3: Create a GCP project and enable APIs
 
-### Step 5.5: Enable RAG Semantic Search (10 minutes)
+```bash
+gcloud projects create YOUR_PROJECT_ID --name="Customer Support Agent"
+gcloud config set project YOUR_PROJECT_ID
+bash scripts/setup_gcp.sh
+```
 
-This enables "gaming computer" to find "ROG Gaming Laptop" via semantic search.
+This enables all required GCP APIs, creates the service account, and grants IAM roles.
 
-- [ ] **Create vector index**
-  ```bash
-  make vector-index
-  ```
+> See [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) for the full list if you want to do this manually.
 
-- [ ] **Wait for index to be ready (5-10 minutes)**
-  ```bash
-  gcloud firestore indexes composite list \
-    --database=customer-support-db \
-    --project=$GOOGLE_CLOUD_PROJECT
-  # Wait for: STATE = READY
-  ```
+### Step 4: Configure environment variables
 
-- [ ] **Add vector embeddings to products**
-  ```bash
-  make add-embeddings
-  ```
+```bash
+cp .env.example .env
+```
 
-- [ ] **Redeploy agent with RAG enabled**
-  ```bash
-  make deploy-agent-engine
-  ```
+Edit `.env`:
 
-**Note:** If you skip RAG, the agent falls back to keyword search automatically.
+```bash
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_CLOUD_STORAGE_BUCKET=gs://your-bucket-name
+FIRESTORE_DATABASE=customer-support-db
+```
 
-### Step 6: Deploy Frontend + Backend to Cloud Run (10 minutes)
+> Full reference: [docs/ENV_SETUP.md](./docs/ENV_SETUP.md)
 
-Skip this step if you only want to test the agent locally.
+### Step 5: Seed the Firestore database
 
-- [ ] **Deploy to Cloud Run**
-  ```bash
-  make deploy-cloud-run
-  ```
+```bash
+make setup-firestore    # creates the database (safe to run if it already exists)
+make seed-db            # loads products, orders, invoices, users
+```
 
-- [ ] **Access web application**
+### Step 6: Test the agent locally
 
-  Open the URL from the deployment output:
-  ```
-  https://customer-support-ai-xxxxx-uc.a.run.app
-  ```
+```bash
+make test-local
+```
 
-### Step 7: Run Tests (2 minutes)
+This runs the agent in-process (no Cloud Run, no Agent Engine). You should see the agent respond to a test query.
 
-- [ ] **Run all tests**
-  ```bash
-  make test
-  ```
+### Step 7: (Optional) Enable RAG semantic search
 
-  Or run individual layers:
-  ```bash
-  make test-tools        # Pure Python, no LLM (free, fast)
-  make test-unit         # Unit agent eval (LLM calls)
-  make test-integration  # Multi-agent handoff eval (LLM calls)
-  ```
+Without RAG, the agent uses keyword search. With RAG, "gaming computer" finds "ROG Gaming Laptop".
 
-- [ ] **Test agent locally**
-  ```bash
-  make test-local
-  ```
+```bash
+make vector-index    # creates the Firestore vector index
+```
 
-### Step 8: Post-Deploy Evaluation (optional)
+Check periodically until `STATE = READY` (takes 5-10 minutes):
 
-Evaluate the live deployed agent against production test cases:
+```bash
+gcloud firestore indexes composite list \
+  --database=customer-support-db \
+  --project=$GOOGLE_CLOUD_PROJECT
+```
+
+Then add embeddings and you're ready:
+
+```bash
+make add-embeddings
+```
+
+---
+
+## Single Environment Deploy
+
+Deploy the full system to one GCP project. This is the fastest path to a live, working system.
+
+Follow [Quick Local Setup](#quick-local-setup) steps 1–7, then continue here.
+
+### Step 8: Deploy the agent to Vertex AI Agent Engine
+
+```bash
+make deploy-agent-engine
+```
+
+This deploys the multi-agent system as a serverless Reasoning Engine and configures the Memory Bank. It takes ~5 minutes.
+
+Expected output:
+```
+✓ Agent deployed successfully!
+Resource name: projects/123/locations/us-central1/reasoningEngines/456
+```
+
+Copy the resource name into `.env`:
+```bash
+AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
+```
+
+> **Important:** After the first deploy, Google creates a new Vertex AI service account (`service-PROJ_NUM@gcp-sa-aiplatform-re.iam.gserviceaccount.com`). This SA needs `roles/datastore.user` to access Firestore. If you're using Terraform, re-run `make infra-up ENV=dev` after the first deploy to grant these permissions. Without this, tool calls fail with `403 Missing or insufficient permissions`.
+
+### Step 9: Deploy the web frontend and backend
+
+```bash
+make deploy-cloud-run
+```
+
+Open the URL printed at the end of the deploy to access the chat UI.
+
+### Step 10: Run the test suite
+
+```bash
+make test-tools        # Layer 1: pure Python, no LLM (fast, free)
+make test-unit         # Layer 2: single-agent eval (LLM calls)
+make test-integration  # Layer 3: multi-agent handoff eval (LLM calls)
+```
+
+Or run all three:
+```bash
+make test
+```
+
+> Tests use an `EVAL_PROFILE` environment variable to switch between `fast` (Rouge-1 only), `standard` (default, + tool_name_f1), and `full` (+ final_response_match_v2). See [docs/EVALUATION.md](./docs/EVALUATION.md) for details.
+
+### Step 11: (Optional) Run post-deploy evaluation
+
+This evaluates the live deployed agent using Vertex AI's Gen AI Evaluation Service:
 
 ```bash
 make eval-post-deploy AGENT_ENGINE_ID=your-engine-id
 ```
 
-Scores appear in **Vertex AI → Experiments → post-deploy-eval**. Results must pass `TOOL_USE_QUALITY ≥ 0.5` and `FINAL_RESPONSE_QUALITY ≥ 0.5`.
-
-### Step 9: Set Up CI/CD (optional)
-
-- [ ] **One-time Cloud Build setup** (IAM, Artifact Registry, Secret Manager)
-  ```bash
-  make setup-cloud-build \
-    PROJECT_ID=your-project-id \
-    REGION=us-central1 \
-    STAGING_BUCKET=your-bucket-name
-  ```
-
-- [ ] **Connect GitHub repo** in Cloud Console → Cloud Build → Triggers → Connect Repository
-
-- [ ] **Create triggers** using the commands printed by the setup script
-
-See **[docs/CI_CD.md](./docs/CI_CD.md)** for full setup instructions.
+Results appear in **Vertex AI → Experiments → post-deploy-eval**. Passing thresholds: `TOOL_USE_QUALITY ≥ 0.5` and `FINAL_RESPONSE_QUALITY ≥ 0.5`.
 
 ---
 
-## You're Done!
+## Multi-Environment Setup
 
-Your multi-agent customer support system is now deployed and ready to use!
+For dev / staging / prod with Terraform-managed infrastructure and Cloud Build CI/CD pipelines. This is the production-grade setup.
 
-## What You've Set Up
+> For a detailed step-by-step walkthrough of this path, see [docs/DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md).
 
-- **Vertex AI Agent Engine** — Serverless agent deployment
-- **Firestore Database** — Products, orders, invoices, users
-- **RAG Search** — Semantic product search with embeddings
-- **Memory Bank** — Cross-session user preferences
-- **Multi-Agent System** — Root + Product + Order + Billing agents
-- **Sequential Workflow** — Validated refund processing
-- **Cloud Run** — Frontend + Backend web application
+### What gets created per environment
 
-## Test These Scenarios
+Each environment (`dev`, `staging`, `prod`) is a separate GCP project. Terraform creates:
 
-1. **Product Search with RAG**
-   ```
-   "Find me gaming laptops"
-   → Semantic search finds ROG Gaming Laptop
-   ```
+- All required GCP APIs enabled
+- Service accounts + IAM roles
+- Firestore database
+- GCS bucket (artifact staging)
+- Artifact Registry (Docker images)
+- Model Armor template (prompt safety policy)
+- Cloud Build triggers (after GitHub connection)
 
-2. **Comprehensive Product Info**
-   ```
-   "Tell me everything about PROD-001"
-   → Returns details + inventory + reviews in one call
-   ```
+### Branch strategy
 
-3. **Refund Request (SequentialAgent)**
-   ```
-   "I want a refund for order ORD-12345"
-   → Step 1: Validate order ✓
-   → Step 2: Check eligibility ✓
-   → Step 3: Process refund ✓
-   ```
-
-4. **Order Tracking**
-   ```
-   "Where is my order ORD-67890?"
-   → Retrieves order status and tracking info
-   ```
-
-## Customize
-
-- **Add new products**: Edit `customer_support_agent/database/seed.py`
-- **Modify agents**: Edit files in `customer_support_agent/agents/`
-- **Add new tools**: Create tools in `customer_support_agent/tools/`
-- **Change models**: Update `customer_support_agent/config.py`
-
-## Troubleshooting
-
-1. **[PREREQUISITES.md](./docs/PREREQUISITES.md)** — API/IAM issues
-2. **[ENV_SETUP.md](./docs/ENV_SETUP.md)** — Configuration issues
-3. **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** — Deployment errors
-
-```bash
-# Useful debug commands
-gcloud run services logs read customer-support-ai --limit=50
-gcloud ai reasoning-engines list
-make test-local
+```
+feat/* → develop → staging → main → (git tag) → prod deploy
 ```
 
-## Documentation
+| Branch | Deploy target | Trigger |
+|--------|--------------|---------|
+| `develop` | dev GCP project | Push to `develop` |
+| `staging` | staging GCP project | Push to `staging` |
+| `main` | CI only (no deploy) | Push to `main` |
+| `v*` tag | prod GCP project | Git tag push |
 
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System design and agent architecture
-- **[EVAL_ARCHITECTURE.md](./docs/EVAL_ARCHITECTURE.md)** — Evaluation strategy (3 layers + post-deploy)
-- **[CI_CD.md](./docs/CI_CD.md)** — Cloud Build pipeline setup
-- **[MEMORY_BANK.md](./docs/MEMORY_BANK.md)** — Memory Bank implementation
+**Full step-by-step walkthrough:** [docs/DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md)
+
+---
+
+## Try these scenarios
+
+Once deployed, test the system with these queries in the chat UI or via `make test-local`:
+
+**1. Semantic product search (RAG)**
+```
+"Find me a gaming computer"
+→ Finds ROG Gaming Laptop via vector similarity
+```
+
+**2. Comprehensive product info**
+```
+"Tell me everything about PROD-001"
+→ Details + inventory + reviews in one response
+```
+
+**3. Refund request (SequentialAgent workflow)**
+```
+"I want a refund for order ORD-12345"
+→ Step 1: Validate order ✓
+→ Step 2: Check 30-day return window ✓
+→ Step 3: Process refund ✓
+```
+
+**4. Order tracking**
+```
+"Where is my order ORD-67890?"
+→ Status, carrier, estimated delivery
+```
+
+**5. Memory across sessions**
+```
+Session 1: "I prefer detailed technical specs"
+Session 2: "Tell me about the keyboard"
+→ Agent remembers and responds with detailed specs
+```
+
+---
+
+## Customize this project
+
+| What to change | Where |
+|---------------|-------|
+| Product catalog and seed data | `customer_support_agent/database/seed.py` |
+| Agent instructions and behavior | `customer_support_agent/agents/` |
+| Add new tools (new Firestore queries) | `customer_support_agent/tools/` |
+| Change models (e.g. Flash → Pro) | `customer_support_agent/config.py` |
+| Business rules (return window, etc.) | Tool implementations in `tools/` |
+
+---
+
+## Documentation map
+
+| Document | What it covers |
+|----------|---------------|
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System design, agent hierarchy, data flow |
+| [docs/DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md) | Multi-environment setup, Terraform, CI/CD triggers |
+| [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) | GCP APIs, IAM roles, manual setup |
+| [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) | All environment variables explained |
+| [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Deploy commands, multi-environment bootstrap |
+| [docs/CI_CD.md](./docs/CI_CD.md) | Cloud Build pipelines, triggers, branch strategy |
+| [docs/EVALUATION.md](./docs/EVALUATION.md) | 3-layer test strategy + post-deploy eval |
+| [docs/TESTING_SCENARIOS.md](./docs/TESTING_SCENARIOS.md) | Demo scenarios, test data, credentials |
+| [docs/MEMORY_BANK.md](./docs/MEMORY_BANK.md) | Memory Bank implementation details |
+| [docs/DATA_MODEL.md](./docs/DATA_MODEL.md) | Firestore collections and schema |
