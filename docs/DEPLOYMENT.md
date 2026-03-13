@@ -94,13 +94,29 @@ Terraform creates:
 - Model Armor template + floor settings
 - Cloud Scheduler nightly job (prod only)
 
-Repeat for staging and prod **before** merging PRs to those branches (the `terraform-apply`
-CI trigger needs the state bucket to exist):
+Repeat for staging and prod **before** merging PRs to those branches (the `terraform-plan`/`terraform-apply`
+CI triggers need the state bucket to exist and the compute SA to have access):
 
 ```bash
-make bootstrap-tfstate ENV=staging && make infra-up ENV=staging
-make bootstrap-tfstate ENV=prod    && make infra-up ENV=prod
+# Staging
+make bootstrap-tfstate ENV=staging
+make sync-tfvars ENV=staging
+gsutil iam ch serviceAccount:STAGING_PROJECT_NUMBER-compute@developer.gserviceaccount.com:roles/storage.admin \
+  gs://css-mas-staging-tf-state
+make infra-up ENV=staging
+
+# Prod
+make bootstrap-tfstate ENV=prod
+make sync-tfvars ENV=prod
+gsutil iam ch serviceAccount:PROD_PROJECT_NUMBER-compute@developer.gserviceaccount.com:roles/storage.admin \
+  gs://css-mas-prod-tf-state
+make infra-up ENV=prod
 ```
+
+> The `gsutil iam ch` step is a one-time bootstrap: the compute SA needs bucket access to run
+> `terraform-plan`/`terraform-apply` in CI, but that permission is only granted by Terraform itself
+> (via `iam.tf`) — which can't run until it has bucket access. After the first `make infra-up`,
+> Terraform owns the permission permanently and this manual step is no longer needed.
 
 > After any local tfvars change (e.g. adding `agent_engine_resource_name` after first deploy),
 > sync it back to GCS so CI picks it up:
@@ -318,22 +334,28 @@ cp terraform/environments/dev/terraform.tfvars.example \
    terraform/environments/dev/terraform.tfvars
 # Edit: project_id, staging_bucket_name, github_owner
 
-# 2. Create GCS state bucket (one-time per env)
+# 2. Create GCS state bucket and upload tfvars (one-time per env)
 make bootstrap-tfstate ENV=dev
+make sync-tfvars ENV=dev
 
 # 3. Grant ADC account bucket access if it differs from the bucket creator
 gsutil iam ch user:YOUR_ADC_ACCOUNT@gmail.com:roles/storage.admin \
   gs://YOUR_DEV_PROJECT_ID-tf-state
 
-# 4. Apply infrastructure
+# 4. Grant the compute SA bucket access (required for CI terraform-plan/apply to work)
+#    The compute SA is created by GCP — get the project number from: gcloud projects describe YOUR_PROJECT_ID
+gsutil iam ch serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com:roles/storage.admin \
+  gs://YOUR_DEV_PROJECT_ID-tf-state
+
+# 5. Apply infrastructure (after this, Terraform owns the SA permission permanently)
 make infra-up ENV=dev
 ```
 
 Repeat with `ENV=staging` and `ENV=prod`.
 
-> **Important:** Run `make bootstrap-tfstate` + `make infra-up` for **all three environments
-> before merging PRs** through the promotion flow. The `terraform-apply` CI trigger
-> requires the state bucket to exist before it can run.
+> **Important:** Run the full bootstrap sequence for **all three environments
+> before merging PRs** through the promotion flow. The `terraform-plan`/`terraform-apply` CI triggers
+> require the state bucket to exist and the compute SA to have access before they can run.
 
 Shared infrastructure code lives in `terraform/modules/core/`.
 
