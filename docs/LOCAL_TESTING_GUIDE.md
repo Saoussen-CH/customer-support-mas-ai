@@ -1,3 +1,3 @@
 # Moved
 
-This file has been renamed to [GETTING_STARTED.md](./GETTING_STARTED.md).
+See [DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md) for the developer workflow guide.

@@ -188,14 +188,17 @@ customer-support-mas/
 │   │   └── test_integration_eval_ci.py
 │   └── post_deploy/              # Post-deployment eval against live Agent Engine
 │       └── datasets/             # post_deploy_cases.json (9 live eval cases)
-└── docs/                         # Documentation
-    ├── ARCHITECTURE.md           # System architecture
-    ├── CI_CD.md                  # CI/CD setup guide
-    ├── DEPLOYMENT.md             # Deployment guide
-    ├── EVAL_ARCHITECTURE.md      # Evaluation architecture (3-layer strategy)
-    ├── EVAL_STRATEGY.md          # Eval profiles and metrics
-    ├── PREREQUISITES.md          # GCP setup, APIs, IAM roles
-    └── VERTEX_CREATE_EVALUATION_RUN.md  # create_evaluation_run() reference (re-enable guide)
+└── docs/                          # Documentation
+    ├── ARCHITECTURE.md            # System design, agents, components
+    ├── CI_CD.md                   # CI/CD pipelines and trigger reference
+    ├── DATA_MODEL.md              # Firestore data model and demo accounts
+    ├── DEPLOYMENT.md              # End-to-end deployment guide
+    ├── DEVELOPER_WORKFLOW.md      # Multi-environment developer workflow
+    ├── ENV_SETUP.md               # Environment variable reference
+    ├── EVAL_ARCHITECTURE.md       # Post-deploy evaluation architecture
+    ├── EVAL_STRATEGY.md           # CI/CD tiered evaluation strategy
+    ├── PREREQUISITES.md           # GCP APIs, IAM roles, and setup
+    └── PYTHON_SETUP.md            # Python 3.11 and pyenv setup
 ```
 
 ## Technology Stack
@@ -534,6 +537,7 @@ logging.info(f"[PRODUCT SEARCH] Query: {query}, Found: {len(results)} products")
 ## Documentation
 
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** — Complete setup checklist (START HERE)
+- **[DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md)** — Multi-environment developer workflow (dev/staging/prod)
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System design, multi-agent workflows, RAG, Model Armor
 - **[PREREQUISITES.md](./docs/PREREQUISITES.md)** — Required APIs, IAM roles, GCP setup
 - **[ENV_SETUP.md](./docs/ENV_SETUP.md)** — Environment configuration

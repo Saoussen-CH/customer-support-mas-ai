@@ -1,5 +1,18 @@
 # Getting Started — Setup Checklist
 
+## Which guide should I follow?
+
+| Scenario | Guide |
+|----------|-------|
+| First time setup (single dev environment) | **This guide** |
+| Multi-environment setup (dev/staging/prod) | [docs/DEVELOPER_WORKFLOW.md](./docs/DEVELOPER_WORKFLOW.md) |
+| GCP APIs and IAM roles reference | [docs/PREREQUISITES.md](./docs/PREREQUISITES.md) |
+| Environment variables reference | [docs/ENV_SETUP.md](./docs/ENV_SETUP.md) |
+| Python environment setup | [docs/PYTHON_SETUP.md](./docs/PYTHON_SETUP.md) |
+| CI/CD pipeline details | [docs/CI_CD.md](./docs/CI_CD.md) |
+
+---
+
 Complete this checklist to deploy the Customer Support Multi-Agent System.
 
 ## Setup Checklist
