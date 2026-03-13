@@ -1,3 +1,3 @@
-# This file has been renamed to DEVELOPER_GUIDE.md
+# Moved
 
-See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for the full developer workflow guide.
+This file has been renamed to [GETTING_STARTED.md](./GETTING_STARTED.md).
