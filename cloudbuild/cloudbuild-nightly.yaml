@@ -1,27 +1,26 @@
-# Nightly Full Eval Pipeline — Triggered by Cloud Scheduler or manual dispatch
-# Runs all CI tests with EVAL_PROFILE=full + optional post-deploy eval
+# Nightly Post-Deploy Eval — Triggered by Cloud Scheduler or manual dispatch
 #
-# Trigger: Cloud Scheduler (midnight UTC) or manual → _EVAL_PROFILE=full
+# Evaluates the deployed Agent Engine via Vertex AI Gen AI Eval Service.
+# Runs nightly at midnight UTC against the live prod Agent Engine.
+#
+# Substitutions (set in Cloud Build trigger config):
+#   _AGENT_ENGINE_RESOURCE_NAME — full resource name of the deployed Agent Engine
+#   _STAGING_BUCKET             — GCS bucket for eval artifacts (gs://...)
 
 substitutions:
-  _EVAL_PROFILE: "full"
   _PYTHON_VERSION: "3.11"
   _FIRESTORE_DATABASE: "customer-support-db"
   _GOOGLE_CLOUD_LOCATION: "us-central1"
-  _RUN_LINT: "true"
-  _RUN_TOOL_TESTS: "true"
-  _RUN_UNIT_TESTS: "true"
-  _RUN_INTEGRATION_TESTS: "true"
-  _RUN_POST_DEPLOY_EVAL: "false"
-  _AGENT_ENGINE_ID: ""
+  _AGENT_ENGINE_RESOURCE_NAME: ""
   _STAGING_BUCKET: ""
+  _EVAL_PROFILE: "full"
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
   # ===========================================================================
-  # Install dependencies into shared /workspace/.venv
+  # Install dependencies
   # ===========================================================================
   - id: "install-deps"
     name: "python:${_PYTHON_VERSION}-slim"
@@ -34,81 +33,7 @@ steps:
     waitFor: ["-"]
 
   # ===========================================================================
-  # Lint (parallel with tool-tests)
-  # ===========================================================================
-  - id: "lint"
-    name: "python:${_PYTHON_VERSION}-slim"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        if [ "${_RUN_LINT}" != "true" ]; then echo "Skipping lint"; exit 0; fi
-        export PATH="/workspace/.venv/bin:$$PATH"
-        ruff check customer_support_agent/ --ignore=E501
-    waitFor: ["install-deps"]
-
-  # ===========================================================================
-  # Tool Tests (parallel with lint)
-  # ===========================================================================
-  - id: "tool-tests"
-    name: "python:${_PYTHON_VERSION}-slim"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        if [ "${_RUN_TOOL_TESTS}" != "true" ]; then echo "Skipping tool-tests"; exit 0; fi
-        export PATH="/workspace/.venv/bin:$$PATH"
-        pytest tests/unit/test_tools.py tests/unit/test_mock_rag.py tests/unit/test_refund_standalone.py -v --tb=short
-    env:
-      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
-      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
-      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
-      - "GOOGLE_GENAI_USE_VERTEXAI=True"
-    waitFor: ["install-deps"]
-
-  # ===========================================================================
-  # Unit Agent Evaluation (after tool-tests)
-  # ===========================================================================
-  - id: "unit-tests"
-    name: "python:${_PYTHON_VERSION}-slim"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        if [ "${_RUN_UNIT_TESTS}" != "true" ]; then echo "Skipping unit-tests"; exit 0; fi
-        export PATH="/workspace/.venv/bin:$$PATH"
-        pytest tests/unit/test_agent_eval_ci.py -v --tb=short
-    env:
-      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
-      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
-      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
-      - "GOOGLE_GENAI_USE_VERTEXAI=True"
-      - "EVAL_PROFILE=${_EVAL_PROFILE}"
-    waitFor: ["tool-tests"]
-
-  # ===========================================================================
-  # Integration Evaluation (after unit-tests)
-  # ===========================================================================
-  - id: "integration-tests"
-    name: "python:${_PYTHON_VERSION}-slim"
-    entrypoint: "bash"
-    args:
-      - "-c"
-      - |
-        if [ "${_RUN_INTEGRATION_TESTS}" != "true" ]; then echo "Skipping integration-tests"; exit 0; fi
-        export PATH="/workspace/.venv/bin:$$PATH"
-        pytest tests/integration/test_integration_eval_ci.py -v --tb=short
-    env:
-      - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
-      - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
-      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
-      - "GOOGLE_GENAI_USE_VERTEXAI=True"
-      - "EVAL_PROFILE=${_EVAL_PROFILE}"
-    waitFor: ["unit-tests"]
-
-  # ===========================================================================
-  # Post-Deploy Eval (optional — set _RUN_POST_DEPLOY_EVAL=true to enable)
-  # Evaluates a deployed Agent Engine via Vertex AI Gen AI Eval Service
+  # Post-Deploy Eval — Vertex AI Gen AI Eval Service against live Agent Engine
   # ===========================================================================
   - id: "post-deploy-eval"
     name: "python:${_PYTHON_VERSION}-slim"
@@ -116,19 +41,21 @@ steps:
     args:
       - "-c"
       - |
-        if [ "${_RUN_POST_DEPLOY_EVAL}" != "true" ]; then
-          echo "Skipping post-deploy eval (_RUN_POST_DEPLOY_EVAL != true)"
-          exit 0
-        fi
         export PATH="/workspace/.venv/bin:$$PATH"
+
+        # Extract engine ID from full resource name
+        ENGINE_ID=$(echo "${_AGENT_ENGINE_RESOURCE_NAME}" | awk -F'/' '{print $NF}')
+
         python scripts/eval_vertex.py \
-          --agent-engine-id "${_AGENT_ENGINE_ID}" \
-          --profile full \
+          --agent-engine-id "$$ENGINE_ID" \
+          --profile "${_EVAL_PROFILE}" \
           --delay 5
     env:
       - "GOOGLE_CLOUD_PROJECT=$PROJECT_ID"
       - "GOOGLE_CLOUD_LOCATION=${_GOOGLE_CLOUD_LOCATION}"
+      - "FIRESTORE_DATABASE=${_FIRESTORE_DATABASE}"
       - "GOOGLE_CLOUD_STORAGE_BUCKET=${_STAGING_BUCKET}"
-    waitFor: ["integration-tests"]
+      - "GOOGLE_GENAI_USE_VERTEXAI=True"
+    waitFor: ["install-deps"]
 
 timeout: "3600s"

@@ -7,7 +7,7 @@ The project uses **Google Cloud Build** for continuous integration and deploymen
 ```
 cloudbuild/pr-checks.yaml          App CI: fast eval + lint on every PR
 cloudbuild/cloudbuild-deploy.yaml  App CI + CD on branch push (develop/staging/main) — auto-detects agent changes
-cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
+cloudbuild/cloudbuild-nightly.yaml Nightly post-deploy eval against live prod Agent Engine (scheduled/manual)
 cloudbuild/release.yaml            Versioned release on git tag push (v*) — prod only
 cloudbuild/terraform-plan.yaml     Infra: show plan diff on every PR — runs per env in parallel with pr-checks
 cloudbuild/terraform-apply.yaml    Infra: auto-apply on merge — runs per env in parallel with deploy
@@ -60,9 +60,9 @@ the base — it fires when a PR is opened or updated against any of those branch
 | `ci-pull-request` | PR to env branch | dev/staging/prod | `cloudbuild/pr-checks.yaml` | `fast` | — |
 | `ci-cd-push-develop` | Push to `develop` | dev | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
 | `ci-cd-push-staging` | Push to `staging` | staging | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
-| `ci-cd-push-main` | Push to `main` | prod | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
-| `ci-manual` | Manual / nightly | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
-| Cloud Scheduler | Midnight UTC | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
+| `ci-push-main` | Push to `main` | prod | `cloudbuild/cloudbuild.yaml` | `standard` | — (CI only) |
+| `ci-manual` | Manual / nightly | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | post-deploy eval against released Agent Engine |
+| Cloud Scheduler | Midnight UTC | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | same — fires automatically |
 | `release` | Git tag `v*.*.*` | prod | `cloudbuild/release.yaml` | `standard` | always |
 
 ### Terraform triggers (per environment, run in parallel with app triggers)
@@ -72,7 +72,7 @@ the base — it fires when a PR is opened or updated against any of those branch
 | `terraform-plan` | PR to env branch | dev/staging/prod | `cloudbuild/terraform-plan.yaml` |
 | `terraform-apply` | Push to env branch | dev/staging/prod | `cloudbuild/terraform-apply.yaml` |
 
-**Total triggers per project:** dev=4, staging=4, prod=6
+**Total triggers per project:** dev=4, staging=4, prod=6 (ci-push-main is CI-only; prod deploy is via git tag → release trigger)
 
 ### Full event → trigger mapping
 
@@ -83,7 +83,7 @@ the base — it fires when a PR is opened or updated against any of those branch
 | PR → `staging` | `ci-pull-request` + `terraform-plan` |
 | Merge → `staging` | `ci-cd-push-staging` (deploy to staging) + `terraform-apply` (infra apply to staging) |
 | PR → `main` | `ci-pull-request` + `terraform-plan` |
-| Merge → `main` | `ci-cd-push-main` (deploy to prod) + `terraform-apply` (infra apply to prod) |
+| Merge → `main` | `ci-push-main` (CI only — no deploy) + `terraform-apply` (infra apply to prod) |
 | Git tag `v*` | `release` (versioned deploy to prod) |
 
 ## Terraform CI/CD
@@ -378,22 +378,15 @@ assert SLO thresholds. Skipped when `_RUN_LOAD_TESTS=false` (default for dev and
 
 ## Nightly Pipeline (cloudbuild-nightly.yaml)
 
-Runs all CI steps with `_EVAL_PROFILE=full` (all metrics including LLM-as-judge). Optionally
-runs post-deploy evaluation against a deployed Agent Engine.
+Runs post-deploy eval against the live prod Agent Engine via Vertex AI Gen AI Eval Service.
+Fires automatically at midnight UTC via Cloud Scheduler. The Agent Engine resource name and
+staging bucket are wired in via Terraform substitutions — no manual configuration needed.
 
 ```bash
-# Full eval only (default — post-deploy eval skipped)
+# Run manually on demand
 gcloud builds triggers run ci-manual \
   --project=YOUR_PROJECT_ID --region=us-central1 --branch=main
-
-# Full eval + post-deploy eval against a live Agent Engine
-gcloud builds triggers run ci-manual \
-  --project=YOUR_PROJECT_ID --region=us-central1 --branch=main \
-  --substitutions="_RUN_POST_DEPLOY_EVAL=true,_AGENT_ENGINE_ID=YOUR_ENGINE_ID,_STAGING_BUCKET=gs://YOUR_BUCKET"
 ```
-
-`_RUN_POST_DEPLOY_EVAL`, `_AGENT_ENGINE_ID`, and `_STAGING_BUCKET` default to `false`, `""`, and
-`""` in the trigger definition — override them at run time only when needed.
 
 ---
 
@@ -490,19 +483,19 @@ All roles are granted by Terraform (`terraform/modules/core/iam.tf`). No service
 
 For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in the fields below → **Save**.
 
-| Field | ci-pull-request | ci-push-develop | ci-cd-push-main | ci-manual | release |
+| Field | ci-pull-request | ci-push-develop | ci-push-main | ci-manual | release |
 |---|---|---|---|---|---|
-| **Name** | `ci-pull-request` | `ci-push-develop` | `ci-cd-push-main` | `ci-manual` | `release` |
+| **Name** | `ci-pull-request` | `ci-push-develop` | `ci-push-main` | `ci-manual` | `release` |
 | **Region** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
 | **Event** | Pull request | Push to branch | Push to branch | Manual invocation | Push tag |
 | **Repository (2nd gen)** | `Saoussen-CH-customer-support-mas-ai` | same | same | same | same |
 | **Branch / Tag** | `^main$` | `^develop$` | `^main$` | `main` | `^v[0-9]+\.[0-9]+\.[0-9]+` |
-| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild-nightly.yaml` | `cloudbuild/release.yaml` |
+| **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-nightly.yaml` | `cloudbuild/release.yaml` |
 | **Service account** | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` | same | same | same | same |
 | **_EVAL_PROFILE** | — | `standard` | `standard` | `full` | `standard` |
 | **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
-| **_STAGING_BUCKET** | — | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
-| **_AGENT_ENGINE_RESOURCE_NAME** | — | — | `projects/.../reasoningEngines/ID` | — | `projects/.../reasoningEngines/ID` |
+| **_STAGING_BUCKET** | — | `gs://YOUR_STAGING_BUCKET` | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
+| **_AGENT_ENGINE_RESOURCE_NAME** | — | `projects/.../reasoningEngines/ID` | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` |
 
 Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
 
@@ -573,34 +566,16 @@ substitutions:
 EOF
 ```
 
-#### Trigger — Manual / nightly (full eval, prod only)
+#### Trigger — Nightly post-deploy eval (prod only)
 
-The `manual` event type must be created from the **Cloud Console** (not supported by `triggers import`):
-
-1. Cloud Build → Triggers → **Create Trigger**
-2. Name: `ci-manual` | Region: `us-central1`
-3. Event: **Manual invocation**
-4. Source (2nd gen): repository `Saoussen-CH/customer-support-mas-ai` | branch: `main`
-5. Configuration: Cloud Build configuration file → `cloudbuild/cloudbuild-nightly.yaml`
-6. Substitution variables: `_EVAL_PROFILE=full`, `_GOOGLE_CLOUD_LOCATION=us-central1`, `_STAGING_BUCKET=gs://YOUR_BUCKET`
-7. Service account: `YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com`
+Created automatically by Terraform (`ci-manual`). Evaluates the **released Agent Engine**
+(`_AGENT_ENGINE_RESOURCE_NAME`) via Vertex AI Gen AI Eval Service — not the code on `main`.
+The Agent Engine resource name and staging bucket are wired in via `make infra-up ENV=prod`
+after setting `agent_engine_resource_name` in `terraform/environments/prod/terraform.tfvars`.
 
 Run on demand via CLI:
 ```bash
 gcloud builds triggers run ci-manual --region=us-central1 --project=YOUR_PROJECT_ID --branch=main
-```
-
-Or use the `nightly` make target:
-```bash
-# Push your changes first — Cloud Build clones from GitHub, not local files
-git push origin main
-
-# Then trigger (all CI steps, post-deploy off by default)
-make nightly
-
-# Run specific steps only
-make nightly RUN_LINT=false RUN_TOOL_TESTS=false   # unit + integration only
-make nightly RUN_LINT=false RUN_TOOL_TESTS=false RUN_UNIT_TESTS=false RUN_INTEGRATION_TESTS=false RUN_POST_DEPLOY_EVAL=true  # post-deploy only
 ```
 
 #### Fixing existing triggers with typos
