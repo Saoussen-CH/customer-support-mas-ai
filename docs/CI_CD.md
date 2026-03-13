@@ -60,7 +60,7 @@ the base — it fires when a PR is opened or updated against any of those branch
 | `ci-pull-request` | PR to env branch | dev/staging/prod | `cloudbuild/pr-checks.yaml` | `fast` | — |
 | `ci-cd-push-develop` | Push to `develop` | dev | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
 | `ci-cd-push-staging` | Push to `staging` | staging | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
-| `ci-cd-push-main` | Push to `main` | prod | `cloudbuild/cloudbuild-deploy.yaml` | `standard` | auto-detected |
+| `ci-push-main` | Push to `main` | prod | `cloudbuild/cloudbuild.yaml` | `standard` | — (CI only) |
 | `ci-manual` | Manual / nightly | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
 | Cloud Scheduler | Midnight UTC | prod | `cloudbuild/cloudbuild-nightly.yaml` | `full` | — |
 | `release` | Git tag `v*.*.*` | prod | `cloudbuild/release.yaml` | `standard` | always |
@@ -72,7 +72,7 @@ the base — it fires when a PR is opened or updated against any of those branch
 | `terraform-plan` | PR to env branch | dev/staging/prod | `cloudbuild/terraform-plan.yaml` |
 | `terraform-apply` | Push to env branch | dev/staging/prod | `cloudbuild/terraform-apply.yaml` |
 
-**Total triggers per project:** dev=4, staging=4, prod=6
+**Total triggers per project:** dev=4, staging=4, prod=6 (ci-push-main is CI-only; prod deploy is via git tag → release trigger)
 
 ### Full event → trigger mapping
 
@@ -83,7 +83,7 @@ the base — it fires when a PR is opened or updated against any of those branch
 | PR → `staging` | `ci-pull-request` + `terraform-plan` |
 | Merge → `staging` | `ci-cd-push-staging` (deploy to staging) + `terraform-apply` (infra apply to staging) |
 | PR → `main` | `ci-pull-request` + `terraform-plan` |
-| Merge → `main` | `ci-cd-push-main` (deploy to prod) + `terraform-apply` (infra apply to prod) |
+| Merge → `main` | `ci-push-main` (CI only — no deploy) + `terraform-apply` (infra apply to prod) |
 | Git tag `v*` | `release` (versioned deploy to prod) |
 
 ## Terraform CI/CD

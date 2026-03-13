@@ -31,7 +31,7 @@ locals {
     _FIRESTORE_DATABASE         = var.firestore_database_id
     _SERVICE_NAME               = var.cloud_run_service_name
     _AR_REPO                    = var.ar_repo_name
-    _STAGING_BUCKET             = var.staging_bucket_name
+    _STAGING_BUCKET             = "gs://${var.staging_bucket_name}"
     _MODEL_ARMOR_ENABLED        = tostring(var.model_armor_enabled)
     _MODEL_ARMOR_TEMPLATE_ID    = var.model_armor_enabled ? google_model_armor_template.customer_support_policy[0].name : ""
     _AGENT_ENGINE_RESOURCE_NAME = var.agent_engine_resource_name
@@ -120,8 +120,8 @@ resource "google_cloudbuild_trigger" "push_main" {
   count           = var.github_connected && local.is_prod ? 1 : 0
   project         = var.project_id
   location        = var.region
-  name            = "ci-cd-push-main"
-  description     = "CI + CD: standard eval + deploy on push to main [prod]"
+  name            = "ci-push-main"
+  description     = "CI only: standard eval on push to main — prod deploy via git tag (release trigger) [prod]"
   service_account = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_sa}"
 
   repository_event_config {
@@ -129,8 +129,12 @@ resource "google_cloudbuild_trigger" "push_main" {
     push { branch = "^main$" }
   }
 
-  filename      = "cloudbuild/cloudbuild-deploy.yaml"
-  substitutions = local.deploy_substitutions
+  filename = "cloudbuild/cloudbuild.yaml"
+  substitutions = {
+    _EVAL_PROFILE          = "standard"
+    _GOOGLE_CLOUD_LOCATION = var.region
+    _FIRESTORE_DATABASE    = var.firestore_database_id
+  }
   depends_on    = [google_project_service.apis]
 }
 
@@ -207,7 +211,7 @@ resource "google_cloudbuild_trigger" "release" {
     _FIRESTORE_DATABASE         = var.firestore_database_id
     _SERVICE_NAME               = var.cloud_run_service_name
     _AR_REPO                    = var.ar_repo_name
-    _STAGING_BUCKET             = var.staging_bucket_name
+    _STAGING_BUCKET             = "gs://${var.staging_bucket_name}"
     _MODEL_ARMOR_ENABLED        = tostring(var.model_armor_enabled)
     _MODEL_ARMOR_TEMPLATE_ID    = var.model_armor_enabled ? google_model_armor_template.customer_support_policy[0].name : ""
     _AGENT_ENGINE_RESOURCE_NAME = var.agent_engine_resource_name
