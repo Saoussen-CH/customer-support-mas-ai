@@ -1,0 +1,106 @@
+%% CI/CD Pipeline — Multi-Environment Promotion Flow
+%% Google Cloud Build triggers across dev / staging / prod
+
+flowchart TD
+    PR1[📬 PR opened\nfeat/* → develop]
+    PR2[📬 PR opened\ndevelop → staging]
+    PR3[📬 PR opened\nstaging → main]
+
+    subgraph dev_pr ["PR Checks — css-mas-dev"]
+        direction LR
+        CI_PR_DEV[ci-pull-request\npr-checks.yaml\nEVAL_PROFILE=fast]
+        TF_PLAN_DEV[terraform-plan\nterraform-plan.yaml\ninfra diff]
+    end
+
+    subgraph staging_pr ["PR Checks — css-mas-staging"]
+        direction LR
+        CI_PR_STG[ci-pull-request\npr-checks.yaml\nEVAL_PROFILE=fast]
+        TF_PLAN_STG[terraform-plan\nterraform-plan.yaml\ninfra diff]
+    end
+
+    subgraph prod_pr ["PR Checks — css-mas-prod"]
+        direction LR
+        CI_PR_PRD[ci-pull-request\npr-checks.yaml\nEVAL_PROFILE=fast]
+        TF_PLAN_PRD[terraform-plan\nterraform-plan.yaml\ninfra diff]
+    end
+
+    MERGE1[✅ Merge → develop]
+    MERGE2[✅ Merge → staging]
+    MERGE3[✅ Merge → main]
+
+    subgraph dev_push ["Push to develop — css-mas-dev"]
+        direction LR
+        CI_DEV[ci-cd-push-develop\ncloudbuild-deploy.yaml\nEVAL_PROFILE=standard\n+ deploy to dev]
+        TF_APPLY_DEV[terraform-apply\nterraform-apply.yaml\nauto-apply infra]
+    end
+
+    subgraph staging_push ["Push to staging — css-mas-staging"]
+        direction LR
+        CI_STG[ci-cd-push-staging\ncloudbuild-deploy.yaml\nEVAL_PROFILE=standard\n+ deploy to staging]
+        TF_APPLY_STG[terraform-apply\nterraform-apply.yaml\nauto-apply infra]
+    end
+
+    subgraph prod_push ["Push to main — css-mas-prod"]
+        direction LR
+        CI_PRD[ci-cd-push-main\ncloudbuild-deploy.yaml\nEVAL_PROFILE=standard\n+ deploy to prod]
+        TF_APPLY_PRD[terraform-apply\nterraform-apply.yaml\nauto-apply infra]
+    end
+
+    TAG[🏷️ git tag v*]
+
+    subgraph release_pipe ["Release — css-mas-prod"]
+        direction TB
+        R1[lint + unit tests]
+        R2[docker build & push\ntagged v* + sha + latest]
+        R3[deploy Agent Engine\ndisplay name: v*]
+        R4[deploy Cloud Run\nimage: v*]
+        R5[smoke tests]
+        R1 --> R2 --> R3 --> R4 --> R5
+    end
+
+    NIGHTLY[⏰ Midnight UTC\nCloud Scheduler]
+
+    subgraph nightly_pipe ["Nightly — css-mas-prod"]
+        direction TB
+        N1[lint + tool tests]
+        N2[unit eval\nEVAL_PROFILE=full]
+        N3[integration eval\nEVAL_PROFILE=full]
+        N4[post-deploy eval\nVertex AI Eval Service]
+        N1 --> N2 --> N3 --> N4
+    end
+
+    PR1 --> dev_pr
+    dev_pr --> MERGE1
+    MERGE1 --> dev_push
+
+    dev_push --> PR2
+    PR2 --> staging_pr
+    staging_pr --> MERGE2
+    MERGE2 --> staging_push
+
+    staging_push --> PR3
+    PR3 --> prod_pr
+    prod_pr --> MERGE3
+    MERGE3 --> prod_push
+
+    prod_push --> TAG
+    TAG --> release_pipe
+
+    NIGHTLY --> nightly_pipe
+
+    style PR1 fill:#4285F4,stroke:#1967D2,color:#fff
+    style PR2 fill:#4285F4,stroke:#1967D2,color:#fff
+    style PR3 fill:#4285F4,stroke:#1967D2,color:#fff
+    style MERGE1 fill:#34A853,stroke:#0D652D,color:#fff
+    style MERGE2 fill:#34A853,stroke:#0D652D,color:#fff
+    style MERGE3 fill:#34A853,stroke:#0D652D,color:#fff
+    style TAG fill:#9334E6,stroke:#7627BB,color:#fff
+    style NIGHTLY fill:#FF6F00,stroke:#E65100,color:#fff
+    style dev_pr fill:#E8F5E9,stroke:#34A853
+    style staging_pr fill:#E8F5E9,stroke:#34A853
+    style prod_pr fill:#E8F5E9,stroke:#34A853
+    style dev_push fill:#E3F2FD,stroke:#4285F4
+    style staging_push fill:#E3F2FD,stroke:#4285F4
+    style prod_push fill:#E3F2FD,stroke:#4285F4
+    style release_pipe fill:#F3E5F5,stroke:#9334E6
+    style nightly_pipe fill:#FFF3E0,stroke:#FF6F00

@@ -6,13 +6,14 @@ The project uses **Google Cloud Build** for continuous integration and deploymen
 
 ```
 cloudbuild/pr-checks.yaml          App CI: fast eval + lint on every PR
-cloudbuild/cloudbuild.yaml         App CI only (develop push, no deploy)
-cloudbuild/cloudbuild-deploy.yaml  App CI + CD on branch push — auto-detects agent changes
+cloudbuild/cloudbuild-deploy.yaml  App CI + CD on branch push (develop/staging/main) — auto-detects agent changes
 cloudbuild/cloudbuild-nightly.yaml Full eval + optional post-deploy eval (scheduled/manual)
 cloudbuild/release.yaml            Versioned release on git tag push (v*) — prod only
 cloudbuild/terraform-plan.yaml     Infra: show plan diff on every PR — runs per env in parallel with pr-checks
 cloudbuild/terraform-apply.yaml    Infra: auto-apply on merge — runs per env in parallel with deploy
 ```
+
+> **Diagram:** See [`docs/diagrams/cicd-pipeline.mmd`](diagrams/cicd-pipeline.mmd) for the full promotion flow visualized.
 
 **Key design principle:** Terraform is fully decoupled from the app deploy. Infrastructure changes propagate automatically — add a resource to `terraform/modules/core/`, open a PR (plan shows the diff), merge (apply runs automatically), promote through `develop → staging → main`.
 
