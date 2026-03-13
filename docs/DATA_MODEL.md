@@ -172,32 +172,6 @@ python -m customer_support_agent.database.seed \
 2. System detects this is a demo email
 3. Returns error: "This email is reserved for demo purposes. Please log in with password 'demo123' instead."
 
-## Testing Scenarios
-
-### Test Order Tracking (Demo User)
-
-1. Log in as `demo@example.com` / `demo123`
-2. Ask: "Track my order ORD-12345"
-3. Expected: Full tracking info with timeline
-
-### Test Order Tracking (New User)
-
-1. Register as `testuser@example.com`
-2. Ask: "Show my order history"
-3. Expected: "No orders found for your account"
-
-### Test Refund (Eligible)
-
-1. Log in as `demo@example.com`
-2. Ask: "I want a refund for ORD-12345"
-3. Expected: Refund processed successfully
-
-### Test Refund (Not Eligible)
-
-1. Log in as `demo@example.com`
-2. Ask: "I want a refund for ORD-11111"
-3. Expected: "Refund denied: Past 30-day return window"
-
 ## Security: Ownership Verification (Production Pattern)
 
 All user-specific tools verify ownership using **decorators** before returning data.
@@ -237,7 +211,6 @@ def get_my_orders(tool_context: ToolContext, _user_id: str = None):
 | Tool | Decorator | Verification |
 |------|-----------|--------------|
 | `track_order(order_id)` | `@requires_order_ownership` | Single fetch, ownership verified |
-| `get_order_details(order_id)` | `@requires_order_ownership` | Single fetch, ownership verified |
 | `get_invoice(invoice_id)` | `@requires_invoice_ownership` | Single fetch, ownership verified |
 | `get_invoice_by_order_id(order_id)` | `@requires_order_ownership` | Order ownership verified |
 | `check_payment_status(order_id)` | `@requires_order_ownership` | Order ownership verified |
@@ -309,8 +282,6 @@ The refund system includes comprehensive validation and tracking:
 | not_as_described | gift_unwanted |
 | missing_parts | ordering_mistake |
 | quality_issue | |
-| arrived_late | |
-| duplicate_order | |
 
 **Policy**: Refunds are granted for product-related issues only. Reasons like "I changed my mind" or "found it cheaper elsewhere" are not valid grounds for a refund.
 
@@ -350,21 +321,6 @@ If user `demo-user-001` tries to access order `ORD-22222` (belongs to `demo-user
   "message": "You don't have permission to access order ORD-22222"
 }
 ```
-
-## Files Modified
-
-| File | Changes |
-|------|---------|
-| `customer_support_agent/database/seed.py` | Added demo users, linked all data to user_ids |
-| `customer_support_agent/auth.py` | **NEW** - Authorization decorators and audit logging |
-| `customer_support_agent/tools/order_tools.py` | Refactored to use decorators, added `get_order_details` |
-| `customer_support_agent/tools/billing_tools.py` | Refactored to use decorators, added `get_my_invoices`, `get_my_payments` |
-| `customer_support_agent/tools/workflow_tools.py` | Uses `verify_order_ownership` helper with audit logging |
-| `customer_support_agent/agents/order_agent.py` | Updated tools and instructions |
-| `customer_support_agent/agents/billing_agent.py` | Updated tools and instructions |
-| `backend/app/database.py` | Added demo user detection and validation |
-| `backend/app/main.py` | Updated auth endpoints with demo user handling |
-| `tests/integration/*.evalset.json` | Updated expected results with new customer_ids |
 
 ## Quick Reference
 

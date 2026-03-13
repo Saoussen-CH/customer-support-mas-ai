@@ -1,7 +1,11 @@
 """
 Load tests — run against staging after deploy to validate SLOs before prod promotion.
 
-Simulates realistic customer support traffic across all agent types.
+Tests infrastructure availability under concurrent connections only.
+LLM response quality and latency are not tested here — latency is dominated
+by LLM inference (not infra) and correctness is gated by smoke tests and
+post-deploy eval (eval_vertex.py).
+
 5 concurrent users, 2 minute run — enough to surface concurrency issues
 without burning Agent Engine quota.
 
@@ -12,87 +16,14 @@ Usage:
       --csv /tmp/load-results --exit-code-on-error 1
 """
 
-import random
-
 from locust import HttpUser, between, task
-
-PRODUCT_QUERIES = [
-    "Search for gaming laptops under $1500",
-    "Show me wireless headphones",
-    "Find me a mechanical keyboard",
-    "What tablets do you have?",
-    "Search for monitors",
-]
-
-ORDER_QUERIES = [
-    "Track my order ORD-12345",
-    "What is the status of order ORD-67890",
-    "Where is my order ORD-11111",
-]
-
-BILLING_QUERIES = [
-    "I have a question about invoice INV-2025-001",
-    "Can you help me understand my bill?",
-    "I need help with invoice INV-2024-003",
-]
-
-GENERAL_QUERIES = [
-    "What is your return policy?",
-    "How do I contact support?",
-    "What payment methods do you accept?",
-]
 
 
 class CustomerSupportUser(HttpUser):
-    """Simulates a realistic customer support conversation."""
+    """Validates the service stays up and accepts connections under concurrent load."""
 
-    wait_time = between(3, 8)  # Think time between messages (Agent Engine needs breathing room)
+    wait_time = between(1, 3)
 
-    def on_start(self):
-        self.user_id = f"load-test-{id(self)}"
-        self.session_id = None
-        self.headers = {"X-User-Id": self.user_id}
-
-    @task(4)
-    def product_search(self):
-        self.client.post(
-            "/api/chat",
-            headers=self.headers,
-            json={"message": random.choice(PRODUCT_QUERIES), "session_id": self.session_id},
-            timeout=60,
-            name="/api/chat [product]",
-        )
-
-    @task(3)
-    def order_tracking(self):
-        self.client.post(
-            "/api/chat",
-            headers=self.headers,
-            json={"message": random.choice(ORDER_QUERIES), "session_id": self.session_id},
-            timeout=60,
-            name="/api/chat [order]",
-        )
-
-    @task(2)
-    def billing_query(self):
-        self.client.post(
-            "/api/chat",
-            headers=self.headers,
-            json={"message": random.choice(BILLING_QUERIES), "session_id": self.session_id},
-            timeout=60,
-            name="/api/chat [billing]",
-        )
-
-    @task(1)
-    def general_query(self):
-        self.client.post(
-            "/api/chat",
-            headers=self.headers,
-            json={"message": random.choice(GENERAL_QUERIES), "session_id": self.session_id},
-            timeout=60,
-            name="/api/chat [general]",
-        )
-
-    @task(1)
+    @task
     def health_check(self):
         self.client.get("/health", name="/health")

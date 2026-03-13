@@ -115,79 +115,20 @@ Vite automatically loads `frontend/.env` and exposes variables prefixed with `VI
 const API_URL = import.meta.env.VITE_API_URL
 ```
 
-## Setup Steps
-
-### 1. Get Your GCP Project ID
-
-```bash
-# List your projects
-gcloud projects list
-
-# Set active project
-gcloud config set project your-project-id
-```
-
-### 2. Create GCS Bucket
-
-```bash
-# Create bucket
-gsutil mb -l us-central1 gs://your-bucket-staging
-
-# Verify
-gsutil ls
-```
-
-### 3. Deploy Agent Engine (to get resource name)
-
-```bash
-# Deploy first time
-python deployment/deploy.py
-
-# Copy the resource name from output
-# Example: projects/123/locations/us-central1/reasoningEngines/456
-```
-
-### 4. Create .env File
-
-```bash
-cat > .env << EOF
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-staging
-AGENT_ENGINE_RESOURCE_NAME=projects/123/locations/us-central1/reasoningEngines/456
-GOOGLE_GENAI_USE_VERTEXAI=1
-FIRESTORE_DATABASE=customer-support-db
-FRONTEND_URL=http://localhost:3000
-PORT=8000
-EOF
-```
-
-### 5. Verify Configuration
-
-```bash
-# Test deployment script reads .env
-python deployment/deploy.py --action test_local
-
-# Test backend reads .env (run from project root)
-python -c "from backend.app.config import settings; print(settings.google_cloud_project)"
-```
-
 ## Security Best Practices
 
-### ✅ DO
+**Do:**
+- Use `.env` files for local development
+- Keep `.env` in `.gitignore` (already configured)
+- Use environment variables or Cloud Run `--set-env-vars` for production
+- Share `.env.example` files (without sensitive values)
+- Rotate credentials regularly
 
-- ✅ Use `.env` files for local development
-- ✅ Keep `.env` in `.gitignore` (already configured)
-- ✅ Use environment variables or Cloud Run `--set-env-vars` for production
-- ✅ Share `.env.example` files (without sensitive values)
-- ✅ Rotate credentials regularly
-
-### ❌ DON'T
-
-- ❌ Commit `.env` files to git
-- ❌ Share `.env` files publicly
-- ❌ Include credentials in `.env.example`
-- ❌ Use production credentials in development
+**Do not:**
+- Commit `.env` files to git
+- Share `.env` files publicly
+- Include credentials in `.env.example`
+- Use production credentials in development
 
 ## Production Deployment
 
@@ -209,44 +150,6 @@ Agent Engine automatically has access to:
 - `GOOGLE_CLOUD_PROJECT` - Auto-detected from deployment
 - `GOOGLE_CLOUD_LOCATION` - Auto-detected from deployment
 
-## Troubleshooting
-
-### Error: "GOOGLE_CLOUD_PROJECT not set"
-
-**Solution:**
-```bash
-# Check if .env exists
-ls -la .env
-
-# Check if variable is set
-cat .env | grep GOOGLE_CLOUD_PROJECT
-
-# Manually export if needed
-export GOOGLE_CLOUD_PROJECT=your-project-id
-```
-
-### Error: "Backend can't find .env"
-
-**Solution:**
-```bash
-# Ensure root .env exists
-ls -la .env
-
-# Verify backend reads it correctly (run from project root)
-python -c "import os; print(os.path.exists('.env'))"
-```
-
-### Error: "Permission denied accessing GCS bucket"
-
-**Solution:**
-```bash
-# Authenticate
-gcloud auth application-default login
-
-# Grant permissions
-gsutil iam ch user:your-email@example.com:roles/storage.admin gs://your-bucket
-```
-
 ## Example Workflows
 
 ### Development Workflow
@@ -257,14 +160,13 @@ cp .env.example .env
 nano .env  # Edit with your values
 
 # 2. Run locally
-python deployment/deploy.py --action test_local
+make test-local
 
 # 3. Deploy to Agent Engine
-python deployment/deploy.py --action deploy
+make deploy-agent-engine
 
-# 4. Run backend
-cd backend
-uvicorn app.main:app --reload
+# 4. Deploy Cloud Run (frontend + backend)
+make deploy-cloud-run
 ```
 
 ### CI/CD Workflow
