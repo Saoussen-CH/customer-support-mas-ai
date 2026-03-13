@@ -53,7 +53,7 @@ class ModelArmorSafetyFilterPlugin(BasePlugin):
             self._template_resource_name = template_id
         else:
             self._template_resource_name = (
-                f"projects/{self._project_id}/locations/{self._location_id}" f"/templates/{template_id}"
+                f"projects/{self._project_id}/locations/{self._location_id}/templates/{template_id}"
             )
 
         self._client = modelarmor_v1.ModelArmorClient(

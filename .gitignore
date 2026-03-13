@@ -32,6 +32,9 @@ env/
 # Environment variables
 .env
 .env.local
+.env.dev
+.env.staging
+.env.prod
 
 # IDE
 .vscode/
@@ -85,9 +88,10 @@ docs/PRODUCTION_READINESS.md
 docs/VERTEX_CREATE_EVALUATION_RUN.md
 
 # Terraform
-terraform/.terraform/
-terraform/.terraform.lock.hcl
-terraform/terraform.tfvars
-terraform/terraform.tfstate
-terraform/terraform.tfstate.backup
-terraform/*.tfplan
+terraform/environments/*/.terraform/
+terraform/environments/*/.terraform.lock.hcl
+terraform/environments/*/terraform.tfvars
+terraform/environments/*/terraform.tfstate
+terraform/environments/*/terraform.tfstate.backup
+terraform/environments/*/*.tfplan
+terraform/environments/*/backend.hcl

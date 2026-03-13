@@ -10,11 +10,21 @@ from unittest.mock import patch
 
 import dotenv
 import pytest
-import vertexai
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+
+
+def pytest_configure(config):
+    """Load .env before any test modules are collected.
+
+    config.py raises ValueError at import time if GOOGLE_CLOUD_PROJECT is unset.
+    Fixtures run after collection, so we must load the env vars here instead.
+    """
+    dotenv.load_dotenv(os.path.join(ROOT, ".env"))
+    if not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -28,6 +38,8 @@ def load_env_and_initialize():
 
     This is required for the agents to call Gemini models via Vertex AI.
     """
+    import vertexai
+
     dotenv_path = os.path.join(ROOT, ".env")
     dotenv.load_dotenv(dotenv_path)
 

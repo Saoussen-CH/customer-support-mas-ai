@@ -9,9 +9,8 @@ Usage:
 
 import argparse
 
-import vertexai
+from google import genai
 from google.cloud import firestore
-from vertexai.language_models import TextEmbeddingModel
 
 
 def add_embeddings_to_products(project_id: str, database_id: str, location: str = "us-central1"):
@@ -24,15 +23,11 @@ def add_embeddings_to_products(project_id: str, database_id: str, location: str 
     print(f"Database: {database_id}")
     print(f"Location: {location}")
 
-    # Initialize Vertex AI
-    vertexai.init(project=project_id, location=location)
-
-    # Initialize Firestore
+    # Initialize genai client and Firestore
+    client = genai.Client(vertexai=True, project=project_id, location=location)
     db = firestore.Client(project=project_id, database=database_id)
 
-    # Load embedding model
-    print("\n⏳ Loading embedding model (text-embedding-004)...")
-    model = TextEmbeddingModel.from_pretrained("text-embedding-004")
+    print("\n⏳ Using embedding model (text-embedding-004)...")
 
     # Get all products
     products = list(db.collection("products").stream())
@@ -62,8 +57,8 @@ def add_embeddings_to_products(project_id: str, database_id: str, location: str 
 
         # Generate embedding
         try:
-            embeddings_response = model.get_embeddings([search_text])
-            embedding_vector = embeddings_response[0].values
+            embeddings_response = client.models.embed_content(model="text-embedding-004", contents=[search_text])
+            embedding_vector = embeddings_response.embeddings[0].values
 
             # Update Firestore document with embedding
             doc.reference.update(

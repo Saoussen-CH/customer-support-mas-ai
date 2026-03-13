@@ -30,7 +30,10 @@ NC='\033[0m' # No Color
 # Load from .env if exists
 if [ -f .env ]; then
     echo -e "${BLUE}Loading configuration from .env...${NC}"
-    export $(grep -v '^#' .env | xargs)
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
 fi
 
 # Get project ID
