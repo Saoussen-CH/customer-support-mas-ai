@@ -26,8 +26,8 @@ SLOS = {
     "max_p99_ms": 270_000,  # no requests hanging near Cloud Run's 300s timeout
 }
 
-# Endpoints excluded from SLO checks (health checks are always fast)
-EXCLUDE = {"/health"}
+# Endpoints excluded from per-endpoint SLO breakdown (checked via overall pass/fail)
+EXCLUDE: set[str] = set()
 
 
 def check_slos(csv_path: str) -> bool:
