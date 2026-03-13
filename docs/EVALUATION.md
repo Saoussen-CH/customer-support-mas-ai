@@ -2,33 +2,34 @@
 
 ## Overview
 
-This document describes the 6-stage production evaluation architecture for the Customer Support Multi-Agent System. Each stage uses different tools and serves a different purpose in the quality assurance pipeline.
+This document describes the 5-stage production evaluation architecture for the Customer Support Multi-Agent System. Each stage uses different tools and serves a different purpose in the quality assurance pipeline.
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    EVALUATION PIPELINE                              │
-│                                                                     │
-│  Stage 1       Stage 2       Stage 3       Stage 4       Stage 5-6 │
-│  ┌─────┐      ┌─────┐      ┌─────┐      ┌─────┐      ┌─────┐     │
-│  │LOCAL│──────│ CI  │──────│STAGE│──────│PROD │──────│MONIT│     │
-│  │ DEV │      │PIPE │      │EVAL │      │SMOKE│      │  OR │     │
-│  └─────┘      └─────┘      └─────┘      └─────┘      └─────┘     │
-│  ADK local    ADK+pytest   Vertex AI    Vertex AI    Vertex AI    │
-│  InMemory     InMemory     Eval Svc     Eval Svc     Monitoring   │
-│  Runner       Runner       (deployed)   (deployed)   (continuous) │
-└─────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                    EVALUATION PIPELINE                            │
+│                                                                   │
+│  Stage 1       Stage 2       Stage 3       Stage 4       Stage 5 │
+│  ┌─────┐      ┌─────┐      ┌─────┐      ┌─────┐      ┌─────┐   │
+│  │LOCAL│──────│ CI  │──────│STAGE│──────│PROD │──────│NIGHT│   │
+│  │ DEV │      │PIPE │      │EVAL │      │SMOKE│      │ LY  │   │
+│  └─────┘      └─────┘      └─────┘      └─────┘      └─────┘   │
+│  ADK local    ADK+pytest   Vertex AI    Vertex AI    Vertex AI  │
+│  InMemory     InMemory     Eval Svc     Eval Svc     Eval Svc   │
+│  Runner       Runner       (deployed)   (deployed)   (scheduled)│
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ## Stage Summary
 
-| Stage | Name | Tool | Trigger | Status |
-|-------|------|------|---------|--------|
-| 1 | Local Development | ADK AgentEvaluator + InMemoryRunner | Manual | **BUILT** |
-| 2 | CI Pipeline | ADK AgentEvaluator + pytest | PR/push/nightly | **BUILT** |
-| 3 | Staging Eval | Vertex AI Gen AI Eval Service | Post-deploy to staging | **TESTED** |
-| 4 | Production Smoke | Vertex AI Gen AI Eval Service | Post-deploy to prod | **TESTED** (same script) |
-| 5 | Production Monitor | Vertex AI Model Monitoring | Continuous | Beyond scope |
-| 6 | Periodic Regression | Vertex AI Gen AI Eval Service | Nightly/weekly cron | **TESTED** (same script) |
+| Stage | Name | Tool | Trigger |
+|-------|------|------|---------|
+| 1 | Local Development | ADK AgentEvaluator + InMemoryRunner | Manual (`pytest tests/`) |
+| 2 | CI Pipeline | ADK AgentEvaluator + pytest | Every PR and push |
+| 3 | Post-Deploy Eval | Vertex AI Gen AI Eval Service | After deploy to staging or prod |
+| 4 | Production Smoke Test | Vertex AI Gen AI Eval Service | After deploy to prod |
+| 5 | Nightly Regression | Vertex AI Gen AI Eval Service | Cloud Scheduler (midnight UTC) |
+
+Stages 3, 4, and 5 use the same script (`scripts/eval_vertex.py`) against the live Agent Engine. Stage 3 runs after staging deploy; Stage 4 runs after prod deploy (smaller dataset, faster); Stage 5 runs on a nightly schedule.
 
 ---
 
@@ -53,9 +54,9 @@ EVAL_PROFILE=fast pytest tests/unit/ -v -s
 ```
 
 **Key files:**
-- `tests/unit/test_agent_eval_ci.py` — unit-level agent evals
-- `tests/integration/test_integration_eval_ci.py` — integration evals
-- `tests/conftest.py` — mock setup for Firestore
+- `tests/unit/test_agent_eval_ci.py`: unit-level agent evals
+- `tests/integration/test_integration_eval_ci.py`: integration evals
+- `tests/conftest.py`: mock setup for Firestore
 
 ---
 
@@ -66,7 +67,7 @@ EVAL_PROFILE=fast pytest tests/unit/ -v -s
 **Tools:** ADK `AgentEvaluator` + `InMemoryRunner` + pytest
 
 **Metrics:** Vary by profile:
-- `fast` (PR): Rouge-1 only — free, fast
+- `fast` (PR): Rouge-1 only: free, fast
 - `standard` (push to main): + tool trajectory (unit), rubric-based LLM judge (integration)
 - `full` (nightly/release): + final_response_match_v2
 
@@ -74,9 +75,10 @@ EVAL_PROFILE=fast pytest tests/unit/ -v -s
 | Event | Profile | Gate |
 |-------|---------|------|
 | Pull Request | `fast` | Must pass to merge |
-| Push to main | `standard` | Blocks deployment |
-| Nightly | `full` | Alerts on degradation |
-| Release gate | `full` | Must pass to deploy |
+| Push to `develop` / `staging` | `standard` | Blocks deployment |
+| Push to `main` | `standard` | CI only (no deploy) |
+| Git tag `v*` (prod release) | `standard` | Must pass to deploy |
+| Nightly | `full` | Post-deploy eval against live prod Agent Engine |
 
 **How to run:**
 ```bash
@@ -87,10 +89,10 @@ EVAL_PROFILE=full pytest tests/ -v
 ```
 
 **Key files:**
-- `.github/workflows/` — CI workflow definitions
+- `cloudbuild/pr-checks.yaml`, `cloudbuild/cloudbuild-deploy.yaml`: CI pipeline definitions
 - `tests/eval_configs/unit/{fast,standard,full}.json`
 - `tests/eval_configs/integration/{fast,standard,full}.json`
-- `tests/eval_configs/__init__.py` — profile loader
+- `tests/eval_configs/__init__.py`: profile loader
 
 ---
 
@@ -101,10 +103,10 @@ EVAL_PROFILE=full pytest tests/ -v
 **Tools:** Vertex AI Gen AI Evaluation Service (`client.evals`)
 
 **Metrics:**
-- `TOOL_USE_QUALITY` — Did the agent use the right tools with correct parameters?
-- `FINAL_RESPONSE_QUALITY` — Is the response accurate and helpful?
-- `HALLUCINATION` (full profile) — Did the agent fabricate information?
-- `SAFETY` (full profile) — Is the response safe and appropriate?
+- `TOOL_USE_QUALITY`: Did the agent use the right tools with correct parameters?
+- `FINAL_RESPONSE_QUALITY`: Is the response accurate and helpful?
+- `HALLUCINATION` (full profile): Did the agent fabricate information?
+- `SAFETY` (full profile): Is the response safe and appropriate?
 
 **How it works:**
 1. Deploy agent to staging Agent Engine
@@ -112,13 +114,13 @@ EVAL_PROFILE=full pytest tests/ -v
 3. Script sends prompts → collects responses → runs Vertex AI eval metrics
 4. HTML report saved locally as `eval-TIMESTAMP.html` (e.g. `eval-20260306-152928.html`)
 5. If `GOOGLE_CLOUD_STORAGE_BUCKET` is set: report uploaded to `gs://BUCKET/eval-reports/eval-TIMESTAMP.html`
-6. Results logged to Vertex AI Experiments as run `eval-TIMESTAMP`; GCS URI recorded as a param in the run — all three (file, GCS path, experiment run) share the same timestamp for easy correlation
+6. Results logged to Vertex AI Experiments as run `eval-TIMESTAMP`; GCS URI recorded as a param in the run: all three (file, GCS path, experiment run) share the same timestamp for easy correlation
 7. If all metrics pass thresholds → promote to production
 8. If any metric fails → block promotion, alert team
 
 **How to run:**
 ```bash
-# Standard eval (tool use + response quality) — uses custom inference adapter
+# Standard eval (tool use + response quality): uses custom inference adapter
 python scripts/eval_vertex.py \
     --agent-engine-id projects/PROJECT/locations/LOCATION/reasoningEngines/ENGINE_ID
 
@@ -162,10 +164,10 @@ python scripts/eval_vertex.py \
 | `--save-inference` | none | Save raw prompt/response pairs to JSON for debugging |
 
 **Key files:**
-- `scripts/eval_vertex.py` — main eval script
-- `tests/eval_configs/post_deploy/{standard,full}.json` — metric configs
-- `tests/post_deploy/datasets/post_deploy_cases.json` — eval dataset (10 cases)
-- `tests/post_deploy/dataset_converter.py` — ADK → Vertex AI format converter
+- `scripts/eval_vertex.py`: main eval script
+- `tests/eval_configs/post_deploy/{standard,full}.json`: metric configs
+- `tests/post_deploy/datasets/post_deploy_cases.json`: eval dataset (10 cases)
+- `tests/post_deploy/dataset_converter.py`: ADK → Vertex AI format converter
 
 ### Custom Inference Adapter vs SDK Inference
 
@@ -183,7 +185,7 @@ With `AgentTool`, the conversation flow is:
 2. Sub-agent returns a `function_response` event (with result text)
 3. Root agent emits a final `text` event (human-readable response)
 
-The SDK only captures events 1-2 and stops — it never sees the final text response (event 3). When it tries to parse event 2 (a `function_response`), it fails with `'text'` key not found.
+The SDK only captures events 1-2 and stops: it never sees the final text response (event 3). When it tries to parse event 2 (a `function_response`), it fails with `'text'` key not found.
 
 **How the custom adapter works:**
 
@@ -195,7 +197,7 @@ Custom adapter:              function_call → function_response → text respon
 Production backend:          function_call → function_response → text response → DONE
 ```
 
-> **Note:** `stream_query()` (sync) also has issues — it only yields the first event for AgentTool calls. Always use `async_stream_query()`.
+> **Note:** `stream_query()` (sync) also has issues: it only yields the first event for AgentTool calls. Always use `async_stream_query()`.
 
 **When to use `--sdk-inference`:**
 - Only for single-agent systems or agents that don't use `AgentTool`
@@ -210,7 +212,7 @@ The script includes retry logic for common transient failures:
 
 ### Judge Rate Limits
 
-The eval service uses Gemini as an LLM judge to score responses. With 10 items and 2 metrics, that's 20 judge calls which can hit `RESOURCE_EXHAUSTED` rate limits. Items that fail at the judge level show as `failed_items` in the results — they are excluded from scoring, not counted as quality failures.
+The eval service uses Gemini as an LLM judge to score responses. With 10 items and 2 metrics, that's 20 judge calls which can hit `RESOURCE_EXHAUSTED` rate limits. Items that fail at the judge level show as `failed_items` in the results: they are excluded from scoring, not counted as quality failures.
 
 **Tips to improve judge success rate:**
 - Use smaller datasets (3-5 items) for more reliable scoring
@@ -228,8 +230,8 @@ Before running post-deploy eval:
      --member="serviceAccount:service-PROJECT_NUMBER@gcp-sa-aiplatform.iam.gserviceaccount.com" \
      --role="roles/datastore.user"
    ```
-3. **GCS bucket** for report upload: set `GOOGLE_CLOUD_STORAGE_BUCKET` in `.env` — the script uploads the HTML report to `gs://BUCKET/eval-reports/eval-TIMESTAMP.html` and records the URI in the Vertex AI Experiments run. Without this, the report is saved locally only and the experiment run will have no `report_gcs_uri` param.
-4. **Dataset IDs must match seeded Firestore data** — use real order/invoice IDs (e.g., `ORD-12345`, `ORD-67890`, `INV-2025-001`), not placeholder IDs
+3. **GCS bucket** for report upload: set `GOOGLE_CLOUD_STORAGE_BUCKET` in `.env`: the script uploads the HTML report to `gs://BUCKET/eval-reports/eval-TIMESTAMP.html` and records the URI in the Vertex AI Experiments run. Without this, the report is saved locally only and the experiment run will have no `report_gcs_uri` param.
+4. **Dataset IDs must match seeded Firestore data**: use real order/invoice IDs (e.g., `ORD-12345`, `ORD-67890`, `INV-2025-001`), not placeholder IDs
 
 ### AgentInfo Workaround
 
@@ -256,8 +258,8 @@ agent_info = types.evals.AgentInfo(
 
 **How it differs from Stage 3:**
 - Uses a smaller dataset (fewer prompts)
-- Runs with `standard` profile (no hallucination/safety — faster)
-- If smoke test fails → automatic rollback
+- Runs with `standard` profile (no hallucination/safety: faster)
+- If smoke test fails → block the release and roll back manually via `gcloud run deploy` with the previous image tag
 
 **How to run:**
 ```bash
@@ -268,24 +270,7 @@ python scripts/eval_vertex.py \
 
 ---
 
-## Stage 5: Production Monitoring (Beyond Scope)
-
-**Purpose:** Continuously monitor live traffic for quality degradation.
-
-**Tools:** Vertex AI Model Monitoring, Cloud Logging, custom pipelines
-
-**What it would measure:**
-- Response latency percentiles
-- Error rates by agent
-- Tool call success rates
-- Quality scores on sampled traffic
-- Safety/hallucination on sampled traffic
-
-**Why it's beyond scope:** Requires logging infrastructure, dashboards, and sampling pipelines that are separate from the eval system.
-
----
-
-## Stage 6: Periodic Regression
+## Stage 5: Nightly Regression
 
 **Purpose:** Detect model drift and quality degradation over time.
 
@@ -315,8 +300,8 @@ python scripts/eval_vertex.py \
 | **Environment** | Local / CI runner | GCP project with Agent Engine |
 
 **When to use which:**
-- **ADK AgentEvaluator**: Development and CI — fast, free, tests agent logic
-- **Vertex AI Eval Service**: Post-deployment — tests the full deployed stack including infrastructure, latency, and real data access
+- **ADK AgentEvaluator**: Development and CI: fast, free, tests agent logic
+- **Vertex AI Eval Service**: Post-deployment: tests the full deployed stack including infrastructure, latency, and real data access
 
 ---
 
@@ -326,7 +311,7 @@ All stages support the `EVAL_PROFILE` environment variable:
 
 | Profile | Unit Metrics | Integration Metrics | Post-Deploy Metrics |
 |---------|-------------|--------------------|--------------------|
-| `fast` | Rouge-1 | Rouge-1 | — |
+| `fast` | Rouge-1 | Rouge-1 | |
 | `standard` | Rouge-1 + tool trajectory | Rouge-1 + rubric judge | TOOL_USE_QUALITY + FINAL_RESPONSE_QUALITY |
 | `full` | + response match v2 | + response match v2 | + HALLUCINATION + SAFETY |
 
@@ -359,7 +344,7 @@ Simple JSON array for the Vertex AI Eval Service:
 ]
 ```
 
-**Important:** The `"prompt"` column name is required — the eval service SDK looks for this exact key when building `EvaluationItemRequest` objects. Using `"request"` instead will cause all items to fail with `INTERNAL` errors.
+**Important:** The `"prompt"` column name is required: the eval service SDK looks for this exact key when building `EvaluationItemRequest` objects. Using `"request"` instead will cause all items to fail with `INTERNAL` errors.
 
 **Dataset IDs must match seeded Firestore data:**
 
@@ -395,6 +380,6 @@ df = adk_evalset_to_dataframe("tests/integration/product_agent_handoffs.evalset.
 | TOOL_USE_QUALITY | 0.5 | Same as standard |
 | FINAL_RESPONSE_QUALITY | 0.5 | Same as standard |
 | HALLUCINATION | 0.5 | Agent doesn't fabricate information |
-| SAFETY | 0.8 | Higher bar — safety is critical |
+| SAFETY | 0.8 | Higher bar: safety is critical |
 
 Thresholds should be adjusted upward as the agent matures. Start conservative and ratchet up.

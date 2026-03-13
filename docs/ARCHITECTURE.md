@@ -4,7 +4,7 @@ Multi-agent customer support system with RAG, Memory Bank, and sequential workfl
 
 ## Architecture Diagrams
 
-📊 **Mermaid Diagrams Available:** Interactive architecture diagrams are available in [`docs/diagrams/`](./diagrams/). GitHub renders these automatically. See [`docs/diagrams/README.md`](./diagrams/README.md) for full details.
+Interactive architecture diagrams are available in [`docs/diagrams/`](./diagrams/). GitHub renders these automatically. See [`docs/diagrams/README.md`](./diagrams/README.md) for full details.
 
 ## Overview
 
@@ -19,32 +19,32 @@ The system consists of multiple layers:
 ```mermaid
 graph TB
     subgraph "User Layer"
-        User[👤 User]
+        User[User]
     end
 
     subgraph "Vertex AI Agent Engine Runtime"
         subgraph "Root Coordinator"
-            RootAgent[🤖 Root Agent<br/>Model: Gemini 2.5 Pro<br/>Callback: auto_save_to_memory_sdk]
+            RootAgent[Root Agent<br/>Model: Gemini 2.5 Pro<br/>Callback: auto_save_to_memory_sdk]
         end
 
         subgraph "Specialist Agents"
-            ProductAgent[🛍️ Product Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
-            OrderAgent[📦 Order Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
-            BillingAgent[💳 Billing Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
+            ProductAgent[Product Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
+            OrderAgent[Order Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
+            BillingAgent[Billing Agent<br/>Model: Gemini 2.5 Flash<br/>+ PreloadMemoryTool<br/>Callback: auto_save_to_memory_sdk]
         end
 
         subgraph "Workflow Patterns"
-            RefundWorkflow[🔄 Sequential Workflow<br/>Model: Gemini 2.5 Pro<br/>3-Step Validation]
+            RefundWorkflow[Sequential Workflow<br/>Model: Gemini 2.5 Pro<br/>3-Step Validation]
         end
     end
 
     subgraph "Memory Bank"
-        MemoryService[💾 Memory Bank Service<br/>Generation: Gemini 2.5 Flash<br/>Embedding: text-embedding-004]
+        MemoryService[Memory Bank Service<br/>Generation: Gemini 2.5 Flash<br/>Embedding: text-embedding-004]
         MemoryStore[(Memory Store<br/>USER_PREFERENCES)]
     end
 
     subgraph "Google Cloud Services"
-        Firestore[(🔥 Firestore<br/>Products, Orders, Sessions<br/>Vector Search)]
+        Firestore[(Firestore<br/>Products, Orders, Sessions<br/>Vector Search)]
     end
 
     User -->|Query| RootAgent
@@ -76,7 +76,7 @@ graph TB
     style Firestore fill:#FF6F00,stroke:#E65100,color:#fff
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/system-overview.mmd`](./diagrams/system-overview.mmd)
+Full diagram: [`docs/diagrams/system-overview.mmd`](./diagrams/system-overview.mmd)
 
 This diagram shows the complete flow from user queries through the Root Agent coordinator to specialist agents, with Memory Bank integration and data sources.
 
@@ -85,17 +85,17 @@ This diagram shows the complete flow from user queries through the Root Agent co
 ```mermaid
 graph TD
     subgraph "Root Layer"
-        Root[🎯 Root Agent<br/>Model: Gemini 2.5 Pro<br/>Role: Coordinator & Router]
+        Root[Root Agent<br/>Model: Gemini 2.5 Pro<br/>Role: Coordinator & Router]
     end
 
     subgraph "Domain Specialists"
-        Product[🛍️ Product Agent<br/>Model: Gemini 2.5 Flash<br/>8 Tools + PreloadMemoryTool]
-        Order[📦 Order Agent<br/>Model: Gemini 2.5 Flash<br/>2 Tools + PreloadMemoryTool]
-        Billing[💳 Billing Agent<br/>Model: Gemini 2.5 Flash<br/>3 Tools + PreloadMemoryTool]
+        Product[Product Agent<br/>Model: Gemini 2.5 Flash<br/>8 Tools + PreloadMemoryTool]
+        Order[Order Agent<br/>Model: Gemini 2.5 Flash<br/>2 Tools + PreloadMemoryTool]
+        Billing[Billing Agent<br/>Model: Gemini 2.5 Flash<br/>3 Tools + PreloadMemoryTool]
     end
 
     subgraph "Workflow Patterns"
-        Sequential[🔄 Sequential Workflow<br/>Model: Gemini 2.5 Pro<br/>3-Step Refund Validation]
+        Sequential[Sequential Workflow<br/>Model: Gemini 2.5 Pro<br/>3-Step Refund Validation]
     end
 
     Root -->|Products Query| Product
@@ -110,7 +110,7 @@ graph TD
     style Sequential fill:#EA4335,stroke:#C5221F,color:#fff,stroke-width:2px
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/agent-hierarchy.mmd`](./diagrams/agent-hierarchy.mmd)
+Full diagram: [`docs/diagrams/agent-hierarchy.mmd`](./diagrams/agent-hierarchy.mmd)
 
 The multi-agent hierarchy shows the Root Agent coordinator routing to specialist agents (Product, Order, Billing) and the Sequential Refund Workflow.
 
@@ -119,18 +119,18 @@ The multi-agent hierarchy shows the Root Agent coordinator routing to specialist
 ```mermaid
 graph TB
     subgraph "Root Agent"
-        Agent[🎯 Root Agent<br/>Model: Gemini 2.5 Pro<br/>Coordinator & Router<br/>Callback: auto_save_to_memory_sdk]
-        ErrorHandling[⚠️ ERROR HANDLING<br/>Always respond to user<br/>Graceful fallbacks]
+        Agent[Root Agent<br/>Model: Gemini 2.5 Pro<br/>Coordinator & Router<br/>Callback: auto_save_to_memory_sdk]
+        ErrorHandling[ERROR HANDLING<br/>Always respond to user<br/>Graceful fallbacks]
     end
 
     subgraph "Sub-Agents"
-        Product[🛍️ Product Agent]
-        Order[📦 Order Agent]
-        Billing[💳 Billing Agent]
-        Refund[🔄 Refund Workflow]
+        Product[Product Agent]
+        Order[Order Agent]
+        Billing[Billing Agent]
+        Refund[Refund Workflow]
     end
 
-    User[👤 User Query] --> Agent
+    User[User Query] --> Agent
     Agent -->|Products| Product
     Agent -->|Orders| Order
     Agent -->|Billing| Billing
@@ -145,7 +145,7 @@ graph TB
     style Refund fill:#EA4335,stroke:#C5221F,color:#fff
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/root-agent.mmd`](./diagrams/root-agent.mmd)
+Full diagram: [`docs/diagrams/root-agent.mmd`](./diagrams/root-agent.mmd)
 
 **Role:** Routes requests to specialist agents
 
@@ -174,13 +174,13 @@ Refunds → refund_workflow
 ```mermaid
 graph TB
     subgraph "Product Agent"
-        Agent[🛍️ Product Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
+        Agent[Product Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
     end
 
     subgraph "Tools"
         T1[PreloadMemoryTool<br/>Load user memories]
         T2[search_products<br/>RAG semantic search]
-        T3[get_product_info<br/>⭐ DEFAULT - Comprehensive<br/>details + inventory + reviews]
+        T3[get_product_info<br/>DEFAULT - Comprehensive<br/>details + inventory + reviews]
         T4[get_all_saved_products_info<br/>Efficient multi-product batch]
         T5[get_last_mentioned_product<br/>Context-aware retrieval]
         T6[get_product_details<br/>Details only explicit]
@@ -224,7 +224,7 @@ graph TB
     style Memory fill:#9334E6,stroke:#7627BB,color:#fff
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/product-agent.mmd`](./diagrams/product-agent.mmd)
+Full diagram: [`docs/diagrams/product-agent.mmd`](./diagrams/product-agent.mmd)
 
 **Role:** Handles product search, details, inventory, reviews
 
@@ -255,7 +255,7 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Order Agent"
-        Agent[📦 Order Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
+        Agent[Order Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
     end
 
     subgraph "Tools"
@@ -285,7 +285,7 @@ graph TB
     style Memory fill:#9334E6,stroke:#7627BB,color:#fff
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/order-agent.mmd`](./diagrams/order-agent.mmd)
+Full diagram: [`docs/diagrams/order-agent.mmd`](./diagrams/order-agent.mmd)
 
 **Role:** Order tracking and history
 
@@ -309,8 +309,8 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Billing Agent"
-        Agent[💳 Billing Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
-        Note[⚠️ NOTE: Refunds processed<br/>via refund_workflow only]
+        Agent[Billing Agent<br/>Model: Gemini 2.5 Flash<br/>Callback: auto_save_to_memory_sdk]
+        Note[NOTE: Refunds processed<br/>via refund_workflow only]
     end
 
     subgraph "Tools"
@@ -345,7 +345,7 @@ graph TB
     style Memory fill:#9334E6,stroke:#7627BB,color:#fff
 ```
 
-📄 **Full Diagram:** [`docs/diagrams/billing-agent.mmd`](./diagrams/billing-agent.mmd)
+Full diagram: [`docs/diagrams/billing-agent.mmd`](./diagrams/billing-agent.mmd)
 
 **Role:** Invoices, payments, refunds
 
@@ -484,9 +484,11 @@ config={
 
 All tools are organized by domain:
 
-### Product Tools (5 tools)
+### Product Tools (7 tools)
 **File:** `customer_support_agent/tools/product_tools.py`
 - search_products
+- get_product_info (smart unified tool: details + inventory + reviews)
+- get_all_saved_products_info (batch fetch for all products from last search)
 - get_product_details
 - get_last_mentioned_product
 - check_inventory
@@ -537,27 +539,6 @@ If RAG unavailable → keyword search
 
 **File:** `customer_support_agent/services/rag_search.py`
 
-## Memory Bank
-
-### Features
-
-- **Cross-session memory** - Remembers user preferences across conversations
-- **Automatic extraction** - Pulls key facts from conversations
-- **Consolidation** - Creates/updates/deletes memories intelligently
-
-### Examples
-
-Extractions:
-- "Customer prefers products under $500"
-- "User had delivery issues with order ORD-12345"
-- "Customer is interested in gaming laptops"
-
-### Usage
-
-Agents use `PreloadMemoryTool` to load memories at conversation start.
-
-**Callback:** `customer_support_agent/agents/callbacks.py`
-
 ## Session State
 
 ### How It Works
@@ -585,7 +566,7 @@ product_id = tool_context.state.get('last_product_id')
 ```
 products/
   ├── id: PROD-001
-  ├── name: "UltraBook Pro"
+  ├── name: "ProBook Laptop 15"
   ├── price: 899.99
   ├── embedding: [768-dim vector]
   └── ...
@@ -651,9 +632,9 @@ User message
              User
 ```
 
-**Layer 1 — Backend template check** (`MODEL_ARMOR_ENABLED=true`): The FastAPI `/api/chat` endpoint calls `sanitize_user_prompt()` against the named template before routing to the agent. Returns HTTP 400 if the prompt violates the template policy. Controlled by `MODEL_ARMOR_ENABLED` and `MODEL_ARMOR_TEMPLATE_ID`.
+**Layer 1: Backend template check** (`MODEL_ARMOR_ENABLED=true`): The FastAPI `/api/chat` endpoint calls `sanitize_user_prompt()` against the named template before routing to the agent. Returns HTTP 400 if the prompt violates the template policy. Controlled by `MODEL_ARMOR_ENABLED` and `MODEL_ARMOR_TEMPLATE_ID`.
 
-**Layer 2 — Floor settings** (always active once configured): Project-level policy applied automatically to every Gemini `generateContent` call including those made internally by Agent Engine. No code changes required — set via `make setup-model-armor`.
+**Layer 2: Floor settings** (always active once configured): Project-level policy applied automatically to every Gemini `generateContent` call including those made internally by Agent Engine. No code changes required: set via `make setup-model-armor`.
 
 #### ADK Plugin (for reference / workshops)
 
@@ -674,7 +655,7 @@ User message
 # 1. Enable API + grant IAM + configure floor settings
 make setup-model-armor
 
-# 2. Create the named template (gcloud model-armor not yet in SDK 482 — use Python SDK)
+# 2. Create the named template (gcloud model-armor not yet in SDK 482: use Python SDK)
 make create-model-armor-template
 # Prints: MODEL_ARMOR_TEMPLATE_ID=projects/.../locations/.../templates/customer-support-policy
 
@@ -692,7 +673,7 @@ make test-model-armor
 |----------|---------|-------------|
 | `MODEL_ARMOR_ENABLED` | `false` | Enables backend template-based screening in `/api/chat` |
 | `MODEL_ARMOR_TEMPLATE_ID` | `` | Full template resource name (`projects/.../locations/.../templates/...`) |
-| `MODEL_ARMOR_MODE` | `INSPECT_AND_BLOCK` | Floor enforcement mode (informational — configured via `gcloud`, not code) |
+| `MODEL_ARMOR_MODE` | `INSPECT_AND_BLOCK` | Floor enforcement mode (informational: configured via `gcloud`, not code) |
 
 **Note:** Floor settings are independent of `MODEL_ARMOR_ENABLED`. They activate at the GCP project level once `make setup-model-armor` is run, regardless of env vars.
 
@@ -705,7 +686,7 @@ All template screening results are logged to Cloud Logging automatically when `l
 | File | Purpose |
 |------|---------|
 | `customer_support_agent/safety/safety_util.py` | Parses Model Armor responses, extracts violated filter names |
-| `customer_support_agent/safety/model_armor_plugin.py` | ADK plugin (disabled — available for reference) |
+| `customer_support_agent/safety/model_armor_plugin.py` | ADK plugin (disabled: available for reference) |
 | `backend/app/main.py` | Backend check in `/api/chat` (Layer 1) |
 | `scripts/setup_model_armor.sh` | Enable API, grant IAM, configure floor settings |
 | `scripts/create_model_armor_template.py` | Create named template via Python SDK |
@@ -784,8 +765,8 @@ customer_support_agent/
 
 - **Google ADK** - Agent framework
 - **Gemini 2.5 Pro** - Root agent model
-- **Gemini 2.0 Flash** - Specialist agents
-- **Firestore** - NoSQL database + vector search
+- **Gemini 2.5 Flash** - Specialist agents
+- **Firestore** - NoSQL database + vector search (See [DATA_MODEL.md](./DATA_MODEL.md) for complete user data model, auth flow, and demo accounts.)
 - **Vertex AI** - Embeddings + Agent Engine
 - **FastAPI** - Backend API
 - **React** - Frontend UI
