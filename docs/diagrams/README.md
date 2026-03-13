@@ -4,6 +4,13 @@ Mermaid diagrams for the Multi-Agent Customer Support System.
 
 ## Diagrams
 
+### CI/CD Pipeline
+**File:** `cicd-pipeline.mmd`
+- Full multi-environment promotion flow (feat → develop → staging → main)
+- All Cloud Build triggers per environment (PR checks, push deploy, terraform plan/apply)
+- Release pipeline (git tag → versioned deploy)
+- Nightly eval pipeline (Cloud Scheduler → full eval + post-deploy eval)
+
 ### System Overview
 **File:** `system-overview.mmd`
 - Complete system architecture
