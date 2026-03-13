@@ -18,7 +18,7 @@ USAGE:
 
 COST OPTIMIZATION:
     - Main agents use gemini-2.5-pro for complex reasoning
-    - Sub-agents use gemini-2.0-flash for simple tool calls (10x cheaper)
+    - Sub-agents use gemini-2.5-flash for simple tool calls (10x cheaper)
     - Potential 40-60% cost reduction with no quality loss
 """
 
