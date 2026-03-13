@@ -492,10 +492,11 @@ For each trigger: Cloud Build → Triggers → **Create Trigger** → fill in th
 | **Branch / Tag** | `^main$` | `^develop$` | `^main$` | `main` | `^v[0-9]+\.[0-9]+\.[0-9]+` |
 | **Build config** | `cloudbuild/pr-checks.yaml` | `cloudbuild/cloudbuild-deploy.yaml` | `cloudbuild/cloudbuild.yaml` | `cloudbuild/cloudbuild-nightly.yaml` | `cloudbuild/release.yaml` |
 | **Service account** | `PROJECT_NUMBER@cloudbuild.gserviceaccount.com` | same | same | same | same |
-| **_EVAL_PROFILE** | — | `standard` | `standard` | `full` | `standard` |
+| **_EVAL_PROFILE** | — | `standard` | `standard` | — | `standard` |
 | **_GOOGLE_CLOUD_LOCATION** | `us-central1` | `us-central1` | `us-central1` | `us-central1` | `us-central1` |
 | **_STAGING_BUCKET** | — | `gs://YOUR_STAGING_BUCKET` | — | `gs://YOUR_STAGING_BUCKET` | `gs://YOUR_STAGING_BUCKET` |
 | **_AGENT_ENGINE_RESOURCE_NAME** | — | `projects/.../reasoningEngines/ID` | — | `projects/.../reasoningEngines/ID` | `projects/.../reasoningEngines/ID` |
+| **_RUN_POST_DEPLOY_EVAL** | — | — | — | `true` | — |
 
 Triggers use the **2nd gen Cloud Build API** (`repositoryEventConfig`). Use `gcloud builds triggers import` with inline YAML — the older `gcloud builds triggers create github` flags (`--repo-name`, `--repo-owner`) do not work with 2nd gen connections.
 
@@ -543,12 +544,12 @@ substitutions:
 EOF
 ```
 
-#### Trigger — Push to `main` (prod environment, CI + CD)
+#### Trigger — Push to `main` (prod environment, CI only — no deploy)
 
 ```bash
 gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
-name: ci-cd-push-main
-filename: cloudbuild/cloudbuild-deploy.yaml
+name: ci-push-main
+filename: cloudbuild/cloudbuild.yaml
 repositoryEventConfig:
   push:
     branch: "^main$"
@@ -558,10 +559,6 @@ serviceAccount: projects/YOUR_PROJECT_ID/serviceAccounts/YOUR_PROJECT_NUMBER-com
 substitutions:
   _EVAL_PROFILE: standard
   _GOOGLE_CLOUD_LOCATION: us-central1
-  _DEPLOY_AGENT_ENGINE: "false"
-  _STAGING_BUCKET: gs://YOUR_PROD_STAGING_BUCKET
-  _AGENT_ENGINE_DISPLAY_NAME: customer-support-multiagent
-  _AGENT_ENGINE_RESOURCE_NAME: ""
   _RUN_LOAD_TESTS: "false"
 EOF
 ```
@@ -588,9 +585,9 @@ gcloud builds triggers list --region=us-central1 --format="table(name,id)"
 
 # Re-import with the id field to update in place (no delete needed)
 gcloud builds triggers import --region=us-central1 --project=YOUR_PROJECT_ID --source=- <<'EOF'
-name: ci-cd-push-main
+name: ci-push-main
 id: YOUR_TRIGGER_ID
-filename: cloudbuild/cloudbuild-deploy.yaml
+filename: cloudbuild/cloudbuild.yaml
 ...
 EOF
 ```

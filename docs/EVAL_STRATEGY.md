@@ -1,5 +1,7 @@
 # Evaluation Strategy: Tiered CI/CD for AI Agents
 
+> This document covers the CI/CD tiered evaluation strategy. For post-deploy evaluation architecture, see [EVAL_ARCHITECTURE.md](./EVAL_ARCHITECTURE.md).
+
 ## Current State
 
 CI runs everything on every push:

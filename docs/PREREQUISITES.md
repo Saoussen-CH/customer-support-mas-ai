@@ -19,7 +19,7 @@ The following APIs must be enabled before deployment:
 ### Core AI/ML APIs
 - ✅ **Vertex AI API** (`aiplatform.googleapis.com`)
   - Agent Engine deployment
-  - Gemini models (2.5 Pro, 2.0 Flash)
+  - Gemini models (2.5 Pro, 2.5 Flash)
   - Vector embeddings (text-embedding-004)
 
 ### Database & Storage APIs
@@ -107,6 +107,8 @@ Your GCP user account needs these roles for deployment:
    - Email: `customer-support-agent@PROJECT_ID.iam.gserviceaccount.com`
 
 ## 4. Quick Setup (Automated)
+
+For advanced or manual setup, see the [Manual Setup section below](#5-manual-setup).
 
 ### Option A: All-in-One Setup
 

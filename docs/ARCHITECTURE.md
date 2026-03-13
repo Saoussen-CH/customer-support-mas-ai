@@ -784,8 +784,8 @@ customer_support_agent/
 
 - **Google ADK** - Agent framework
 - **Gemini 2.5 Pro** - Root agent model
-- **Gemini 2.0 Flash** - Specialist agents
-- **Firestore** - NoSQL database + vector search
+- **Gemini 2.5 Flash** - Specialist agents
+- **Firestore** - NoSQL database + vector search (See [DATA_MODEL.md](./DATA_MODEL.md) for complete user data model, auth flow, and demo accounts.)
 - **Vertex AI** - Embeddings + Agent Engine
 - **FastAPI** - Backend API
 - **React** - Frontend UI

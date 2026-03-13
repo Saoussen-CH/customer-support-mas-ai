@@ -1,5 +1,7 @@
 # Production Evaluation Architecture
 
+> This document covers the deployed agent evaluation architecture. For CI/CD pipeline evaluation strategy and profiles, see [EVAL_STRATEGY.md](./EVAL_STRATEGY.md).
+
 ## Overview
 
 This document describes the 6-stage production evaluation architecture for the Customer Support Multi-Agent System. Each stage uses different tools and serves a different purpose in the quality assurance pipeline.

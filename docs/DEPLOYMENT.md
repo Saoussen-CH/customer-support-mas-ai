@@ -35,17 +35,11 @@ cd customer-support-mas-ai
 cp .env.example .env
 ```
 
-Fill in the required fields:
-
-```bash
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-FIRESTORE_DATABASE=customer-support-db
-MODEL_ARMOR_ENABLED=true   # recommended
-```
-
+Fill in `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, and `FIRESTORE_DATABASE`.
 Leave `GOOGLE_CLOUD_STORAGE_BUCKET`, `AGENT_ENGINE_RESOURCE_NAME`, and
 `MODEL_ARMOR_TEMPLATE_ID` blank for now — they come from Terraform output.
+
+See [ENV_SETUP.md](./ENV_SETUP.md) for full variable reference.
 
 ---
 
@@ -405,13 +399,9 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The `release` Cloud Build trigger fires automatically on the prod project. It:
+The `release` Cloud Build trigger fires automatically on the prod project. It runs lint + unit tests, builds and pushes a Docker image tagged with `v1.0.0` / `$COMMIT_SHA` / `latest`, deploys Agent Engine with a versioned display name, deploys Cloud Run pinned to the version tag, and runs smoke tests.
 
-1. Runs lint + unit tests (`standard` eval profile)
-2. Builds and pushes a Docker image tagged **`v1.0.0`**, `$COMMIT_SHA`, and `latest`
-3. Deploys Agent Engine with display name `customer-support-multiagent-v1.0.0`
-4. Deploys Cloud Run pinned to `image:v1.0.0`
-5. Runs smoke tests to confirm the release is live
+See [CI_CD.md](./CI_CD.md#release-pipeline) for full release pipeline details and the versioning strategy.
 
 ### Rollback a release
 
@@ -436,8 +426,6 @@ git push origin main
 git tag v1.0.0
 git push origin v1.0.0
 ```
-
-See [CI_CD.md](./CI_CD.md#agent-engine-versioning-strategy) for a full explanation of the versioning strategy and why one-resource-per-version was not chosen.
 
 ---
 
