@@ -237,9 +237,10 @@ resource "google_cloudbuild_trigger" "nightly" {
   filename = "cloudbuild/cloudbuild-nightly.yaml"
 
   substitutions = {
-    _EVAL_PROFILE          = "full"
-    _GOOGLE_CLOUD_LOCATION = var.region
-    _FIRESTORE_DATABASE    = var.firestore_database_id
+    _EVAL_PROFILE                = "full"
+    _GOOGLE_CLOUD_LOCATION       = var.region
+    _FIRESTORE_DATABASE          = var.firestore_database_id
+    _AGENT_ENGINE_RESOURCE_NAME  = var.agent_engine_resource_name
   }
 
   depends_on = [google_project_service.apis]
