@@ -116,7 +116,7 @@ Evaluates the **deployed** agent on Agent Engine using the Vertex AI Gen AI Eval
 |--------|---------|---------|-------------|
 | `scripts/eval_vertex.py` | `tests/post_deploy/datasets/post_deploy_cases.json` (10 cases) | TOOL_USE_QUALITY, FINAL_RESPONSE_QUALITY | Deployed Agent Engine |
 
-**Key difference from Layers 1-3:** Uses a custom inference adapter (`async_stream_query()`) instead of the SDK's `run_inference()`. The SDK's parser fails for multi-agent systems using `AgentTool` because it only captures the first 2 events (function_call + function_response) and misses the root agent's final text response. See `docs/EVAL_ARCHITECTURE.md` for full details.
+**Key difference from Layers 1-3:** Uses a custom inference adapter (`async_stream_query()`) instead of the SDK's `run_inference()`. The SDK's parser fails for multi-agent systems using `AgentTool` because it only captures the first 2 events (function_call + function_response) and misses the root agent's final text response. See `docs/EVALUATION.md` for full details.
 
 ```bash
 # Run post-deploy eval
@@ -275,7 +275,8 @@ EVAL_PROFILE=full pytest tests/integration/test_integration_eval_ci.py -v -s
 | Profile | Metrics | Cost |
 |---------|---------|------|
 | **fast** | `response_match_score: 0.15` (Rouge-1) | Free |
-| **standard** | + `tool_trajectory_avg_score: 0.5` | Free |
+| **standard** | + `tool_name_f1: 0.5` (F1 on tool names only) | Free |
+| **standard_exact** | + `tool_trajectory_avg_score: 0.5` (strict exact match, backup) | Free |
 | **full** | + `final_response_match_v2: 0.5` (LLM judge) | Gemini Flash calls |
 
 ### Integration Test Profiles (`tests/eval_configs/integration/`)
@@ -389,4 +390,4 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
 
 ---
 
-Last Updated: 2026-02-13
+Last Updated: 2026-03-13

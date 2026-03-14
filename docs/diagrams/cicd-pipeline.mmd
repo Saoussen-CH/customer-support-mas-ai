@@ -42,7 +42,7 @@ flowchart TD
 
     subgraph prod_push ["Push to main — css-mas-prod"]
         direction LR
-        CI_PRD[ci-cd-push-main\ncloudbuild-deploy.yaml\nEVAL_PROFILE=standard\n+ deploy to prod]
+        CI_PRD[ci-push-main\ncloudbuild.yaml\nEVAL_PROFILE=standard\nCI only — no deploy]
         TF_APPLY_PRD[terraform-apply\nterraform-apply.yaml\nauto-apply infra]
     end
 
